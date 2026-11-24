@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -23,6 +24,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Validate JavaScript syntax
+        run: |
+          node --check assets/js/app.js
+          node --check assets/js/auth.js
+          node --check service-worker.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
