@@ -22,12 +22,45 @@ let currentUser=null;
 let currentOrg=null;
 let organizations=[];
 
+let appRegistration=null;
+let appUpdateNotice=null;
+function showAppUpdateNotice(){
+ if(!appUpdateNotice){appUpdateNotice=document.createElement("div");appUpdateNotice.id="appUpdateNotice";appUpdateNotice.className="app-update-notice";appUpdateNotice.setAttribute("role","status");document.body.append(appUpdateNotice);}
+ appUpdateNotice.innerHTML='<div><strong>Biz FOX ERP update available</strong><p>A newer version is ready. Update now to use the latest improvements.</p></div><button type="button" id="applyAppUpdate">Update now</button>';
+ document.getElementById("applyAppUpdate").addEventListener("click",()=>{const waiting=appRegistration?.waiting;if(waiting)waiting.postMessage({type:"SKIP_WAITING"});else checkForAppUpdates();});
+}
+async function checkForAppUpdates(){
+ const button=document.getElementById("checkAppUpdate");if(button){button.disabled=true;button.textContent="Checking…";}
+ try{
+  if(!("serviceWorker" in navigator)){showMessage("App updates are managed by your browser.");return;}
+  appRegistration=await navigator.serviceWorker.getRegistration();
+  if(!appRegistration){appRegistration=await navigator.serviceWorker.register("./service-worker.js");}
+  await appRegistration.update();
+  if(appRegistration.waiting){showAppUpdateNotice();if(button)button.textContent="Update available";}
+  else{if(button)button.textContent="App is up to date";setTimeout(()=>{if(button)button.textContent="Check updates";},2500);}
+ }catch(error){showMessage("Could not check for updates. Connect to the internet and try again.");}
+ finally{if(button)button.disabled=false;}
+}
+async function setupAppUpdates(){
+ if(!("serviceWorker" in navigator))return;
+ try{
+  appRegistration=await navigator.serviceWorker.ready;
+  if(appRegistration.waiting)showAppUpdateNotice();
+  appRegistration.addEventListener("updatefound",()=>{
+   const installing=appRegistration.installing;if(!installing)return;
+   installing.addEventListener("statechange",()=>{if(installing.state==="installed"&&navigator.serviceWorker.controller)showAppUpdateNotice();});
+  });
+  navigator.serviceWorker.addEventListener("controllerchange",()=>location.reload());
+  appRegistration.update().catch(()=>{});
+ }catch(error){console.warn("App update check unavailable",error);}
+}
 function escapeHtml(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function showMessage(message){let el=document.getElementById("appMessage");if(!el){el=document.createElement("div");el.id="appMessage";el.className="app-message";document.querySelector(".content").prepend(el);}el.textContent=message;el.hidden=false;}
 function addWorkspaceControls(){
   const actions=document.querySelector(".top-actions");
-  actions.innerHTML=`<select id="orgSelect" aria-label="Organization" class="org-select"><option value="">Select organization</option></select><span class="status-dot"></span><span class="status-text">Connected</span><button id="profileButton" class="profile-button" title="Account">${escapeHtml((currentUser.email||"U").slice(0,1).toUpperCase())}</button><button id="signOutButton" class="signout-button">Sign out</button>`;
+  actions.innerHTML=`<button id="checkAppUpdate" class="secondary-button app-update-check" type="button">Check updates</button><select id="orgSelect" aria-label="Organization" class="org-select"><option value="">Select organization</option></select><span class="status-dot"></span><span class="status-text">Connected</span><button id="profileButton" class="profile-button" title="Account">${escapeHtml((currentUser.email||"U").slice(0,1).toUpperCase())}</button><button id="signOutButton" class="signout-button">Sign out</button>`;
   document.getElementById("profileButton").title=currentUser.email||"Account";
+  document.getElementById("checkAppUpdate").addEventListener("click",checkForAppUpdates);
   document.getElementById("signOutButton").addEventListener("click",async()=>{await supabase.auth.signOut();location.href="./login.html";});
   const select=document.getElementById("orgSelect");
   organizations.forEach(o=>{const option=document.createElement("option");option.value=o.id;option.textContent=o.name;select.append(option);});
@@ -185,6 +218,7 @@ const {data:{session},error:sessionError}=await supabase.auth.getSession();
 if(sessionError||!session){location.replace("./login.html");}
 else{
   currentUser=session.user;
+  setupAppUpdates();
   try{await loadOrganizations();addWorkspaceControls();if(organizations.length)renderOverview();else renderOnboarding();}
   catch(error){content.innerHTML=`<div class="empty-page"><h2>Workspace connection issue</h2><p>${escapeHtml(error.message)}</p></div>`;}
   supabase.auth.onAuthStateChange((_event,newSession)=>{if(!newSession)location.href="./login.html";});
