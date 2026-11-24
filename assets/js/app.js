@@ -66,13 +66,76 @@ async function renderOverview(){
   const [files,tasks,projects,employees]=await Promise.all([countFor("office_files"),countFor("tasks"),countFor("projects"),countFor("employees")]);
   [["filesCount",files],["tasksCount",tasks],["projectsCount",projects],["employeesCount",employees]].forEach(([id,n])=>{const el=document.getElementById(id);if(el)el.textContent=n===null?"—":n;});
 }
+const dataModules = {
+  administration:{table:"employees",title:"Employee directory",fields:[["employee_code","Employee code","text",1],["full_name","Full name","text",1],["designation","Designation","text"],["email","Email","email"],["phone","Phone","tel"],["date_of_joining","Date of joining","date"],["employment_status","Status","select",0,["active","on_leave","suspended","separated"]],["notes","Notes","textarea"]],columns:["employee_code","full_name","designation","employment_status","phone"],extras:[["attendance_records","Attendance register"],["leave_requests","Leave requests"]]},
+  departments:{table:"departments",title:"Departments",fields:[["name","Department name","text",1],["code","Department code","text"],["description","Description","textarea"]],columns:["name","code","description","is_active"]},
+  documents:{table:"office_files",title:"Office files",fields:[["file_number","File number","text",1],["subject","Subject","text",1],["description","Description","textarea"],["priority","Priority","select",0,["low","normal","high","urgent"]],["status","Status","select",0,["draft","open","pending_approval","approved","rejected","closed"]]],columns:["file_number","subject","priority","status","created_at"],extras:[["file_movements","File movement register"]]},
+  correspondence:{table:"correspondence",title:"Inward / outward correspondence",fields:[["direction","Direction","select",1,["inward","outward"]],["reference_number","Reference number","text",1],["subject","Subject","text",1],["sender_name","Sender","text"],["recipient_name","Recipient","text"],["received_or_sent_on","Date","date"],["status","Status","select",0,["registered","under_process","replied","dispatched","closed"]]],columns:["direction","reference_number","subject","received_or_sent_on","status"]},
+  finance:{table:"bills",title:"Bills register",fields:[["bill_number","Bill number","text",1],["payee_name","Payee","text",1],["purpose","Purpose","textarea",1],["bill_date","Bill date","date"],["amount","Amount (INR)","number",1],["status","Status","select",0,["draft","submitted","approved","rejected","paid"]]],columns:["bill_number","payee_name","purpose","amount","bill_date","status"],extras:[["budgets","Budgets"],["vouchers","Vouchers"],["financial_transactions","Transactions"],["finance_accounts","Accounts"]]},
+  meetings:{table:"meetings",title:"Meetings & calendar",fields:[["title","Meeting title","text",1],["starts_at","Date and time","datetime-local",1],["location","Location","text"],["agenda","Agenda","textarea"],["status","Status","select",0,["scheduled","held","postponed","cancelled"]]],columns:["title","starts_at","location","status"]},
+  tasks:{table:"tasks",title:"Tasks & work",fields:[["title","Task title","text",1],["description","Description","textarea"],["priority","Priority","select",0,["low","normal","high","urgent"]],["status","Status","select",0,["pending","in_progress","blocked","completed","cancelled"]],["due_at","Due date and time","datetime-local"]],columns:["title","priority","status","due_at","created_at"]},
+  inventory:{table:"assets",title:"Asset register",fields:[["asset_code","Asset code","text",1],["name","Asset name","text",1],["category","Category","text"],["location","Location","text"],["condition","Condition","select",0,["new","good","needs_repair","retired"]],["acquired_on","Acquired on","date"]],columns:["asset_code","name","category","location","condition"],extras:[["stock_items","Stock items"],["stock_movements","Stock movements"]]},
+  projects:{table:"projects",title:"Projects & development works",fields:[["project_code","Project code","text",1],["name","Project name","text",1],["description","Description","textarea"],["status","Status","select",0,["planned","active","on_hold","completed","cancelled"]],["start_date","Start date","date"],["target_date","Target date","date"],["budget","Budget (INR)","number"]],columns:["project_code","name","status","start_date","target_date","budget"]},
+  communication:{table:"announcements",title:"Circulars & announcements",fields:[["title","Title","text",1],["body","Message","textarea",1],["published_at","Publish date and time","datetime-local"],["expires_at","Expiry date and time","datetime-local"]],columns:["title","published_at","expires_at","created_at"]},
+  services:{table:"applications",title:"Applications register",fields:[["application_number","Application number","text",1],["applicant_name","Applicant name","text",1],["service_name","Service requested","text",1],["submitted_on","Submission date","date"],["status","Status","select",0,["received","under_review","approved","rejected","completed"]],["notes","Notes","textarea"]],columns:["application_number","applicant_name","service_name","submitted_on","status"],extras:[["grievances","Grievances"]]},
+  reports:{table:"audit_logs",title:"Audit trail",readOnly:true,fields:[],columns:["created_at","actor_user_id","action","entity_type","entity_id","details"]},
+  security:{table:"organization_members",title:"Workspace members",readOnly:true,fields:[],columns:["user_id","role","status","created_at"]}
+};
+const extraConfigs = {
+ attendance_records:{table:"attendance_records",title:"Attendance register",fields:[["employee_id","Employee ID","text",1],["attendance_date","Attendance date","date"],["check_in","Check-in","datetime-local"],["check_out","Check-out","datetime-local"],["status","Status","select",0,["present","absent","half_day","holiday","leave"]],["remarks","Remarks","textarea"]],columns:["employee_id","attendance_date","check_in","check_out","status","remarks"]},
+ leave_requests:{table:"leave_requests",title:"Leave requests",fields:[["employee_id","Employee ID","text",1],["leave_type","Leave type","text",1],["start_date","Start date","date",1],["end_date","End date","date",1],["reason","Reason","textarea"],["status","Status","select",0,["pending","approved","rejected","cancelled"]]],columns:["employee_id","leave_type","start_date","end_date","status"]},
+ file_movements:{table:"file_movements",title:"File movement register",readOnly:true,fields:[],columns:["office_file_id","from_user_id","to_user_id","action","movement_note","moved_at"]},
+ budgets:{table:"budgets",title:"Budget register",fields:[["fiscal_year","Financial year","text",1],["budget_head","Budget head","text",1],["allocated_amount","Allocated amount (INR)","number",1],["revised_amount","Revised amount (INR)","number"],["notes","Notes","textarea"]],columns:["fiscal_year","budget_head","allocated_amount","revised_amount"]},
+ vouchers:{table:"vouchers",title:"Vouchers",fields:[["voucher_number","Voucher number","text",1],["voucher_type","Voucher type","select",1,["payment","receipt","journal"]],["voucher_date","Voucher date","date"],["amount","Amount (INR)","number",1],["narration","Narration","textarea",1],["status","Status","select",0,["draft","posted","cancelled"]]],columns:["voucher_number","voucher_type","voucher_date","amount","status"]},
+ financial_transactions:{table:"financial_transactions",title:"Financial transactions",fields:[["transaction_date","Date","date"],["transaction_type","Type","select",1,["income","expense","transfer"]],["amount","Amount (INR)","number",1],["reference_number","Reference number","text"],["description","Description","textarea",1]],columns:["transaction_date","transaction_type","amount","reference_number","description"]},
+ finance_accounts:{table:"finance_accounts",title:"Finance accounts",fields:[["account_code","Account code","text",1],["account_name","Account name","text",1],["account_type","Account type","select",1,["cash","bank","income","expense","liability","asset","equity"]]],columns:["account_code","account_name","account_type","is_active"]},
+ stock_items:{table:"stock_items",title:"Stock items",fields:[["item_code","Item code","text",1],["item_name","Item name","text",1],["unit","Unit","text"],["quantity","Opening quantity","number"],["reorder_level","Reorder level","number"],["location","Storage location","text"]],columns:["item_code","item_name","unit","quantity","reorder_level","location"]},
+ stock_movements:{table:"stock_movements",title:"Stock movement register",readOnly:true,fields:[],columns:["stock_item_id","movement_type","quantity","reference_number","moved_at"]},
+ grievances:{table:"grievances",title:"Grievance register",fields:[["tracking_number","Tracking number","text",1],["applicant_name","Applicant name","text",1],["contact","Contact","tel"],["subject","Subject","text",1],["description","Description","textarea",1],["status","Status","select",0,["received","assigned","in_progress","resolved","closed","rejected"]]],columns:["tracking_number","applicant_name","subject","status","created_at"]}
+};
+function fieldMarkup(field){
+ const [key,label,type,required,options]=field;const req=required?"required":"";
+ if(type==="select")return `<label>${label}<select name="${key}" ${req}>${(options||[]).map(x=>`<option value="${x}">${x.replaceAll("_"," ")}</option>`).join("")}</select></label>`;
+ if(type==="textarea")return `<label class="wide-field">${label}<textarea name="${key}" rows="2" ${req}></textarea></label>`;
+ return `<label>${label}<input name="${key}" type="${type}" ${type==="number"?'step="0.01" min="0"':""} ${req}></label>`;
+}
+function formatCell(value){
+ if(value===null||value===undefined||value==="")return "—";
+ if(typeof value==="object")return escapeHtml(JSON.stringify(value));
+ return escapeHtml(String(value).replaceAll("_"," "));
+}
+async function renderDataTable(config){
+ const {data,error}=await supabase.from(config.table).select("*").eq("organization_id",currentOrg.id).order("created_at",{ascending:false}).limit(100);
+ const table=document.getElementById("recordsTable");if(!table)return;
+ if(error){table.innerHTML=`<p class="form-error">${escapeHtml(error.message)}</p>`;return;}
+ if(!data?.length){table.innerHTML='<div class="empty-records">No records yet. Use the form above to add the first record.</div>';return;}
+ table.innerHTML=`<div class="table-scroll"><table><thead><tr>${config.columns.map(c=>`<th>${escapeHtml(c.replaceAll("_"," "))}</th>`).join("")}</tr></thead><tbody>${data.map(row=>`<tr>${config.columns.map(c=>`<td>${formatCell(row[c])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+async function openDataConfig(config){
+ title.textContent=config.title;
+ const canWrite=!config.readOnly;
+ content.innerHTML=`<div class="data-page"><div class="data-page-head"><div><span class="tag">${config.readOnly?"Read only":"Workspace records"}</span><h2>${escapeHtml(config.title)}</h2><p>Organization: ${escapeHtml(currentOrg.name)}</p></div><button id="refreshRecords" class="secondary-button">Refresh</button></div>
+ ${config.extras?.length?`<div class="submodule-links">${config.extras.map(([id,label])=>`<button data-submodule="${id}">${label}</button>`).join("")}</div>`:""}
+ ${canWrite?`<form id="recordForm" class="record-form"><div class="form-grid">${config.fields.map(fieldMarkup).join("")}</div><button class="primary-button" type="submit">Save record</button><p id="recordMessage" class="form-message" role="status"></p></form>`:""}
+ <div class="records-heading"><h3>Records</h3><span>Latest 100</span></div><div id="recordsTable" class="records-table">Loading records…</div></div>`;
+ document.getElementById("refreshRecords").addEventListener("click",()=>renderDataTable(config));
+ content.querySelectorAll("[data-submodule]").forEach(b=>b.addEventListener("click",()=>openDataConfig(extraConfigs[b.dataset.submodule])));
+ if(canWrite)document.getElementById("recordForm").addEventListener("submit",async e=>{
+  e.preventDefault();const form=e.currentTarget;const button=form.querySelector("button[type=submit]");button.disabled=true;button.textContent="Saving…";
+  const payload={organization_id:currentOrg.id};
+  for(const f of config.fields){const el=form.elements[f[0]];if(!el||el.value==="")continue;let value=el.value;if(f[2]==="number")value=Number(value);if(f[2]==="datetime-local")value=new Date(value).toISOString();payload[f[0]]=value;}
+  const {error}=await supabase.from(config.table).insert(payload);
+  const msg=document.getElementById("recordMessage");msg.textContent=error?error.message:"Record saved successfully.";msg.className="form-message "+(error?"error":"success");
+  button.disabled=false;button.textContent="Save record";if(!error){form.reset();await renderDataTable(config);}
+ });
+ await renderDataTable(config);
+}
 async function openPage(id){
-  const m=modules.find(x=>x.id===id);if(!m){renderOverview();return;}
-  title.textContent=m.name;
-  if(!m.table){content.innerHTML=`<div class="empty-page"><span class="module-icon">${m.icon}</span><h2>${m.name}</h2><span class="tag">Under development</span><p>${m.desc}. This module is on the implementation roadmap and will be connected to the workspace in a later phase.</p></div>`;return;}
-  content.innerHTML=`<div class="empty-page"><span class="module-icon">${m.icon}</span><h2>${m.name}</h2><span class="tag">Database connected · Phase in progress</span><p>${m.desc}. The secured database table is ready. The full forms, workflows, approvals and reports are being built next.</p><p id="moduleCount">Loading records…</p></div>`;
-  const {count,error}=await supabase.from(m.table).select("id",{count:"exact",head:true}).eq("organization_id",currentOrg.id);
-  const el=document.getElementById("moduleCount");if(el)el.textContent=error?"Records are not available yet.":`Current records in this workspace: ${count??0}`;
+ const m=modules.find(x=>x.id===id);if(!m){renderOverview();return;}
+ const config=dataModules[id];
+ if(config){await openDataConfig(config);return;}
+ title.textContent=m.name;
+ content.innerHTML=`<div class="empty-page"><span class="module-icon">${m.icon}</span><h2>${m.name}</h2><span class="tag">Under development</span><p>${m.desc}. This module is on the implementation roadmap and will be connected to the workspace in a later phase.</p></div>`;
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-page]");if(!b)return;const id=b.dataset.page;if(id==="overview")renderOverview();else openPage(id);document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.page===id));document.getElementById("sidebar").classList.remove("open");});
 document.getElementById("menuToggle").addEventListener("click",()=>document.getElementById("sidebar").classList.toggle("open"));
