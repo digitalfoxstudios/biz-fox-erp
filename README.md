@@ -32,9 +32,9 @@ Staff portal: https://digitalfoxstudios.github.io/biz-fox-erp/staff.html
 2. The administrator selects **Create staff login** beside the employee record.
 3. Biz FOX sends a secure account invitation to the employee. The employee uses the email link to set their password.
 4. The staff account is linked to the employee record and receives the staff role automatically.
-4. A manager opens **Tasks & Work**, creates an assignment and selects the linked employee.
-5. The employee sees the assignment in the Staff App and submits progress or completion reports.
-6. The manager reviews the report and approves it or requests changes with feedback.
+5. A manager opens **Tasks & Work**, creates an assignment and selects the linked employee.
+6. The employee sees the assignment in the Staff App and submits progress or completion reports.
+7. The manager reviews the report and approves it or requests changes with feedback.
 
 Staff self-registration is disabled. Only authorized company administrators can create staff invitations.
 
