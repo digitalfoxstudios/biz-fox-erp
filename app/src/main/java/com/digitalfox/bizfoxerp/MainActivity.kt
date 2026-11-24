@@ -15,6 +15,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -41,10 +42,10 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
             setPadding(16, 10, 12, 10); setBackgroundColor(Color.rgb(25, 45, 72))
         }
-        val brandMark = TextView(this).apply {
-            text = "FOX"; textSize = 12f; setTypeface(null, Typeface.BOLD)
-            setTextColor(Color.rgb(25, 37, 57)); gravity = Gravity.CENTER
-            setBackgroundColor(Color.rgb(255, 157, 55))
+        val brandMark = ImageView(this).apply {
+            setImageResource(R.drawable.biz_fox_logo)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            contentDescription = "Biz FOX ERP logo"
             layoutParams = LinearLayout.LayoutParams(42, 42).apply { rightMargin = 11 }
         }
         val brand = TextView(this).apply {
