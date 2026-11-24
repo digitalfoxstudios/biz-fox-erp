@@ -24,7 +24,7 @@ This repository is the dedicated Biz FOX ERP project and is separate from Secure
 
 ## Database foundation
 
-The dedicated Supabase project is provisioned in the Mumbai region. The initial remote migration is recorded as `20261124041909_initial_secure_office_schema`; a follow-up migration adds indexes for foreign-key columns. The public schema currently contains 13 tables with Row Level Security enabled and organization-scoped policies.
+The dedicated Supabase project is provisioned in the Mumbai region. The initial remote migration is recorded as `20261124041909_initial_secure_office_schema`; a follow-up migration adds indexes for foreign-key columns. The public schema currently contains 25 tables with Row Level Security enabled and organization-scoped policies.
 
 Core tables include profiles, organizations, organization_members, departments, employees, office_files, correspondence, tasks, meetings, assets, projects, announcements and audit_logs.
 
@@ -41,9 +41,9 @@ The web client uses the Supabase publishable key only. No service-role or secret
 - [x] Email/password sign-up, sign-in and password reset UI
 - [x] Organization workspace creation and membership bootstrap
 - [x] Dashboard counts connected to secured database tables
-- [ ] Full CRUD forms and approval workflows for each module
+- [x] Initial CRUD forms and record lists for HR, departments, e-Office files, correspondence, finance, tasks, meetings, assets, projects, circulars and service applications\n- [ ] Approval workflows and deeper module automation
 - [ ] Staff invitations and administration screens
-- [ ] Private document storage and file movement
+- [x] Private office-documents storage bucket and file movement register\n- [x] Audit event capture for operational record changes
 - [ ] Automated audit event capture and reporting
 - [ ] Android packaging and release workflow
 
