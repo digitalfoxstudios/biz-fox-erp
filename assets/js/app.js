@@ -212,7 +212,21 @@ async function openPage(id){
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-page]");if(!b)return;const id=b.dataset.page;if(id==="overview")renderOverview();else openPage(id);document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.page===id));document.getElementById("sidebar").classList.remove("open");});
 document.getElementById("menuToggle").addEventListener("click",()=>document.getElementById("sidebar").classList.toggle("open"));
-document.getElementById("sidebarAppUpdate").addEventListener("click",()=>{document.getElementById("sidebar").classList.remove("open");if(window.BizFoxAndroid?.checkForUpdates){window.BizFoxAndroid.checkForUpdates();return;}window.open("https://github.com/digitalfoxstudios/biz-fox-erp/releases/latest","_blank","noopener");});
+document.getElementById("sidebarAppUpdate").addEventListener("click",()=>{
+ const item=document.getElementById("sidebarAppUpdate");
+ document.getElementById("sidebar").classList.remove("open");
+ item.disabled=true;
+ const label=item.querySelector("span:nth-child(2)");
+ const original=label.textContent;
+ label.textContent="Checking for updates…";
+ if(window.BizFoxAndroid?.checkForUpdates){
+   window.BizFoxAndroid.checkForUpdates();
+   setTimeout(()=>{item.disabled=false;label.textContent=original;},1800);
+   return;
+ }
+ item.disabled=false;label.textContent=original;
+ window.open("https://github.com/digitalfoxstudios/biz-fox-erp/releases/latest","_blank","noopener");
+});
 document.getElementById("year").textContent=new Date().getFullYear();
 
 const {data:{session},error:sessionError}=await supabase.auth.getSession();
