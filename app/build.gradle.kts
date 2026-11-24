@@ -15,8 +15,27 @@ android {
         applicationId = "com.digitalfox.bizfoxerp"
         minSdk = 23
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.0.5"
+        versionCode = 7
+        versionName = "1.0.6"
+    }
+    buildFeatures { buildConfig = true }
+    flavorDimensions += "edition"
+    productFlavors {
+        create("manager") {
+            dimension = "edition"
+            resValue("string", "app_name", "Biz FOX ERP")
+            buildConfigField("String", "APP_URL", "\"https://digitalfoxstudios.github.io/biz-fox-erp/\"")
+            buildConfigField("String", "APP_NAME", "\"Biz FOX ERP\"")
+            buildConfigField("String", "RELEASE_ASSET", "\"biz-fox-erp-manager.apk\"")
+        }
+        create("staff") {
+            dimension = "edition"
+            applicationIdSuffix = ".staff"
+            resValue("string", "app_name", "Biz FOX Staff")
+            buildConfigField("String", "APP_URL", "\"https://digitalfoxstudios.github.io/biz-fox-erp/staff.html\"")
+            buildConfigField("String", "APP_NAME", "\"Biz FOX Staff\"")
+            buildConfigField("String", "RELEASE_ASSET", "\"biz-fox-staff.apk\"")
+        }
     }
     signingConfigs {
         create("release") {
