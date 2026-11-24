@@ -92,3 +92,7 @@ html,body{width:100%;max-width:100%;overflow-x:clip}
 .task-report-card textarea{width:100%;min-height:60px;border:1px solid #dce3ec;border-radius:9px;padding:10px;font:inherit;font-size:13px}
 .report-actions{display:flex;flex-wrap:wrap;gap:8px}
 @media(max-width:620px){.report-card-head{display:block}.task-report-card .task-state{margin-top:8px}.report-actions .secondary-button{flex:1}}
+
+/* Approved brand artwork — render the original repository image without redrawing it. */
+.brand-logo{width:48px;height:48px;display:block;object-fit:contain;flex:0 0 48px;border-radius:0}
+.login-brand .brand-logo{width:56px;height:56px;flex-basis:56px}
