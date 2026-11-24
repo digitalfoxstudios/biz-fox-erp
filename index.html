@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="Biz FOX ERP — centralized office operations and management">
+  <title>Biz FOX ERP</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./assets/css/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="./"><span class="brand-mark">FOX</span><span><strong>Biz FOX</strong><small>Enterprise Resource Planning</small></span></a>
+      <nav id="navigation" aria-label="Main navigation">
+        <button class="nav-item active" data-page="overview">▦ <span>Overview</span></button>
+        <p class="nav-label">OFFICE MANAGEMENT</p>
+        <button class="nav-item" data-page="administration">▣ <span>Administration & HR</span></button>
+        <button class="nav-item" data-page="documents">▤ <span>Files & e-Office</span></button>
+        <button class="nav-item" data-page="correspondence">✉ <span>Correspondence</span></button>
+        <button class="nav-item" data-page="finance">₹ <span>Accounts & Finance</span></button>
+        <button class="nav-item" data-page="departments">▥ <span>Departments</span></button>
+        <button class="nav-item" data-page="meetings">▦ <span>Meetings & Calendar</span></button>
+        <button class="nav-item" data-page="tasks">✓ <span>Tasks & Work</span></button>
+        <button class="nav-item" data-page="inventory">▧ <span>Inventory & Assets</span></button>
+        <button class="nav-item" data-page="projects">⌂ <span>Projects</span></button>
+        <button class="nav-item" data-page="communication">◉ <span>Communication</span></button>
+        <button class="nav-item" data-page="services">◎ <span>Public Services</span></button>
+        <p class="nav-label">CONTROL</p>
+        <button class="nav-item" data-page="reports">▥ <span>Reports & Audit</span></button>
+        <button class="nav-item" data-page="security">♙ <span>Users & Security</span></button>
+      </nav>
+      <div class="sidebar-foot">Biz FOX ERP <span>Foundation build</span></div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
+        <div><span class="eyebrow">OFFICE WORKSPACE</span><h1 id="pageTitle">Overview</h1></div>
+        <div class="top-actions"><span class="status-dot"></span><span class="status-text">Workspace ready</span><div class="avatar">A</div></div>
+      </header>
+      <section class="content" id="pageContent" aria-live="polite">
+        <div class="welcome"><div><span class="eyebrow">CENTRAL OFFICE DASHBOARD</span><h2>Welcome to Biz FOX ERP</h2><p>Your centralized workspace for office operations, records and services.</p></div><span class="welcome-icon">✦</span></div>
+        <div class="stats-grid">
+          <article class="stat-card"><span class="stat-icon blue">▤</span><p>Open files</p><strong>—</strong><small>Connect your workspace to load data</small></article>
+          <article class="stat-card"><span class="stat-icon green">✓</span><p>Pending tasks</p><strong>—</strong><small>Live task totals will appear here</small></article>
+          <article class="stat-card"><span class="stat-icon amber">₹</span><p>Financial summary</p><strong>—</strong><small>Secure finance overview</small></article>
+          <article class="stat-card"><span class="stat-icon violet">♙</span><p>Employees</p><strong>—</strong><small>Staff directory and attendance</small></article>
+        </div>
+        <div class="section-heading"><div><h3>Office modules</h3><p>Choose a module to open its workspace.</p></div></div>
+        <div class="module-grid" id="moduleGrid"></div>
+        <div class="notice"><strong>Setup status</strong><p>This is the application foundation. Authentication, database-backed records, permissions and each module will be implemented and tested in phases. No sample figures are presented as real office data.</p></div>
+      </section>
+      <footer>© <span id="year"></span> Biz FOX ERP <span>•</span> Secure office operations</footer>
+    </main>
+  </div>
+  <script src="./assets/js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(() => {}));
+  </script>
+</body>
+</html>
