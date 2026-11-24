@@ -58,9 +58,9 @@ function escapeHtml(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","
 function showMessage(message){let el=document.getElementById("appMessage");if(!el){el=document.createElement("div");el.id="appMessage";el.className="app-message";document.querySelector(".content").prepend(el);}el.textContent=message;el.hidden=false;}
 function addWorkspaceControls(){
   const actions=document.querySelector(".top-actions");
-  actions.innerHTML=`<button id="checkAppUpdate" class="secondary-button app-update-check" type="button">Check updates</button><select id="orgSelect" aria-label="Organization" class="org-select"><option value="">Select organization</option></select><span class="status-dot"></span><span class="status-text">Connected</span><button id="profileButton" class="profile-button" title="Account">${escapeHtml((currentUser.email||"U").slice(0,1).toUpperCase())}</button><button id="signOutButton" class="signout-button">Sign out</button>`;
+  actions.innerHTML=`<select id="orgSelect" aria-label="Organization" class="org-select"><option value="">Select organization</option></select><span class="status-dot"></span><span class="status-text">Connected</span><button id="profileButton" class="profile-button" title="Account">${escapeHtml((currentUser.email||"U").slice(0,1).toUpperCase())}</button><button id="signOutButton" class="signout-button">Sign out</button>`;
   document.getElementById("profileButton").title=currentUser.email||"Account";
-  document.getElementById("checkAppUpdate").addEventListener("click",checkForAppUpdates);
+
   document.getElementById("signOutButton").addEventListener("click",async()=>{await supabase.auth.signOut();location.href="./login.html";});
   const select=document.getElementById("orgSelect");
   organizations.forEach(o=>{const option=document.createElement("option");option.value=o.id;option.textContent=o.name;select.append(option);});
@@ -212,6 +212,7 @@ async function openPage(id){
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-page]");if(!b)return;const id=b.dataset.page;if(id==="overview")renderOverview();else openPage(id);document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.page===id));document.getElementById("sidebar").classList.remove("open");});
 document.getElementById("menuToggle").addEventListener("click",()=>document.getElementById("sidebar").classList.toggle("open"));
+document.getElementById("sidebarAppUpdate").addEventListener("click",()=>{document.getElementById("sidebar").classList.remove("open");if(window.BizFoxAndroid?.checkForUpdates){window.BizFoxAndroid.checkForUpdates();return;}window.open("https://github.com/digitalfoxstudios/biz-fox-erp/releases/latest","_blank","noopener");});
 document.getElementById("year").textContent=new Date().getFullYear();
 
 const {data:{session},error:sessionError}=await supabase.auth.getSession();
