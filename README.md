@@ -48,3 +48,15 @@ The web client uses the Supabase publishable key only. No service-role or secret
 - [ ] Android packaging and release workflow
 
 Routine module screens are being delivered in phases; unfinished screens are labelled as such.
+
+## One-time hosting and Auth configuration
+
+The repository includes a GitHub Actions Pages deployment workflow. Enable **Settings → Pages → Build and deployment → Source: GitHub Actions** once in this repository. The Pages site is not yet enabled, so a public app URL is not claimed yet.
+
+After Pages is enabled, set the Supabase Auth **Site URL** to:
+
+`https://digitalfoxstudios.github.io/biz-fox-erp/`
+
+Add that same URL (and `https://digitalfoxstudios.github.io/biz-fox-erp/**` if using a wildcard) to the Supabase Auth allowed redirect URLs so email confirmation and password recovery return to the app.
+
+The Supabase publishable key in `assets/js/supabase.js` is designed for browser use. Never add a secret or service-role key to this file.
