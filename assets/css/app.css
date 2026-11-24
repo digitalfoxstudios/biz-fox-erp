@@ -78,3 +78,17 @@ html,body{width:100%;max-width:100%;overflow-x:clip}
 .nav-update-icon{width:25px;height:25px;display:inline-grid;place-items:center;border-radius:8px;background:#ff9d37;color:#17253b;font-size:19px;font-weight:800}
 .nav-update-badge{margin-left:auto;padding:3px 6px;border-radius:5px;background:#ff9d37;color:#17253b;font-size:8px;font-weight:900;letter-spacing:.6px}
 .brand-mark{box-shadow:0 5px 16px #f1843240}
+
+
+/* Staff work assignment and report review */
+.task-work-list,.task-report-list{display:grid;gap:12px;margin:14px 0 28px}
+.task-work-card,.task-report-card{background:#fff;border:1px solid var(--line,#e5eaf1);border-radius:14px;padding:17px 19px;box-shadow:0 5px 18px #17253b08}
+.task-work-main h3{margin:10px 0 6px;font-size:17px}.task-work-main p,.task-report-card p{color:#647187;font-size:13px;line-height:1.55;white-space:pre-wrap}
+.task-work-main small,.report-card-head small{display:block;color:#78859a;font-size:12px;margin-top:8px}
+.task-priority,.task-state{display:inline-flex;padding:4px 8px;border-radius:99px;font-size:10px;font-weight:800;text-transform:capitalize;background:#edf2f8;color:#47556b;margin-right:5px}
+.priority-urgent,.priority-high{background:#fff0e6;color:#a44b1c}.state-completed,.state-approved{background:#e6f6ed;color:#23734a}.state-blocked,.state-revision_requested{background:#fff0e6;color:#a44b1c}
+.report-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.report-card-head strong{font-size:14px}
+.task-report-card label{display:grid;gap:6px;margin:13px 0 9px;font-size:12px;font-weight:700;color:#536178}
+.task-report-card textarea{width:100%;min-height:60px;border:1px solid #dce3ec;border-radius:9px;padding:10px;font:inherit;font-size:13px}
+.report-actions{display:flex;flex-wrap:wrap;gap:8px}
+@media(max-width:620px){.report-card-head{display:block}.task-report-card .task-state{margin-top:8px}.report-actions .secondary-button{flex:1}}
