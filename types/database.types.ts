@@ -55,6 +55,59 @@ export type Database = {
           },
         ]
       }
+      applications: {
+        Row: {
+          applicant_name: string
+          application_number: string
+          assigned_to: string | null
+          created_at: string
+          created_by: string
+          id: string
+          notes: string | null
+          organization_id: string
+          service_name: string
+          status: string
+          submitted_on: string
+          updated_at: string
+        }
+        Insert: {
+          applicant_name: string
+          application_number: string
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          service_name: string
+          status?: string
+          submitted_on?: string
+          updated_at?: string
+        }
+        Update: {
+          applicant_name?: string
+          application_number?: string
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          service_name?: string
+          status?: string
+          submitted_on?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assets: {
         Row: {
           acquired_on: string | null
@@ -108,6 +161,60 @@ export type Database = {
           },
         ]
       }
+      attendance_records: {
+        Row: {
+          attendance_date: string
+          check_in: string | null
+          check_out: string | null
+          created_at: string
+          employee_id: string
+          id: string
+          organization_id: string
+          recorded_by: string
+          remarks: string | null
+          status: string
+        }
+        Insert: {
+          attendance_date?: string
+          check_in?: string | null
+          check_out?: string | null
+          created_at?: string
+          employee_id: string
+          id?: string
+          organization_id: string
+          recorded_by?: string
+          remarks?: string | null
+          status?: string
+        }
+        Update: {
+          attendance_date?: string
+          check_in?: string | null
+          check_out?: string | null
+          created_at?: string
+          employee_id?: string
+          id?: string
+          organization_id?: string
+          recorded_by?: string
+          remarks?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -142,6 +249,106 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "audit_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bills: {
+        Row: {
+          amount: number
+          approved_by: string | null
+          attachment_path: string | null
+          bill_date: string
+          bill_number: string
+          created_at: string
+          created_by: string
+          id: string
+          organization_id: string
+          payee_name: string
+          purpose: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          approved_by?: string | null
+          attachment_path?: string | null
+          bill_date?: string
+          bill_number: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          organization_id: string
+          payee_name: string
+          purpose: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          approved_by?: string | null
+          attachment_path?: string | null
+          bill_date?: string
+          bill_number?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          organization_id?: string
+          payee_name?: string
+          purpose?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bills_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          allocated_amount: number
+          budget_head: string
+          created_at: string
+          created_by: string
+          fiscal_year: string
+          id: string
+          notes: string | null
+          organization_id: string
+          revised_amount: number
+        }
+        Insert: {
+          allocated_amount?: number
+          budget_head: string
+          created_at?: string
+          created_by?: string
+          fiscal_year: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          revised_amount?: number
+        }
+        Update: {
+          allocated_amount?: number
+          budget_head?: string
+          created_at?: string
+          created_by?: string
+          fiscal_year?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          revised_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -314,6 +521,259 @@ export type Database = {
           },
           {
             foreignKeyName: "employees_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      file_movements: {
+        Row: {
+          action: string
+          created_by: string
+          from_user_id: string | null
+          id: string
+          moved_at: string
+          movement_note: string | null
+          office_file_id: string
+          organization_id: string
+          to_user_id: string | null
+        }
+        Insert: {
+          action?: string
+          created_by?: string
+          from_user_id?: string | null
+          id?: string
+          moved_at?: string
+          movement_note?: string | null
+          office_file_id: string
+          organization_id: string
+          to_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_by?: string
+          from_user_id?: string | null
+          id?: string
+          moved_at?: string
+          movement_note?: string | null
+          office_file_id?: string
+          organization_id?: string
+          to_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_movements_office_file_id_fkey"
+            columns: ["office_file_id"]
+            isOneToOne: false
+            referencedRelation: "office_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "file_movements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_accounts: {
+        Row: {
+          account_code: string
+          account_name: string
+          account_type: string
+          created_at: string
+          id: string
+          is_active: boolean
+          organization_id: string
+        }
+        Insert: {
+          account_code: string
+          account_name: string
+          account_type: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id: string
+        }
+        Update: {
+          account_code?: string
+          account_name?: string
+          account_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_transactions: {
+        Row: {
+          account_id: string | null
+          amount: number
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          organization_id: string
+          reference_number: string | null
+          transaction_date: string
+          transaction_type: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          created_at?: string
+          created_by?: string
+          description: string
+          id?: string
+          organization_id: string
+          reference_number?: string | null
+          transaction_date?: string
+          transaction_type: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          organization_id?: string
+          reference_number?: string | null
+          transaction_date?: string
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grievances: {
+        Row: {
+          applicant_name: string
+          assigned_to: string | null
+          contact: string | null
+          created_at: string
+          description: string
+          id: string
+          organization_id: string
+          resolved_at: string | null
+          status: string
+          subject: string
+          tracking_number: string
+          updated_at: string
+        }
+        Insert: {
+          applicant_name: string
+          assigned_to?: string | null
+          contact?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          organization_id: string
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          tracking_number: string
+          updated_at?: string
+        }
+        Update: {
+          applicant_name?: string
+          assigned_to?: string | null
+          contact?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          organization_id?: string
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          tracking_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grievances_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_requests: {
+        Row: {
+          created_at: string
+          employee_id: string
+          end_date: string
+          id: string
+          leave_type: string
+          organization_id: string
+          reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          start_date: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          end_date: string
+          id?: string
+          leave_type: string
+          organization_id: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          start_date: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          end_date?: string
+          id?: string
+          leave_type?: string
+          organization_id?: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          start_date?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -572,6 +1032,104 @@ export type Database = {
           },
         ]
       }
+      stock_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_code: string
+          item_name: string
+          location: string | null
+          organization_id: string
+          quantity: number
+          reorder_level: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_code: string
+          item_name: string
+          location?: string | null
+          organization_id: string
+          quantity?: number
+          reorder_level?: number
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_code?: string
+          item_name?: string
+          location?: string | null
+          organization_id?: string
+          quantity?: number
+          reorder_level?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_movements: {
+        Row: {
+          created_by: string
+          id: string
+          moved_at: string
+          movement_type: string
+          notes: string | null
+          organization_id: string
+          quantity: number
+          reference_number: string | null
+          stock_item_id: string
+        }
+        Insert: {
+          created_by?: string
+          id?: string
+          moved_at?: string
+          movement_type: string
+          notes?: string | null
+          organization_id: string
+          quantity: number
+          reference_number?: string | null
+          stock_item_id: string
+        }
+        Update: {
+          created_by?: string
+          id?: string
+          moved_at?: string
+          movement_type?: string
+          notes?: string | null
+          organization_id?: string
+          quantity?: number
+          reference_number?: string | null
+          stock_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_stock_item_id_fkey"
+            columns: ["stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assigned_to: string | null
@@ -615,6 +1173,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vouchers: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          id: string
+          narration: string
+          organization_id: string
+          status: string
+          voucher_date: string
+          voucher_number: string
+          voucher_type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          narration: string
+          organization_id: string
+          status?: string
+          voucher_date?: string
+          voucher_number: string
+          voucher_type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          narration?: string
+          organization_id?: string
+          status?: string
+          voucher_date?: string
+          voucher_number?: string
+          voucher_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vouchers_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
