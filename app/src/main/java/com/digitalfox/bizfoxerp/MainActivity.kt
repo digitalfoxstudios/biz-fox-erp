@@ -31,7 +31,7 @@ class MainActivity : Activity() {
     private lateinit var web: WebView
     private lateinit var progress: ProgressBar
     private var fileCallback: ValueCallback<Array<Uri>>? = null
-    private val appUrl = "https://digitalfoxstudios.github.io/biz-fox-erp/"
+    private val appUrl = BuildConfig.APP_URL
     private val releasesApi = "https://api.github.com/repos/digitalfoxstudios/biz-fox-erp/releases/latest"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -125,7 +125,7 @@ class MainActivity : Activity() {
                         val assets = json.optJSONArray("assets")
                         if (assets != null) for (i in 0 until assets.length()) {
                             val asset = assets.getJSONObject(i)
-                            if (asset.optString("name").endsWith(".apk", true)) { apkUrl = asset.optString("browser_download_url"); break }
+                            if (asset.optString("name") == BuildConfig.RELEASE_ASSET) { apkUrl = asset.optString("browser_download_url"); break }
                         }
                         connection.disconnect()
                     } catch (_: Exception) { }
