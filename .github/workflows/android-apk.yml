@@ -33,6 +33,7 @@ jobs:
             convert "$SOURCE" -resize "${size}x${size}" "app/src/main/res/mipmap-${density}/ic_launcher.png"
             convert "$SOURCE" -resize "${size}x${size}" "app/src/main/res/mipmap-${density}/ic_launcher_round.png"
           done
+          cp "$SOURCE" app/src/main/res/drawable-nodpi/ic_launcher_legacy_image.png
           convert "$SOURCE" -resize 288x288 -gravity center -background none -extent 432x432 app/src/main/res/drawable-nodpi/ic_launcher_foreground_image.png
       - name: Set up Java
         uses: actions/setup-java@v4
