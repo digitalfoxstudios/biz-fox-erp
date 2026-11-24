@@ -1,0 +1,14 @@
+{
+  "id": "./staff.html",
+  "name": "Biz FOX Staff Work App",
+  "short_name": "Biz FOX Staff",
+  "description": "Staff assignments, progress updates and work reports",
+  "start_url": "./staff.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f6fb",
+  "theme_color": "#101827",
+  "icons": [
+    {"src":"./assets/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}
+  ]
+}
