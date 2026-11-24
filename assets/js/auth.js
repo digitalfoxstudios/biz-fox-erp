@@ -7,7 +7,7 @@ function setMode(next){mode=next;const signup=mode==="signup";title.textContent=
 toggle.addEventListener("click",()=>setMode(mode==="signin"?"signup":"signin"));
 forgot.addEventListener("click",async()=>{const email=form.elements.email.value.trim();if(!email){setMessage("Enter your email address first.","error");return;}const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname.replace("login.html","")});setMessage(error?error.message:"If this email is registered, a password reset link will be sent.","success");});
 form.addEventListener("submit",async e=>{e.preventDefault();submit.disabled=true;submit.textContent="Please wait…";setMessage("");const email=form.elements.email.value.trim();const password=form.elements.password.value;let result;
-if(mode==="signup"){result=await supabase.auth.signUp({email,password,options:{data:{full_name:form.elements.full_name.value.trim()}}});}
+if(mode==="signup"){result=await supabase.auth.signUp({email,password,options:{data:{full_name:form.elements.full_name.value.trim()},emailRedirectTo:location.origin+location.pathname.replace("login.html","")}});}
 else{result=await supabase.auth.signInWithPassword({email,password});}
 submit.disabled=false;submit.textContent=mode==="signup"?"Create account":"Sign in";
 if(result.error){setMessage(result.error.message,"error");return;}
