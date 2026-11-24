@@ -203,7 +203,69 @@ async function openDataConfig(config){
  });
  await renderDataTable(config);
 }
+
+async function openTaskWorkspace(){
+ title.textContent="Tasks & Work";
+ const {data:member}=await supabase.from("organization_members").select("role").eq("organization_id",currentOrg.id).eq("user_id",currentUser.id).eq("status","active").maybeSingle();
+ const manager=member&&["owner","admin","manager"].includes(member.role);
+ if(!manager){
+  content.innerHTML='<div class="empty-page"><span class="module-icon">✓</span><h2>Staff work portal</h2><p>Assignments and work reports are available in the dedicated staff app.</p><a class="primary-button" href="./staff.html">Open Staff App</a></div>';
+  return;
+ }
+ content.innerHTML=\`<div class="data-page">
+  <div class="data-page-head"><div><span class="tag">Manager workspace</span><h2>Assign and monitor staff work</h2><p>Assign work to linked staff accounts, track progress and review submitted reports.</p></div><a class="secondary-button" href="./staff.html" target="_blank" rel="noopener">Staff app preview</a></div>
+  <form id="assignmentForm" class="record-form"><h3>New work assignment</h3><div class="form-grid">
+   <label>Work / assignment title<input name="title" required maxlength="180" placeholder="Enter work title"></label>
+   <label>Assign to staff member<select name="assigned_to" required><option value="">Loading staff…</option></select></label>
+   <label>Priority<select name="priority"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="urgent">Urgent</option></select></label>
+   <label>Deadline<input name="due_at" type="datetime-local"></label>
+   <label class="wide-field">Instructions / work details<textarea name="description" rows="3" placeholder="Describe the expected work and deliverables"></textarea></label>
+  </div><button class="primary-button" type="submit">Assign work</button><p id="assignmentMessage" class="form-message" role="status"></p></form>
+  <div class="records-heading"><h3>Assigned work</h3><span id="taskCount">Loading…</span></div><div id="managerTaskList" class="task-work-list">Loading assignments…</div>
+  <div class="records-heading"><h3>Staff work reports</h3><span>Review and respond</span></div><div id="managerReportList" class="task-report-list">Loading reports…</div>
+ </div>\`;
+ const staffSelect=document.querySelector('#assignmentForm [name="assigned_to"]');
+ const {data:staff,error:staffError}=await supabase.from("employees").select("user_id,full_name,employee_code,designation").eq("organization_id",currentOrg.id).eq("employment_status","active").not("user_id","is",null).order("full_name");
+ if(staffError){staffSelect.innerHTML='<option value="">Could not load staff</option>';document.getElementById("assignmentMessage").textContent=staffError.message;}
+ else if(!staff?.length){staffSelect.innerHTML='<option value="">No linked staff accounts yet</option>';document.getElementById("assignmentMessage").textContent="Add an employee with their work email in Administration & HR. Ask them to create an account in the Staff App using the same email; the account will link automatically.";}
+ else{staffSelect.innerHTML='<option value="">Choose staff member</option>'+staff.map(x=>'<option value="'+escapeHtml(x.user_id)+'">'+escapeHtml([x.employee_code,x.full_name,x.designation].filter(Boolean).join(" · "))+'</option>').join("");}
+ document.getElementById("assignmentForm").addEventListener("submit",async e=>{
+  e.preventDefault();const form=e.currentTarget;const button=form.querySelector('button[type="submit"]');const fd=new FormData(form);
+  if(!fd.get("assigned_to")){document.getElementById("assignmentMessage").textContent="Please select a linked staff member.";return;}
+  button.disabled=true;button.textContent="Assigning…";
+  const payload={organization_id:currentOrg.id,title:String(fd.get("title")).trim(),description:String(fd.get("description")||"").trim()||null,priority:String(fd.get("priority")||"normal"),assigned_to:String(fd.get("assigned_to")),created_by:currentUser.id,due_at:fd.get("due_at")?new Date(String(fd.get("due_at"))).toISOString():null};
+  const {error}=await supabase.from("tasks").insert(payload);
+  document.getElementById("assignmentMessage").textContent=error?"Assignment failed: "+error.message:"Work assigned successfully.";
+  document.getElementById("assignmentMessage").className="form-message "+(error?"error":"success");
+  button.disabled=false;button.textContent="Assign work";
+  if(!error){form.reset();await refreshManagerWork(staff);}
+ });
+ await refreshManagerWork(staff||[]);
+}
+async function refreshManagerWork(staff){
+ const [taskResult,reportResult]=await Promise.all([
+  supabase.from("tasks").select("*").eq("organization_id",currentOrg.id).order("created_at",{ascending:false}).limit(100),
+  supabase.from("task_reports").select("*").eq("organization_id",currentOrg.id).order("created_at",{ascending:false}).limit(100)
+ ]);
+ const taskBox=document.getElementById("managerTaskList"),reportBox=document.getElementById("managerReportList");if(!taskBox||!reportBox)return;
+ if(taskResult.error){taskBox.innerHTML='<p class="form-error">'+escapeHtml(taskResult.error.message)+'</p>';return;}
+ const staffMap=Object.fromEntries((staff||[]).map(x=>[x.user_id,x.full_name]));
+ const tasks=taskResult.data||[];document.getElementById("taskCount").textContent=tasks.length+" assignments";
+ taskBox.innerHTML=tasks.length?tasks.map(t=>\`<article class="task-work-card"><div class="task-work-main"><div><span class="task-priority priority-\${escapeHtml(t.priority)}">\${escapeHtml(t.priority)}</span><span class="task-state state-\${escapeHtml(t.status)}">\${escapeHtml(t.status.replaceAll("_"," "))}</span></div><h3>\${escapeHtml(t.title)}</h3><p>\${escapeHtml(t.description||"No extra instructions")}</p><small>Assigned to: \${escapeHtml(staffMap[t.assigned_to]||"Staff account")} · Due: \${t.due_at?escapeHtml(new Date(t.due_at).toLocaleString()):"No deadline"}</small></div></article>\`).join(""):'<div class="empty-records">No assignments yet. Create the first assignment above.</div>';
+ if(reportResult.error){reportBox.innerHTML='<p class="form-error">'+escapeHtml(reportResult.error.message)+'</p>';return;}
+ const taskMap=Object.fromEntries(tasks.map(t=>[t.id,t.title]));
+ const reports=reportResult.data||[];
+ reportBox.innerHTML=reports.length?reports.map(r=>\`<article class="task-report-card"><div class="report-card-head"><div><strong>\${escapeHtml(taskMap[r.task_id]||"Work assignment")}</strong><small>\${escapeHtml(staffMap[r.submitted_by]||"Staff member")} · \${escapeHtml(r.report_date)}</small></div><span class="task-state state-\${escapeHtml(r.report_status)}">\${escapeHtml(r.report_status.replaceAll("_"," "))}</span></div><p><b>Work completed:</b> \${escapeHtml(r.work_done)}</p>\${r.challenges?'<p><b>Challenges:</b> '+escapeHtml(r.challenges)+'</p>':''}\${r.next_steps?'<p><b>Next steps:</b> '+escapeHtml(r.next_steps)+'</p>':''}<small>Hours spent: \${r.hours_spent??"—"} · Work status: \${escapeHtml(r.task_status.replaceAll("_"," "))}</small><label>Manager feedback<textarea id="feedback-\${r.id}" rows="2" placeholder="Add feedback or revision instructions">\${escapeHtml(r.manager_feedback||"")}</textarea></label><div class="report-actions"><button class="secondary-button" data-review-report="\${r.id}" data-status="approved">Approve report</button><button class="secondary-button" data-review-report="\${r.id}" data-status="revision_requested">Request changes</button></div></article>\`).join(""):'<div class="empty-records">No work reports submitted yet.</div>';
+ reportBox.querySelectorAll("[data-review-report]").forEach(button=>button.addEventListener("click",async()=>{
+  const id=button.dataset.reviewReport,status=button.dataset.status,feedback=document.getElementById("feedback-"+id).value.trim();
+  button.disabled=true;const {error}=await supabase.from("task_reports").update({report_status:status,manager_feedback:feedback||null}).eq("id",id).eq("organization_id",currentOrg.id);
+  if(error){showMessage("Could not update report: "+error.message);button.disabled=false;return;}
+  await refreshManagerWork(staff);
+ }));
+}
+
 async function openPage(id){
+ if(id==="tasks"){await openTaskWorkspace();return;}
  const m=modules.find(x=>x.id===id);if(!m){renderOverview();return;}
  const config=dataModules[id];
  if(config){await openDataConfig(config);return;}
