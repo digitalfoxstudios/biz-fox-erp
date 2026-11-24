@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'app/**'
+      - 'assets/**'
       - '*.gradle.kts'
       - 'gradle.properties'
       - '.github/workflows/android-apk.yml'
@@ -20,6 +21,19 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+      - name: Generate launcher icons from the exact approved logo
+        run: |
+          set -euo pipefail
+          SOURCE=assets/biz-fox-erp-logo.png
+          test -s "$SOURCE" || (echo "::error::Missing $SOURCE" && exit 1)
+          identify "$SOURCE"
+          mkdir -p app/src/main/res/mipmap-mdpi app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi app/src/main/res/drawable-nodpi
+          for spec in "mdpi:48" "hdpi:72" "xhdpi:96" "xxhdpi:144" "xxxhdpi:192"; do
+            density="${spec%%:*}"; size="${spec##*:}"
+            convert "$SOURCE" -resize "${size}x${size}" "app/src/main/res/mipmap-${density}/ic_launcher.png"
+            convert "$SOURCE" -resize "${size}x${size}" "app/src/main/res/mipmap-${density}/ic_launcher_round.png"
+          done
+          convert "$SOURCE" -resize 288x288 -gravity center -background none -extent 432x432 app/src/main/res/drawable-nodpi/ic_launcher_foreground_image.png
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
