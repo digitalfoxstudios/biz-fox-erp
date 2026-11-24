@@ -69,3 +69,8 @@ $("staffNoAccessSignOut").addEventListener("click",async()=>{await supabase.auth
 supabase.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_OUT"){currentUser=null;portal.hidden=true;noAccess.hidden=true;authPanel.hidden=false;}});
 const {data:{session}}=await supabase.auth.getSession();
 if(session)await boot(session.user);
+
+document.getElementById("staffAppUpdate").addEventListener("click",()=>{
+ if(window.BizFoxAndroid?.checkForUpdates){window.BizFoxAndroid.checkForUpdates();return;}
+ window.open("https://github.com/digitalfoxstudios/biz-fox-erp/releases/latest","_blank","noopener");
+});
