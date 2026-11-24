@@ -83,3 +83,13 @@ Read-only inspection of the connected production project confirmed:
 - Performance advisor also reports multiple permissive UPDATE policies on `office_files` and `tasks`. These combine creator/manager and assigned-staff paths; review policy efficiency and field-level update restrictions rather than blindly removing a valid access path.
 
 No production database schema or business records were changed during this audit.
+
+## Remediations applied — 2026-11-24
+
+- Removed the tracked binary signing keystore from the current public branch. The GitHub Actions workflow continues to use the existing protected repository secrets. The old Git object remains in public history until a separate history rewrite is performed.
+- Added the deployed `admin-create-staff` Edge Function source to the repository without embedding any service-role key.
+- Updated the manager portal, manager sign-in, staff portal, and native Android header to display the exact approved image at `assets/biz-fox-erp-logo.png`. The source artwork itself is used directly; Android density/adaptive resources are generated for platform compatibility.
+- Added the two missing `task_reports` foreign-key indexes using an additive migration and verified both indexes exist in the live database.
+- Consolidated the duplicate permissive UPDATE policies for `office_files` and `tasks` into equivalent combined policies. Verified the final policies in PostgreSQL. The Supabase performance advisor no longer reports the duplicate-policy warning.
+- The only current security advisor warning found in this pass is that leaked-password protection is disabled in Supabase Auth. It has not been changed from this session.
+- The latest Android build with the native logo is still running; APK links should only be refreshed after its signature-verification step succeeds. GitHub Pages syntax validation and artifact upload passed, but the deploy step reported that it could not find the uploaded artifact. A failed deployment retry has been requested.
