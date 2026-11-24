@@ -112,7 +112,23 @@ async function renderDataTable(config){
  if(!data?.length){table.innerHTML='<div class="empty-records">No records yet. Use the form above to add the first record.</div>';return;}
  const signedFiles={};
  if(config.table==="office_files"){await Promise.all(data.filter(row=>row.storage_path).map(async row=>{const {data:link}=await supabase.storage.from("office-documents").createSignedUrl(row.storage_path,3600);if(link?.signedUrl)signedFiles[row.id]=link.signedUrl;}));}
- table.innerHTML=`<div class="table-scroll"><table><thead><tr>${config.columns.map(c=>`<th>${escapeHtml(c.replaceAll("_"," "))}</th>`).join("")}</tr></thead><tbody>${data.map(row=>`<tr>${config.columns.map(c=>`<td>${c==="storage_path"&&signedFiles[row.id]?`<a href="${escapeHtml(signedFiles[row.id])}" target="_blank" rel="noopener">Download</a>`:formatCell(row[c])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+ const canManage=!config.readOnly;
+ table.innerHTML=`<div class="table-scroll"><table><thead><tr>${config.columns.map(c=>`<th>${escapeHtml(c.replaceAll("_"," "))}</th>`).join("")}${canManage?"<th>Actions</th>":""}</tr></thead><tbody>${data.map(row=>`<tr>${config.columns.map(c=>`<td>${c==="storage_path"&&signedFiles[row.id]?`<a href="${escapeHtml(signedFiles[row.id])}" target="_blank" rel="noopener">Download</a>`:formatCell(row[c])}</td>`).join("")}${canManage?`<td><button type="button" class="secondary-button" data-edit-record="${row.id}">Edit</button> <button type="button" class="secondary-button" data-delete-record="${row.id}">Delete</button></td>`:""}</tr>`).join("")}</tbody></table></div>`;
+ if(canManage){
+  table.querySelectorAll("[data-edit-record]").forEach(button=>button.addEventListener("click",()=>{
+   const row=data.find(item=>item.id===button.dataset.editRecord);const form=document.getElementById("recordForm");if(!row||!form)return;
+   for(const field of config.fields){const input=form.elements[field[0]];if(!input||field[2]==="file")continue;input.value=row[field[0]]??"";}
+   form.dataset.editId=row.id;form.querySelector('button[type="submit"]').textContent="Update record";
+   document.getElementById("recordMessage").textContent="Editing selected record. Save to apply changes.";
+   form.scrollIntoView({behavior:"smooth",block:"start"});
+  }));
+  table.querySelectorAll("[data-delete-record]").forEach(button=>button.addEventListener("click",async()=>{
+   const row=data.find(item=>item.id===button.dataset.deleteRecord);if(!row||!confirm("Delete this record permanently? This cannot be undone."))return;
+   button.disabled=true;const {error}=await supabase.from(config.table).delete().eq("id",row.id).eq("organization_id",currentOrg.id);
+   if(error){showMessage("Delete failed: "+error.message);button.disabled=false;return;}
+   await renderDataTable(config);
+  }));
+ }
 }
 async function openDataConfig(config){
  title.textContent=config.title;
@@ -140,7 +156,7 @@ async function openDataConfig(config){
   const payload={organization_id:currentOrg.id};
   for(const f of config.fields){if(f[2]==="file")continue;const el=form.elements[f[0]];if(!el||el.value==="")continue;let value=el.value;if(f[2]==="number")value=Number(value);if(f[2]==="datetime-local")value=new Date(value).toISOString();payload[f[0]]=value;}
   const attachment=form.elements.attachment?.files?.[0];
-  const {data:saved,error}=await supabase.from(config.table).insert(payload).select("id").single();
+  const editId=form.dataset.editId;const saveQuery=editId?supabase.from(config.table).update(payload).eq("id",editId).eq("organization_id",currentOrg.id):supabase.from(config.table).insert(payload);const {data:saved,error}=await saveQuery.select("id").single();
   let finalError=error;
   if(!finalError&&attachment&&config.table==="office_files"){
     const safeName=attachment.name.replace(/[^a-zA-Z0-9._-]+/g,"_");
@@ -150,7 +166,7 @@ async function openDataConfig(config){
     else {const {error:updateError}=await supabase.from("office_files").update({storage_path:path}).eq("id",saved.id);if(updateError)finalError=updateError;}
   }
   const msg=document.getElementById("recordMessage");msg.textContent=finalError?("Record saved, but an operation failed: "+finalError.message):"Record saved successfully.";msg.className="form-message "+(finalError?"error":"success");
-  button.disabled=false;button.textContent="Save record";if(!error){form.reset();await renderDataTable(config);}
+  button.disabled=false;button.textContent="Save record";if(!finalError){form.reset();delete form.dataset.editId;button.textContent="Save record";await renderDataTable(config);}
  });
  await renderDataTable(config);
 }
