@@ -60,16 +60,16 @@ class MainActivity : Activity() {
             CookieManager.getInstance().setAcceptCookie(true)
             webViewClient = object : WebViewClient() {
                 override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
-                    progress.visibility = View.VISIBLE
+                    this@MainActivity.progress.visibility = View.VISIBLE
                 }
-                override fun onPageFinished(view: WebView?, url: String?) { progress.visibility = View.GONE }
+                override fun onPageFinished(view: WebView?, url: String?) { this@MainActivity.progress.visibility = View.GONE }
                 override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
                     if (request?.isForMainFrame == true) view?.loadUrl("file:///android_asset/offline.html")
                 }
             }
             webChromeClient = object : WebChromeClient() {
                 override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                    progress.progress = newProgress
+                    this@MainActivity.progress.progress = newProgress
                     progress.visibility = if (newProgress >= 100) View.GONE else View.VISIBLE
                 }
                 override fun onShowFileChooser(view: WebView?, callback: ValueCallback<Array<Uri>>?, params: FileChooserParams?): Boolean {
