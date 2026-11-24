@@ -2,20 +2,14 @@ import { supabase } from "./supabase.js";
 const $=id=>document.getElementById(id);
 const authPanel=$("staffAuth"),portal=$("staffPortal"),noAccess=$("staffNoAccess");
 let currentUser=null,currentOrg=null,staffOrganizations=[];
-let authMode="signin";
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const showAuthMessage=(message,kind="error")=>{const el=$("staffAuthMessage");el.textContent=message;el.style.color=kind==="success"?"#21734a":"#b34a38";};
-function setAuthMode(mode){authMode=mode;$("staffAuthTitle").textContent=mode==="signup"?"Create staff account":"Staff sign in";$("staffAuthSubmit").textContent=mode==="signup"?"Create account":"Sign in";$("staffAuthToggle").textContent=mode==="signup"?"Already have an account? Sign in":"New staff member? Create account";}
-$("staffAuthToggle").addEventListener("click",()=>setAuthMode(authMode==="signin"?"signup":"signin"));
 $("staffAuthForm").addEventListener("submit",async e=>{
- e.preventDefault();const form=e.currentTarget,fd=new FormData(form),button=$("staffAuthSubmit");button.disabled=true;button.textContent=authMode==="signup"?"Creating account…":"Signing in…";
+ e.preventDefault();const form=e.currentTarget,fd=new FormData(form),button=$("staffAuthSubmit");button.disabled=true;button.textContent="Signing in…";
  const email=String(fd.get("email")).trim().toLowerCase(),password=String(fd.get("password"));
- let result;
- if(authMode==="signup")result=await supabase.auth.signUp({email,password,options:{emailRedirectTo:"https://digitalfoxstudios.github.io/biz-fox-erp/"}});
- else result=await supabase.auth.signInWithPassword({email,password});
- button.disabled=false;button.textContent=authMode==="signup"?"Create account":"Sign in";
+ const result=await supabase.auth.signInWithPassword({email,password});
+ button.disabled=false;button.textContent="Sign in";
  if(result.error){showAuthMessage(result.error.message);return;}
- if(authMode==="signup"&&!result.data.session){showAuthMessage("Account created. Check your email to confirm it, then return here to sign in.","success");return;}
  if(result.data.session)await boot(result.data.session.user);
 });
 async function boot(user){
