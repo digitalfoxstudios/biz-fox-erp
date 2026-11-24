@@ -20,3 +20,6 @@
 
 .staff-header-actions{display:flex;align-items:center;gap:14px}.staff-header-actions .staff-outline-button{background:#1d2d45;color:#fff;border-color:#51617a;padding:8px 11px;font-size:12px}.staff-header-actions .staff-outline-button:hover{background:#30435f}
 @media(max-width:520px){.staff-header-actions{gap:8px}.staff-header-actions .staff-outline-button{font-size:11px;padding:7px 8px}.staff-main-link{font-size:12px}}
+
+/* Approved brand artwork — original logo image, no recreated mark. */
+.staff-logo{width:48px;height:48px;display:block;object-fit:contain;flex:0 0 48px;background:transparent;border-radius:0;color:inherit}
