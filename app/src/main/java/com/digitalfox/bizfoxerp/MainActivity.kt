@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.webkit.JavascriptInterface
 import android.webkit.CookieManager
 import android.webkit.DownloadListener
 import android.webkit.ValueCallback
@@ -40,15 +41,21 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
             setPadding(16, 10, 12, 10); setBackgroundColor(Color.rgb(25, 45, 72))
         }
+        val brandMark = TextView(this).apply {
+            text = "FOX"; textSize = 12f; setTypeface(null, Typeface.BOLD)
+            setTextColor(Color.rgb(25, 37, 57)); gravity = Gravity.CENTER
+            setBackgroundColor(Color.rgb(255, 157, 55))
+            layoutParams = LinearLayout.LayoutParams(42, 42).apply { rightMargin = 11 }
+        }
         val brand = TextView(this).apply {
-            text = "Biz FOX ERP"; textSize = 18f; setTypeface(null, Typeface.BOLD)
+            text = "Biz FOX ERP\\nOFFICE WORKSPACE"; textSize = 16f; setTypeface(null, Typeface.BOLD)
             setTextColor(Color.WHITE); layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
         }
         val update = Button(this).apply {
             text = "Check updates"; textSize = 12f
             setOnClickListener { checkForUpdates() }
         }
-        bar.addView(brand); bar.addView(update)
+        bar.addView(brandMark); bar.addView(brand); bar.addView(update)
         progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
             max = 100; visibility = View.GONE
         }
@@ -57,6 +64,7 @@ class MainActivity : Activity() {
             settings.domStorageEnabled = true
             settings.allowFileAccess = false
             settings.allowContentAccess = true
+            addJavascriptInterface(AndroidUpdateBridge(), "BizFoxAndroid")
             CookieManager.getInstance().setAcceptCookie(true)
             webViewClient = object : WebViewClient() {
                 override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
@@ -100,6 +108,10 @@ class MainActivity : Activity() {
         root.addView(web, LinearLayout.LayoutParams(-1, 0, 1f))
         setContentView(root)
         if (savedInstanceState == null) web.loadUrl(appUrl) else web.restoreState(savedInstanceState)
+    }
+
+    private inner class AndroidUpdateBridge {
+        @JavascriptInterface fun checkForUpdates() { runOnUiThread { checkForUpdates() } }
     }
 
     private fun checkForUpdates() {
