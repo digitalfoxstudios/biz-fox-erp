@@ -21,6 +21,10 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+      - name: Install image tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes imagemagick
       - name: Generate launcher icons from the exact approved logo
         run: |
           set -euo pipefail
