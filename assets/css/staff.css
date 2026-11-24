@@ -17,3 +17,6 @@
 .staff-footer{text-align:center;padding:18px;color:#8490a2;font-size:12px}
 [hidden]{display:none!important}
 @media(max-width:720px){.staff-header{height:66px;padding:0 16px}.staff-shell{padding:24px 15px 45px}.staff-auth{grid-template-columns:1fr;gap:20px;min-height:auto}.staff-intro h1{font-size:34px}.staff-intro p{font-size:14px}.staff-auth-card{padding:22px}.staff-welcome{padding:20px;align-items:flex-start}.staff-welcome h1{font-size:25px}.staff-summary{gap:8px}.staff-stat{padding:13px}.staff-stat strong{font-size:23px}.staff-section-head{align-items:flex-start}.staff-report-grid{grid-template-columns:1fr}.staff-report-form .wide{grid-column:auto}.staff-task-card,.staff-report-card{padding:17px}.staff-task-top{display:block}.staff-submit{width:100%}}
+
+.staff-header-actions{display:flex;align-items:center;gap:14px}.staff-header-actions .staff-outline-button{background:#1d2d45;color:#fff;border-color:#51617a;padding:8px 11px;font-size:12px}.staff-header-actions .staff-outline-button:hover{background:#30435f}
+@media(max-width:520px){.staff-header-actions{gap:8px}.staff-header-actions .staff-outline-button{font-size:11px;padding:7px 8px}.staff-main-link{font-size:12px}}
