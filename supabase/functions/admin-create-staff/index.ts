@@ -1,0 +1,31 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
+const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:{...cors,"Content-Type":"application/json"}});
+Deno.serve(async(req:Request)=>{
+ if(req.method==="OPTIONS")return new Response("ok",{headers:cors});
+ if(req.method!=="POST")return json({error:"Method not allowed"},405);
+ const url=Deno.env.get("SUPABASE_URL")!,anon=Deno.env.get("SUPABASE_ANON_KEY")!,service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+ const caller=createClient(url,anon,{global:{headers:{Authorization:req.headers.get("Authorization")||""}}});
+ const {data:{user},error:authError}=await caller.auth.getUser();
+ if(authError||!user)return json({error:"Please sign in as an administrator."},401);
+ let input:{organization_id?:string;employee_id?:string};
+ try{input=await req.json()}catch{return json({error:"Invalid request."},400)}
+ if(!input.organization_id||!input.employee_id)return json({error:"Employee is required."},400);
+ const admin=createClient(url,service);
+ const {data:member}=await admin.from("organization_members").select("role,status").eq("organization_id",input.organization_id).eq("user_id",user.id).eq("status","active").maybeSingle();
+ if(!member||!["owner","admin","manager"].includes(member.role))return json({error:"Only company administrators can create staff logins."},403);
+ const {data:employee,error:employeeError}=await admin.from("employees").select("id,organization_id,full_name,email,user_id,employment_status").eq("id",input.employee_id).eq("organization_id",input.organization_id).single();
+ if(employeeError||!employee)return json({error:"Employee record not found."},404);
+ if(employee.employment_status!=="active")return json({error:"Only active employees can receive a login."},400);
+ if(!employee.email)return json({error:"Add an email address to the employee record first."},400);
+ if(employee.user_id)return json({error:"This employee already has a linked login."},409);
+ const {data:invite,error:inviteError}=await admin.auth.admin.inviteUserByEmail(employee.email,{redirectTo:"https://digitalfoxstudios.github.io/biz-fox-erp/staff.html",data:{full_name:employee.full_name,account_type:"staff"}});
+ if(inviteError||!invite.user)return json({error:inviteError?.message||"Invitation could not be sent."},400);
+ const uid=invite.user.id;
+ const {error:linkError}=await admin.from("employees").update({user_id:uid}).eq("id",employee.id).eq("organization_id",input.organization_id);
+ if(linkError)return json({error:"Invitation sent, but employee linking needs administrator attention: "+linkError.message},500);
+ const {error:membershipError}=await admin.from("organization_members").upsert({organization_id:input.organization_id,user_id:uid,role:"staff",status:"active"},{onConflict:"organization_id,user_id"});
+ if(membershipError)return json({error:"Invitation sent, but staff permissions could not be linked: "+membershipError.message},500);
+ return json({success:true,email:employee.email,message:"Staff invitation sent. The employee must use the email invitation to set their password."});
+});
