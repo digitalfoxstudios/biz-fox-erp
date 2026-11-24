@@ -69,3 +69,17 @@ Deployment model: one company workspace; web portal plus separate Manager and St
 - Never modify the separate SecureV3 project.
 - Never regenerate the Android signing key casually; it is required for in-place app upgrades.
 - Do not claim a workflow is complete until its end-to-end manager/staff/unauthorized tests pass.
+
+## Live Supabase verification — 2026-11-24
+
+Read-only inspection of the connected production project confirmed:
+
+- Project status: `ACTIVE_HEALTHY`; PostgreSQL 17.12; Mumbai region.
+- 26 public tables exist and all 26 have Row Level Security enabled.
+- Existing company workspace and user foundation is present: 1 organization, 1 membership and 2 profiles. Most operational module tables currently contain no records; preserve the existing records and IDs.
+- The deployed `admin-create-staff` Edge Function is active at version 3 with JWT verification enabled. Its exact deployed `index.ts` source has now been saved to `supabase/functions/admin-create-staff/index.ts` so future changes can be reviewed and reproduced.
+- Security advisor: leaked-password protection is disabled. Enable it in Supabase Auth settings after reviewing the current account/password policy.
+- Performance advisor: two foreign keys on `task_reports` lack covering indexes (`submitted_by` and `task_id`). Add these in a reviewed additive migration.
+- Performance advisor also reports multiple permissive UPDATE policies on `office_files` and `tasks`. These combine creator/manager and assigned-staff paths; review policy efficiency and field-level update restrictions rather than blindly removing a valid access path.
+
+No production database schema or business records were changed during this audit.
