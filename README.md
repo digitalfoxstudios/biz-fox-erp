@@ -1,6 +1,6 @@
 # Biz FOX ERP
 
-A centralized office automation platform for web and Android.
+A single-company office automation platform for web and Android. It is configured for one company workspace, not multi-tenant customer accounts.
 
 ## Main office portal
 
@@ -28,14 +28,15 @@ Staff portal: https://digitalfoxstudios.github.io/biz-fox-erp/staff.html
 
 ### Staff onboarding
 
-1. A manager opens **Administration & HR** in the main portal and adds the employee using their work email address.
-2. The employee opens the Staff Work App and creates an account using that exact same email address.
-3. Biz FOX ERP automatically links the staff login to the employee record.
+1. An administrator opens **Administration & HR** and adds the employee with their work email address.
+2. The administrator selects **Create staff login** beside the employee record.
+3. Biz FOX sends a secure account invitation to the employee. The employee uses the email link to set their password.
+4. The staff account is linked to the employee record and receives the staff role automatically.
 4. A manager opens **Tasks & Work**, creates an assignment and selects the linked employee.
 5. The employee sees the assignment in the Staff App and submits progress or completion reports.
 6. The manager reviews the report and approves it or requests changes with feedback.
 
-If the employee already has a login, adding an employee record with the same email links the account automatically.
+Staff self-registration is disabled. Only authorized company administrators can create staff invitations.
 
 ## Android apps
 
@@ -57,12 +58,12 @@ Download both APKs from the [v1.0.6 release](https://github.com/digitalfoxstudio
 - Supabase service-role/secret keys are not included in browser or Android clients.
 - Row Level Security is enabled on exposed application tables.
 - Staff users can read only their own assigned tasks and their own reports.
-- Managers can assign work and review reports within their organization.
+- Managers can assign work and review reports within the company workspace.
 - Work-report storage is private.
 
 ## Database foundation
 
-The dedicated Supabase project is provisioned in the Mumbai region. The public schema contains 26 tables with Row Level Security enabled and organization-scoped policies.
+The dedicated Supabase project is provisioned in the Mumbai region. The public schema contains 26 tables with Row Level Security enabled and company-scoped policies. The `organization_id` column is retained internally as a workspace/security key; users cannot create or switch company workspaces.
 
 Core tables include profiles, organizations, organization_members, departments, employees, office_files, correspondence, tasks, task_reports, meetings, assets, projects, announcements and audit_logs.
 
@@ -70,16 +71,17 @@ Generated TypeScript database definitions are stored in `types/database.types.ts
 
 ## Authentication
 
-The web client uses the Supabase publishable key only. No service-role or secret key is included in browser code. Users register/sign in at `login.html`, then create an organization workspace. The database trigger assigns the creator the owner role automatically.
+The web client uses the Supabase publishable key only. No service-role or secret key is included in browser code. Company administrators sign in at `login.html`. Public account registration and creation of additional company workspaces are disabled.
 
-Staff accounts are linked to employee records by matching the email address. No separate invitation email is required in this first staff-app release.
+Administrators add an employee and select **Create staff login**. A secured Supabase Edge Function checks the caller's company role, sends an invitation, links the account to the employee record and grants the staff role. Staff self-registration is disabled.
 
 ## Current implementation status
 
 - [x] Responsive application shell and navigation
 - [x] Supabase project and secured database foundation
-- [x] Email/password sign-up, sign-in and password reset UI
-- [x] Organization workspace creation and membership bootstrap
+- [x] Email/password sign-in and password reset UI
+- [x] Single-company workspace with public company creation disabled
+- [x] Admin-controlled staff account invitations
 - [x] Initial CRUD forms and record lists for core office modules
 - [x] Private office-document storage and file movement register
 - [x] Staff work assignment and report workflow
@@ -87,7 +89,7 @@ Staff accounts are linked to employee records by matching the email address. No 
 - [x] Manager report review and feedback
 - [ ] Deeper approval workflows and remaining module automation
 - [ ] Photo/document attachments on staff work reports
-- [ ] Advanced staff invitation and administration screens
+- [x] Admin-created staff invitations from the employee directory
 
 Routine module screens are being delivered in phases; unfinished screens are labelled as such.
 
