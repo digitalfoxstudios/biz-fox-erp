@@ -69,14 +69,9 @@ async function loadOrganizations(){
   if(!currentOrg||!organizations.some(o=>o.id===currentOrg.id))currentOrg=organizations[0]||null;
 }
 function renderOnboarding(){
-  title.textContent="Create workspace";
-  content.innerHTML=`<div class="empty-page onboarding"><span class="module-icon">✦</span><h2>Set up your first office workspace</h2><p>Create your organization. Your account will automatically become its owner. You can add departments and invite staff in the next setup stage.</p><form id="orgForm" class="org-form"><label>Organization / Office name<input name="name" required minlength="2" maxlength="160" placeholder="e.g. Digital Fox Office"></label><label>Workspace address ID<input name="slug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="digital-fox-office"><small>Lowercase letters, numbers and hyphens only.</small></label><button class="primary-button" type="submit">Create workspace</button><p id="orgError" class="form-error" role="alert"></p></form></div>`;
-  document.getElementById("orgForm").addEventListener("submit",async e=>{
-    e.preventDefault();const form=e.currentTarget;const button=form.querySelector("button");button.disabled=true;button.textContent="Creating…";
-    const fd=new FormData(form);const {error}=await supabase.from("organizations").insert({name:String(fd.get("name")).trim(),slug:String(fd.get("slug")).trim(),created_by:currentUser.id});
-    if(error){document.getElementById("orgError").textContent=error.message;button.disabled=false;button.textContent="Create workspace";return;}
-    await loadOrganizations();addWorkspaceControls();renderOverview();
-  });
+  title.textContent="Company access";
+  content.innerHTML=`<div class="empty-page"><span class="module-icon">▣</span><h2>Company workspace access required</h2><p>This Biz FOX ERP installation is configured for one company. Your account does not have access to the company workspace.</p><p>Contact the company administrator to activate your account. New company workspaces cannot be created from this portal.</p><button class="primary-button" id="companySignOut" type="button">Sign out</button></div>`;
+  document.getElementById("companySignOut").addEventListener("click",async()=>{await supabase.auth.signOut();location.href="./login.html";});
 }
 async function countFor(table){
   if(!currentOrg)return null;
