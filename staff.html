@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="Biz FOX Staff — work assignments and daily reports">
+  <title>Biz FOX Staff</title>
+  <link rel="manifest" href="./staff.webmanifest">
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./assets/css/staff.css?v=1">
+</head>
+<body>
+  <header class="staff-header">
+    <a class="staff-brand" href="./staff.html"><span class="staff-logo">FOX</span><span><b>Biz FOX</b><small>STAFF WORKSPACE</small></span></a>
+    <a class="staff-main-link" href="./index.html">Manager portal</a>
+  </header>
+  <main class="staff-shell">
+    <section id="staffAuth" class="staff-auth">
+      <div class="staff-intro"><span class="staff-eyebrow">YOUR WORK, IN ONE PLACE</span><h1>Staff Work App</h1><p>View assigned work, update progress and submit daily work reports.</p></div>
+      <form id="staffAuthForm" class="staff-auth-card">
+        <h2 id="staffAuthTitle">Staff sign in</h2>
+        <label>Email address<input name="email" type="email" autocomplete="email" required placeholder="name@office.com"></label>
+        <label>Password<input name="password" type="password" autocomplete="current-password" minlength="8" required placeholder="At least 8 characters"></label>
+        <button id="staffAuthSubmit" type="submit">Sign in</button>
+        <p id="staffAuthMessage" class="staff-message" role="status"></p>
+        <button id="staffAuthToggle" class="staff-text-button" type="button">New staff member? Create account</button>
+      </form>
+    </section>
+    <section id="staffPortal" hidden>
+      <div class="staff-welcome"><div><span class="staff-eyebrow">STAFF WORKSPACE</span><h1 id="staffGreeting">My assignments</h1><p id="staffOrgName"></p></div><button id="staffSignOut" class="staff-outline-button">Sign out</button></div>
+      <div class="staff-summary" id="staffSummary"></div>
+      <div class="staff-section-head"><div><h2>My assigned work</h2><p>Open an assignment to submit a progress report.</p></div><button id="staffRefresh" class="staff-outline-button">Refresh</button></div>
+      <div id="staffTasks" class="staff-task-list">Loading assignments…</div>
+      <div class="staff-section-head"><div><h2>My submitted reports</h2><p>Reports and manager feedback.</p></div></div>
+      <div id="staffReports" class="staff-report-list">Loading reports…</div>
+    </section>
+    <section id="staffNoAccess" class="staff-no-access" hidden>
+      <h1>Staff account not linked yet</h1>
+      <p>Your login is not linked to an active employee record in Biz FOX ERP.</p>
+      <p>Ask your office manager to add your employee record using this same email address. Your account will link automatically. Then sign in again.</p>
+      <button id="staffNoAccessSignOut" class="staff-outline-button">Sign out</button>
+    </section>
+  </main>
+  <footer class="staff-footer">Biz FOX ERP · Staff Work App</footer>
+  <script type="module" src="./assets/js/staff.js?v=1"></script>
+</body>
+</html>
