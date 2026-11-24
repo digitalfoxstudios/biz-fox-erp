@@ -8,6 +8,9 @@ on:
       - 'gradle.properties'
       - '.github/workflows/android-apk.yml'
   workflow_dispatch:
+concurrency:
+  group: biz-fox-android-release
+  cancel-in-progress: true
 permissions:
   contents: write
   actions: read
