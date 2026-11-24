@@ -1,4 +1,4 @@
-const CACHE_NAME="biz-fox-erp-shell-v4";
+const CACHE_NAME="biz-fox-erp-shell-v5";
 const APP_SHELL=["./","./index.html","./login.html","./offline.html","./manifest.webmanifest","./assets/icon.svg","./assets/css/app.css","./assets/js/app.js","./assets/js/supabase.js","./assets/js/auth.js"];
 self.addEventListener("install",event=>event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL))));
 self.addEventListener("activate",event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
