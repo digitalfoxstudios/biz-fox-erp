@@ -84,13 +84,13 @@ const dataModules = {
 const extraConfigs = {
  attendance_records:{table:"attendance_records",title:"Attendance register",fields:[["employee_id","Employee ID","text",1],["attendance_date","Attendance date","date"],["check_in","Check-in","datetime-local"],["check_out","Check-out","datetime-local"],["status","Status","select",0,["present","absent","half_day","holiday","leave"]],["remarks","Remarks","textarea"]],columns:["employee_id","attendance_date","check_in","check_out","status","remarks"]},
  leave_requests:{table:"leave_requests",title:"Leave requests",fields:[["employee_id","Employee ID","text",1],["leave_type","Leave type","text",1],["start_date","Start date","date",1],["end_date","End date","date",1],["reason","Reason","textarea"],["status","Status","select",0,["pending","approved","rejected","cancelled"]]],columns:["employee_id","leave_type","start_date","end_date","status"]},
- file_movements:{table:"file_movements",title:"File movement register",readOnly:true,fields:[],columns:["office_file_id","from_user_id","to_user_id","action","movement_note","moved_at"]},
+ file_movements:{table:"file_movements",title:"File movement register",readOnly:true,orderBy:"moved_at",fields:[],columns:["office_file_id","from_user_id","to_user_id","action","movement_note","moved_at"]},
  budgets:{table:"budgets",title:"Budget register",fields:[["fiscal_year","Financial year","text",1],["budget_head","Budget head","text",1],["allocated_amount","Allocated amount (INR)","number",1],["revised_amount","Revised amount (INR)","number"],["notes","Notes","textarea"]],columns:["fiscal_year","budget_head","allocated_amount","revised_amount"]},
  vouchers:{table:"vouchers",title:"Vouchers",fields:[["voucher_number","Voucher number","text",1],["voucher_type","Voucher type","select",1,["payment","receipt","journal"]],["voucher_date","Voucher date","date"],["amount","Amount (INR)","number",1],["narration","Narration","textarea",1],["status","Status","select",0,["draft","posted","cancelled"]]],columns:["voucher_number","voucher_type","voucher_date","amount","status"]},
  financial_transactions:{table:"financial_transactions",title:"Financial transactions",fields:[["transaction_date","Date","date"],["transaction_type","Type","select",1,["income","expense","transfer"]],["amount","Amount (INR)","number",1],["reference_number","Reference number","text"],["description","Description","textarea",1]],columns:["transaction_date","transaction_type","amount","reference_number","description"]},
  finance_accounts:{table:"finance_accounts",title:"Finance accounts",fields:[["account_code","Account code","text",1],["account_name","Account name","text",1],["account_type","Account type","select",1,["cash","bank","income","expense","liability","asset","equity"]]],columns:["account_code","account_name","account_type","is_active"]},
  stock_items:{table:"stock_items",title:"Stock items",fields:[["item_code","Item code","text",1],["item_name","Item name","text",1],["unit","Unit","text"],["quantity","Opening quantity","number"],["reorder_level","Reorder level","number"],["location","Storage location","text"]],columns:["item_code","item_name","unit","quantity","reorder_level","location"]},
- stock_movements:{table:"stock_movements",title:"Stock movement register",readOnly:true,fields:[],columns:["stock_item_id","movement_type","quantity","reference_number","moved_at"]},
+ stock_movements:{table:"stock_movements",title:"Stock movement register",readOnly:true,orderBy:"moved_at",fields:[],columns:["stock_item_id","movement_type","quantity","reference_number","moved_at"]},
  grievances:{table:"grievances",title:"Grievance register",fields:[["tracking_number","Tracking number","text",1],["applicant_name","Applicant name","text",1],["contact","Contact","tel"],["subject","Subject","text",1],["description","Description","textarea",1],["status","Status","select",0,["received","assigned","in_progress","resolved","closed","rejected"]]],columns:["tracking_number","applicant_name","subject","status","created_at"]}
 };
 function fieldMarkup(field){
@@ -105,7 +105,7 @@ function formatCell(value){
  return escapeHtml(String(value).replaceAll("_"," "));
 }
 async function renderDataTable(config){
- const {data,error}=await supabase.from(config.table).select("*").eq("organization_id",currentOrg.id).order("created_at",{ascending:false}).limit(100);
+ const {data,error}=await supabase.from(config.table).select("*").eq("organization_id",currentOrg.id).order(config.orderBy||"created_at",{ascending:false}).limit(100);
  const table=document.getElementById("recordsTable");if(!table)return;
  if(error){table.innerHTML=`<p class="form-error">${escapeHtml(error.message)}</p>`;return;}
  if(!data?.length){table.innerHTML='<div class="empty-records">No records yet. Use the form above to add the first record.</div>';return;}
