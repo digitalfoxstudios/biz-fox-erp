@@ -8,7 +8,7 @@
   <title>Biz FOX Staff</title>
   <link rel="manifest" href="./staff.webmanifest">
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/css/staff.css?v=2">
+  <link rel="stylesheet" href="./assets/css/staff.css?v=3">
 </head>
 <body>
   <header class="staff-header">
@@ -17,14 +17,14 @@
   </header>
   <main class="staff-shell">
     <section id="staffAuth" class="staff-auth">
-      <div class="staff-intro"><span class="staff-eyebrow">YOUR WORK, IN ONE PLACE</span><h1>Staff Work App</h1><p>View assigned work, update progress and submit daily work reports.</p></div>
+      <div class="staff-intro"><span class="staff-eyebrow">YOUR WORK, IN ONE PLACE</span><h1>Staff Work App</h1><p>Sign in with the account invitation provided by your company administrator.</p></div>
       <form id="staffAuthForm" class="staff-auth-card">
         <h2 id="staffAuthTitle">Staff sign in</h2>
         <label>Email address<input name="email" type="email" autocomplete="email" required placeholder="name@office.com"></label>
         <label>Password<input name="password" type="password" autocomplete="current-password" minlength="8" required placeholder="At least 8 characters"></label>
         <button id="staffAuthSubmit" type="submit">Sign in</button>
         <p id="staffAuthMessage" class="staff-message" role="status"></p>
-        <button id="staffAuthToggle" class="staff-text-button" type="button">New staff member? Create account</button>
+        <p class="staff-message">Staff accounts are created by the company administrator. Self-registration is disabled.</p>
       </form>
     </section>
     <section id="staffPortal" hidden>
@@ -44,6 +44,6 @@
   </main>
   <footer class="staff-footer">Biz FOX ERP · Staff Work App</footer>
   <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(() => {}));</script>
-  <script type="module" src="./assets/js/staff.js?v=2"></script>
+  <script type="module" src="./assets/js/staff.js?v=3"></script>
 </body>
 </html>
