@@ -51,11 +51,7 @@ class MainActivity : Activity() {
             text = "Biz FOX ERP\\nOFFICE WORKSPACE"; textSize = 16f; setTypeface(null, Typeface.BOLD)
             setTextColor(Color.WHITE); layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
         }
-        val update = Button(this).apply {
-            text = "Check updates"; textSize = 12f
-            setOnClickListener { checkForUpdates() }
-        }
-        bar.addView(brandMark); bar.addView(brand); bar.addView(update)
+        bar.addView(brandMark); bar.addView(brand)
         progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
             max = 100; visibility = View.GONE
         }
