@@ -28,6 +28,7 @@ jobs:
         run: |
           node --check assets/js/app.js
           node --check assets/js/auth.js
+          node --check assets/js/staff.js
           node --check service-worker.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
