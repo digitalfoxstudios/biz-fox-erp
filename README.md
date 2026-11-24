@@ -49,9 +49,9 @@ The web client uses the Supabase publishable key only. No service-role or secret
 
 Routine module screens are being delivered in phases; unfinished screens are labelled as such.
 
-## One-time hosting and Auth configuration
+## Hosting and Auth configuration
 
-The repository includes a GitHub Actions Pages deployment workflow. Enable **Settings → Pages → Build and deployment → Source: GitHub Actions** once in this repository. The Pages site is not yet enabled, so a public app URL is not claimed yet.
+The repository includes a GitHub Actions Pages deployment workflow. Enable **Settings → Pages → Build and deployment → Source: GitHub Actions** once in this repository. GitHub Pages is enabled and deployment is automated through GitHub Actions.
 
 After Pages is enabled, set the Supabase Auth **Site URL** to:
 
