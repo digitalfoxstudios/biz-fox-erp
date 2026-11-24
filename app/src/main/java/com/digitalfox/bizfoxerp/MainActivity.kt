@@ -48,7 +48,7 @@ class MainActivity : Activity() {
             layoutParams = LinearLayout.LayoutParams(42, 42).apply { rightMargin = 11 }
         }
         val brand = TextView(this).apply {
-            text = "Biz FOX ERP\nOFFICE WORKSPACE"; textSize = 16f; setTypeface(null, Typeface.BOLD)
+            text = BuildConfig.APP_NAME + if (BuildConfig.APP_NAME == "Biz FOX Staff") "\nSTAFF WORKSPACE" else "\nOFFICE WORKSPACE"; textSize = 16f; setTypeface(null, Typeface.BOLD)
             setTextColor(Color.WHITE); layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
         }
         bar.addView(brandMark); bar.addView(brand)
