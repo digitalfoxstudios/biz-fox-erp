@@ -58,14 +58,9 @@ function escapeHtml(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","
 function showMessage(message){let el=document.getElementById("appMessage");if(!el){el=document.createElement("div");el.id="appMessage";el.className="app-message";document.querySelector(".content").prepend(el);}el.textContent=message;el.hidden=false;}
 function addWorkspaceControls(){
   const actions=document.querySelector(".top-actions");
-  actions.innerHTML=`<select id="orgSelect" aria-label="Organization" class="org-select"><option value="">Select organization</option></select><span class="status-dot"></span><span class="status-text">Connected</span><button id="profileButton" class="profile-button" title="Account">${escapeHtml((currentUser.email||"U").slice(0,1).toUpperCase())}</button><button id="signOutButton" class="signout-button">Sign out</button>`;
+  actions.innerHTML=`<span class="status-dot"></span><span class="status-text">Company workspace</span><button id="profileButton" class="profile-button" title="Account">${escapeHtml((currentUser.email||"U").slice(0,1).toUpperCase())}</button><button id="signOutButton" class="signout-button">Sign out</button>`;
   document.getElementById("profileButton").title=currentUser.email||"Account";
-
   document.getElementById("signOutButton").addEventListener("click",async()=>{await supabase.auth.signOut();location.href="./login.html";});
-  const select=document.getElementById("orgSelect");
-  organizations.forEach(o=>{const option=document.createElement("option");option.value=o.id;option.textContent=o.name;select.append(option);});
-  select.value=currentOrg?.id||"";
-  select.addEventListener("change",()=>{currentOrg=organizations.find(o=>o.id===select.value)||null;renderOverview();});
 }
 async function loadOrganizations(){
   const {data,error}=await supabase.from("organizations").select("id,name,slug").order("name");
@@ -100,7 +95,7 @@ async function renderOverview(){
   [["filesCount",files],["tasksCount",tasks],["projectsCount",projects],["employeesCount",employees]].forEach(([id,n])=>{const el=document.getElementById(id);if(el)el.textContent=n===null?"—":n;});
 }
 const dataModules = {
-  administration:{table:"employees",title:"Employee directory",fields:[["employee_code","Employee code","text",1],["full_name","Full name","text",1],["department_id","Department","select",0,[]],["designation","Designation","text"],["email","Email","email"],["phone","Phone","tel"],["date_of_joining","Date of joining","date"],["notes","Notes","textarea"]],columns:["employee_code","full_name","designation","employment_status","phone"],extras:[["attendance_records","Attendance register"],["leave_requests","Leave requests"]]},
+  administration:{table:"employees",title:"Employee directory",fields:[["employee_code","Employee code","text",1],["full_name","Full name","text",1],["department_id","Department","select",0,[]],["designation","Designation","text"],["email","Email","email"],["phone","Phone","tel"],["date_of_joining","Date of joining","date"],["notes","Notes","textarea"]],columns:["employee_code","full_name","designation","email","employment_status","phone"],extras:[["attendance_records","Attendance register"],["leave_requests","Leave requests"]]},
   departments:{table:"departments",title:"Departments",fields:[["name","Department name","text",1],["code","Department code","text"],["description","Description","textarea"]],columns:["name","code","description","is_active"]},
   documents:{table:"office_files",title:"Office files",fields:[["file_number","File number","text",1],["subject","Subject","text",1],["description","Description","textarea"],["priority","Priority","select",0,["low","normal","high","urgent"]],["attachment","Attach document (max 25 MB)","file"]],columns:["file_number","subject","priority","status","storage_path","created_at"],extras:[["file_movements","File movement register"]]},
   correspondence:{table:"correspondence",title:"Inward / outward correspondence",fields:[["direction","Direction","select",1,["inward","outward"]],["reference_number","Reference number","text",1],["subject","Subject","text",1],["sender_name","Sender","text"],["recipient_name","Recipient","text"],["received_or_sent_on","Date","date"],["status","Status","select",0,["registered","under_process","replied","dispatched","closed"]]],columns:["direction","reference_number","subject","received_or_sent_on","status"]},
@@ -146,8 +141,17 @@ async function renderDataTable(config){
  const signedFiles={};
  if(config.table==="office_files"){await Promise.all(data.filter(row=>row.storage_path).map(async row=>{const {data:link}=await supabase.storage.from("office-documents").createSignedUrl(row.storage_path,3600);if(link?.signedUrl)signedFiles[row.id]=link.signedUrl;}));}
  const canManage=!config.readOnly;
- table.innerHTML=`<div class="table-scroll"><table><thead><tr>${config.columns.map(c=>`<th>${escapeHtml(c.replaceAll("_"," "))}</th>`).join("")}${canManage?"<th>Actions</th>":""}</tr></thead><tbody>${data.map(row=>`<tr>${config.columns.map(c=>`<td>${c==="storage_path"&&signedFiles[row.id]?`<a href="${escapeHtml(signedFiles[row.id])}" target="_blank" rel="noopener">Download</a>`:formatCell(row[c])}</td>`).join("")}${canManage?`<td><button type="button" class="secondary-button" data-edit-record="${row.id}">Edit</button> <button type="button" class="secondary-button" data-delete-record="${row.id}">Delete</button></td>`:""}</tr>`).join("")}</tbody></table></div>`;
+ table.innerHTML=`<div class="table-scroll"><table><thead><tr>${config.columns.map(c=>`<th>${escapeHtml(c.replaceAll("_"," "))}</th>`).join("")}${config.table==="employees"?"<th>Staff login</th>":""}${canManage?"<th>Actions</th>":""}</tr></thead><tbody>${data.map(row=>`<tr>${config.columns.map(c=>`<td>${c==="storage_path"&&signedFiles[row.id]?`<a href="${escapeHtml(signedFiles[row.id])}" target="_blank" rel="noopener">Download</a>`:formatCell(row[c])}</td>`).join("")}${config.table==="employees"?`<td>${row.user_id?'<span class="tag">Login linked</span>':row.email&&row.employment_status!=="inactive"?`<button type="button" class="secondary-button" data-create-staff-login="${row.id}">Create staff login</button>`:"Add email / activate employee"}</td>`:""}${canManage?`<td><button type="button" class="secondary-button" data-edit-record="${row.id}">Edit</button> <button type="button" class="secondary-button" data-delete-record="${row.id}">Delete</button></td>`:""}</tr>`).join("")}</tbody></table></div>`;
  if(canManage){
+  table.querySelectorAll("[data-create-staff-login]").forEach(button=>button.addEventListener("click",async()=>{
+   const employee=data.find(item=>item.id===button.dataset.createStaffLogin);if(!employee)return;
+   if(!confirm("Send a secure staff account invitation to "+employee.email+"?"))return;
+   button.disabled=true;button.textContent="Sending invitation…";
+   const {data:result,error}=await supabase.functions.invoke("admin-create-staff",{body:{organization_id:currentOrg.id,employee_id:employee.id}});
+   if(error||result?.error){showMessage("Staff login could not be created: "+(result?.error||error?.message||"Unknown error"));button.disabled=false;button.textContent="Create staff login";return;}
+   showMessage("Staff invitation sent to "+employee.email+". They can set their password from the invitation email.");
+   await renderDataTable(config);
+  }));
   table.querySelectorAll("[data-edit-record]").forEach(button=>button.addEventListener("click",()=>{
    const row=data.find(item=>item.id===button.dataset.editRecord);const form=document.getElementById("recordForm");if(!row||!form)return;
    for(const field of config.fields){const input=form.elements[field[0]];if(!input||field[2]==="file")continue;input.value=row[field[0]]??"";}
