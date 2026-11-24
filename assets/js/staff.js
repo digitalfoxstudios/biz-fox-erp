@@ -11,7 +11,7 @@ $("staffAuthForm").addEventListener("submit",async e=>{
  e.preventDefault();const form=e.currentTarget,fd=new FormData(form),button=$("staffAuthSubmit");button.disabled=true;button.textContent=authMode==="signup"?"Creating account…":"Signing in…";
  const email=String(fd.get("email")).trim().toLowerCase(),password=String(fd.get("password"));
  let result;
- if(authMode==="signup")result=await supabase.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});
+ if(authMode==="signup")result=await supabase.auth.signUp({email,password,options:{emailRedirectTo:"https://digitalfoxstudios.github.io/biz-fox-erp/"}});
  else result=await supabase.auth.signInWithPassword({email,password});
  button.disabled=false;button.textContent=authMode==="signup"?"Create account":"Sign in";
  if(result.error){showAuthMessage(result.error.message);return;}
