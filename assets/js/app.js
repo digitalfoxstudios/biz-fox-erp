@@ -69,7 +69,7 @@ async function renderOverview(){
 const dataModules = {
   administration:{table:"employees",title:"Employee directory",fields:[["employee_code","Employee code","text",1],["full_name","Full name","text",1],["designation","Designation","text"],["email","Email","email"],["phone","Phone","tel"],["date_of_joining","Date of joining","date"],["employment_status","Status","select",0,["active","on_leave","suspended","separated"]],["notes","Notes","textarea"]],columns:["employee_code","full_name","designation","employment_status","phone"],extras:[["attendance_records","Attendance register"],["leave_requests","Leave requests"]]},
   departments:{table:"departments",title:"Departments",fields:[["name","Department name","text",1],["code","Department code","text"],["description","Description","textarea"]],columns:["name","code","description","is_active"]},
-  documents:{table:"office_files",title:"Office files",fields:[["file_number","File number","text",1],["subject","Subject","text",1],["description","Description","textarea"],["priority","Priority","select",0,["low","normal","high","urgent"]],["status","Status","select",0,["draft","open","pending_approval","approved","rejected","closed"]]],columns:["file_number","subject","priority","status","created_at"],extras:[["file_movements","File movement register"]]},
+  documents:{table:"office_files",title:"Office files",fields:[["file_number","File number","text",1],["subject","Subject","text",1],["description","Description","textarea"],["priority","Priority","select",0,["low","normal","high","urgent"]],["status","Status","select",0,["draft","open","pending_approval","approved","rejected","closed"]],["attachment","Attach document (max 25 MB)","file"]],columns:["file_number","subject","priority","status","storage_path","created_at"],extras:[["file_movements","File movement register"]]},
   correspondence:{table:"correspondence",title:"Inward / outward correspondence",fields:[["direction","Direction","select",1,["inward","outward"]],["reference_number","Reference number","text",1],["subject","Subject","text",1],["sender_name","Sender","text"],["recipient_name","Recipient","text"],["received_or_sent_on","Date","date"],["status","Status","select",0,["registered","under_process","replied","dispatched","closed"]]],columns:["direction","reference_number","subject","received_or_sent_on","status"]},
   finance:{table:"bills",title:"Bills register",fields:[["bill_number","Bill number","text",1],["payee_name","Payee","text",1],["purpose","Purpose","textarea",1],["bill_date","Bill date","date"],["amount","Amount (INR)","number",1],["status","Status","select",0,["draft","submitted","approved","rejected","paid"]]],columns:["bill_number","payee_name","purpose","amount","bill_date","status"],extras:[["budgets","Budgets"],["vouchers","Vouchers"],["financial_transactions","Transactions"],["finance_accounts","Accounts"]]},
   meetings:{table:"meetings",title:"Meetings & calendar",fields:[["title","Meeting title","text",1],["starts_at","Date and time","datetime-local",1],["location","Location","text"],["agenda","Agenda","textarea"],["status","Status","select",0,["scheduled","held","postponed","cancelled"]]],columns:["title","starts_at","location","status"]},
@@ -96,7 +96,7 @@ const extraConfigs = {
 function fieldMarkup(field){
  const [key,label,type,required,options]=field;const req=required?"required":"";
  if(type==="select")return `<label>${label}<select name="${key}" ${req}>${(options||[]).map(x=>`<option value="${x}">${x.replaceAll("_"," ")}</option>`).join("")}</select></label>`;
- if(type==="textarea")return `<label class="wide-field">${label}<textarea name="${key}" rows="2" ${req}></textarea></label>`;
+ if(type==="file")return `<label class="wide-field">${label}<input name="${key}" type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xlsx"></label>`;\n if(type==="textarea")return `<label class="wide-field">${label}<textarea name="${key}" rows="2" ${req}></textarea></label>`;
  return `<label>${label}<input name="${key}" type="${type}" ${type==="number"?'step="0.01" min="0"':""} ${req}></label>`;
 }
 function formatCell(value){
@@ -109,7 +109,9 @@ async function renderDataTable(config){
  const table=document.getElementById("recordsTable");if(!table)return;
  if(error){table.innerHTML=`<p class="form-error">${escapeHtml(error.message)}</p>`;return;}
  if(!data?.length){table.innerHTML='<div class="empty-records">No records yet. Use the form above to add the first record.</div>';return;}
- table.innerHTML=`<div class="table-scroll"><table><thead><tr>${config.columns.map(c=>`<th>${escapeHtml(c.replaceAll("_"," "))}</th>`).join("")}</tr></thead><tbody>${data.map(row=>`<tr>${config.columns.map(c=>`<td>${formatCell(row[c])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+ const signedFiles={};
+ if(config.table==="office_files"){await Promise.all(data.filter(row=>row.storage_path).map(async row=>{const {data:link}=await supabase.storage.from("office-documents").createSignedUrl(row.storage_path,3600);if(link?.signedUrl)signedFiles[row.id]=link.signedUrl;}));}
+ table.innerHTML=`<div class="table-scroll"><table><thead><tr>${config.columns.map(c=>`<th>${escapeHtml(c.replaceAll("_"," "))}</th>`).join("")}</tr></thead><tbody>${data.map(row=>`<tr>${config.columns.map(c=>`<td>${c==="storage_path"&&signedFiles[row.id]?`<a href="${escapeHtml(signedFiles[row.id])}" target="_blank" rel="noopener">Download</a>`:formatCell(row[c])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 async function openDataConfig(config){
  title.textContent=config.title;
@@ -124,9 +126,18 @@ async function openDataConfig(config){
  if(canWrite)document.getElementById("recordForm").addEventListener("submit",async e=>{
   e.preventDefault();const form=e.currentTarget;const button=form.querySelector("button[type=submit]");button.disabled=true;button.textContent="Saving…";
   const payload={organization_id:currentOrg.id};
-  for(const f of config.fields){const el=form.elements[f[0]];if(!el||el.value==="")continue;let value=el.value;if(f[2]==="number")value=Number(value);if(f[2]==="datetime-local")value=new Date(value).toISOString();payload[f[0]]=value;}
-  const {error}=await supabase.from(config.table).insert(payload);
-  const msg=document.getElementById("recordMessage");msg.textContent=error?error.message:"Record saved successfully.";msg.className="form-message "+(error?"error":"success");
+  for(const f of config.fields){if(f[2]==="file")continue;const el=form.elements[f[0]];if(!el||el.value==="")continue;let value=el.value;if(f[2]==="number")value=Number(value);if(f[2]==="datetime-local")value=new Date(value).toISOString();payload[f[0]]=value;}
+  const attachment=form.elements.attachment?.files?.[0];
+  const {data:saved,error}=await supabase.from(config.table).insert(payload).select("id").single();
+  let finalError=error;
+  if(!finalError&&attachment&&config.table==="office_files"){
+    const safeName=attachment.name.replace(/[^a-zA-Z0-9._-]+/g,"_");
+    const path=currentOrg.id+"/"+saved.id+"/"+safeName;
+    const {error:uploadError}=await supabase.storage.from("office-documents").upload(path,attachment,{contentType:attachment.type||"application/octet-stream",upsert:false});
+    if(uploadError)finalError=uploadError;
+    else {const {error:updateError}=await supabase.from("office_files").update({storage_path:path}).eq("id",saved.id);if(updateError)finalError=updateError;}
+  }
+  const msg=document.getElementById("recordMessage");msg.textContent=finalError?("Record saved, but an operation failed: "+finalError.message):"Record saved successfully.";msg.className="form-message "+(finalError?"error":"success");
   button.disabled=false;button.textContent="Save record";if(!error){form.reset();await renderDataTable(config);}
  });
  await renderDataTable(config);
