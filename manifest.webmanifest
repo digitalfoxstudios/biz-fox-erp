@@ -1,0 +1,11 @@
+{
+  "name": "Biz FOX ERP",
+  "short_name": "Biz FOX",
+  "description": "Centralized office operations and management",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6fa",
+  "theme_color": "#101827",
+  "icons": []
+}
