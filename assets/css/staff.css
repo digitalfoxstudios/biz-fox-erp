@@ -55,3 +55,13 @@ body{background:radial-gradient(circle at 12% 4%,#e8eef7 0,transparent 32%),#f5f
 .staff-footer{color:#8491a4;padding:22px 12px}
 .staff-no-access{border-radius:18px;border-color:#e3e9f0}
 @media(max-width:720px){.staff-header{height:70px;padding:0 15px}.staff-shell{padding:26px 14px 42px}.staff-auth-card{padding:23px}.staff-welcome{border-radius:14px}.staff-summary{gap:9px}}
+
+/* Work completion evidence: multiple site photos and permission-based GPS */
+.staff-report-grid .staff-location-panel{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 14px;margin:6px 0 10px;border:1px solid #e2e8f0;border-radius:11px;background:#f8fafc}
+.staff-location-panel b,.staff-location-panel small{display:block}.staff-location-panel b{font-size:13px;color:#243650}.staff-location-panel small{font-size:11px;color:#718096;margin-top:4px;line-height:1.45}
+.staff-photo-preview,.staff-saved-photos{display:flex;flex-wrap:wrap;gap:9px;margin:5px 0 10px}
+.staff-photo-thumb{width:94px;min-width:0;display:grid;gap:4px}.staff-photo-thumb img,.staff-saved-photos img{width:94px;height:76px;object-fit:cover;border-radius:8px;border:1px solid #dce4ed;background:#eef2f7}
+.staff-photo-thumb small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;color:#758197}
+.staff-saved-photos a{display:block}.staff-saved-photos img{width:112px;height:88px}
+.staff-geo-info{font-size:12px!important;color:#53657d!important}.staff-geo-info a{color:#bf6828;font-weight:700}
+@media(max-width:720px){.staff-report-grid .staff-location-panel{grid-column:auto;align-items:flex-start}.staff-location-panel button{width:100%}}
