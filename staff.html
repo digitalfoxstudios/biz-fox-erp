@@ -18,25 +18,16 @@
   </header>
   <main class="staff-shell">
     <section id="staffAuth" class="staff-auth">
-      <div class="staff-intro"><span class="staff-eyebrow">YOUR WORK, IN ONE PLACE</span><h1>Staff Work App</h1><p>Sign in with the account invitation provided by your company administrator.</p></div>
+      <div class="staff-intro"><span class="staff-eyebrow">YOUR WORK, IN ONE PLACE</span><h1>Staff Work App</h1><p>Sign in using the username and password provided by your company administrator.</p></div>
       <form id="staffAuthForm" class="staff-auth-card">
         <h2 id="staffAuthTitle">Staff sign in</h2>
-        <label>Email address<input name="email" type="email" autocomplete="email" required placeholder="name@office.com"></label>
-        <label>Password<input name="password" type="password" autocomplete="current-password" minlength="8" required placeholder="At least 8 characters"></label>
+        <label>Username<input name="username" type="text" autocomplete="username" required placeholder="Enter your username"></label>
+        <label>8-digit password<input name="password" type="password" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" minlength="8" autocomplete="current-password" required placeholder="Enter 8-digit password"></label>
         <button id="staffAuthSubmit" type="submit">Sign in</button>
-        <button id="staffForgotPassword" class="staff-outline-button" type="button">Set / Reset password</button>
         <p id="staffAuthMessage" class="staff-message" role="status"></p>
         <p class="staff-message">Staff accounts are created by the company administrator. Self-registration is disabled.</p>
       </form>
-      <form id="staffPasswordSetup" class="staff-auth-card" hidden>
-        <h2>Create your staff password</h2>
-        <p>Choose an exactly 8-digit numeric password for your staff account.</p>
-        <label>New 8-digit password<input name="new_password" type="password" inputmode="numeric" pattern="[0-9]{8}" minlength="8" maxlength="8" autocomplete="new-password" required placeholder="8 digits"></label>
-        <label>Confirm 8-digit password<input name="confirm_password" type="password" inputmode="numeric" pattern="[0-9]{8}" minlength="8" maxlength="8" autocomplete="new-password" required placeholder="Re-enter 8 digits"></label>
-        <button id="staffPasswordSave" type="submit">Save password</button>
-        <p id="staffPasswordMessage" class="staff-message" role="status"></p>
-      </form>
-    </section>
+   </section>
     <section id="staffPortal" hidden>
       <div class="staff-welcome"><div><span class="staff-eyebrow">STAFF WORKSPACE</span><h1 id="staffGreeting">My assignments</h1><p id="staffOrgName"></p></div><button id="staffSignOut" class="staff-outline-button">Sign out</button></div>
       <div class="staff-summary" id="staffSummary"></div>
@@ -55,6 +46,6 @@
   <footer class="staff-footer">Biz FOX ERP · Staff Work App</footer>
   <script src="./assets/js/app-update.js?v=1"></script>
   <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(() => {}));</script>
-  <script type="module" src="./assets/js/staff.js?v=5"></script>
+  <script type="module" src="./assets/js/staff.js?v=6"></script>
 </body>
 </html>
