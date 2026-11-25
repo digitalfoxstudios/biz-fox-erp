@@ -1,39 +1,18 @@
 import { supabase } from "./supabase.js";
 const $=id=>document.getElementById(id);
 const authPanel=$("staffAuth"),portal=$("staffPortal"),noAccess=$("staffNoAccess");
-const setupForm=$("staffPasswordSetup"),loginForm=$("staffAuthForm");
-const setupRequested=new URLSearchParams(location.search).get("setup-password")==="1";
 let currentUser=null,currentOrg=null,staffOrganizations=[];
-const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const esc=v=>String(v??"").replace(/[&<>"\']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","\'":"&#39;"}[c]));
 const showAuthMessage=(message,kind="error")=>{const el=$("staffAuthMessage");el.textContent=message;el.style.color=kind==="success"?"#21734a":"#b34a38";};
-function showPasswordSetup(message=""){loginForm.hidden=true;setupForm.hidden=false;portal.hidden=true;noAccess.hidden=true;authPanel.hidden=false;if(message)$("staffPasswordMessage").textContent=message;}
-$("staffForgotPassword").addEventListener("click",async()=>{
- const email=String(new FormData(loginForm).get("email")||"").trim().toLowerCase();
- if(!email){showAuthMessage("Enter your staff email address first.");return;}
- const button=$("staffForgotPassword");button.disabled=true;button.textContent="Sending secure link…";
- const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname+"?setup-password=1"});
- button.disabled=false;button.textContent="Set / Reset password";
- showAuthMessage(error?"Could not send password link: "+error.message:"If this email belongs to an invited staff account, a secure password setup link has been sent.",!error?"success":"error");
-});
-setupForm.addEventListener("submit",async e=>{
- e.preventDefault();const fd=new FormData(setupForm),password=String(fd.get("new_password")||""),confirm=String(fd.get("confirm_password")||""),button=$("staffPasswordSave");
- if(!/^[0-9]{8}$/.test(password)){$("staffPasswordMessage").textContent="Password must contain exactly 8 digits.";return;}
- if(password!==confirm){$("staffPasswordMessage").textContent="The passwords do not match.";return;}
- const {data:{session}}=await supabase.auth.getSession();
- if(!session){$("staffPasswordMessage").textContent="This secure link is missing or expired. Request a new password link from the sign-in screen.";return;}
- button.disabled=true;button.textContent="Saving…";
- const {error}=await supabase.auth.updateUser({password});
- button.disabled=false;button.textContent="Save password";
- if(error){$("staffPasswordMessage").textContent="Password could not be saved: "+error.message;return;}
- history.replaceState({},document.title,location.pathname);
- await boot(session.user);
-});
 $("staffAuthForm").addEventListener("submit",async e=>{
- e.preventDefault();const form=e.currentTarget,fd=new FormData(form),button=$("staffAuthSubmit");button.disabled=true;button.textContent="Signing in…";
- const email=String(fd.get("email")).trim().toLowerCase(),password=String(fd.get("password"));
- const result=await supabase.auth.signInWithPassword({email,password});
+ e.preventDefault();const fd=new FormData(e.currentTarget),button=$("staffAuthSubmit");
+ const username=String(fd.get("username")||"").trim().toLowerCase(),password=String(fd.get("password")||"");
+ if(!/^[a-z0-9._-]{3,32}$/.test(username)){showAuthMessage("Enter a valid username.");return;}
+ if(!/^[0-9]{8}$/.test(password)){showAuthMessage("Password must contain exactly 8 digits.");return;}
+ button.disabled=true;button.textContent="Signing in…";
+ const result=await supabase.auth.signInWithPassword({email:username+"@staff.bizfox.invalid",password});
  button.disabled=false;button.textContent="Sign in";
- if(result.error){showAuthMessage(result.error.message);return;}
+ if(result.error){showAuthMessage("Incorrect username or password. Contact your administrator if you need new credentials.");return;}
  if(result.data.session)await boot(result.data.session.user);
 });
 async function boot(user){
