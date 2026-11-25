@@ -132,7 +132,7 @@ async function renderDataTable(config){
  const {data,error}=await supabase.from(config.table).select("*").eq("organization_id",currentOrg.id).order(config.orderBy||"created_at",{ascending:false}).limit(100);
  const table=document.getElementById("recordsTable");if(!table)return;
  if(error){table.innerHTML=`<p class="form-error">${escapeHtml(error.message)}</p>`;return;}
- if(!data?.length){table.innerHTML='<div class="empty-records">No records yet. Use the form above to add the first record.</div>';return;}
+ if(!data?.length){table.innerHTML='<div class="empty-records">No records yet. Select <b>Add new</b> when you are ready to create the first record.</div>';return;}
  const signedFiles={};
  if(config.table==="office_files"){await Promise.all(data.filter(row=>row.storage_path).map(async row=>{const {data:link}=await supabase.storage.from("office-documents").createSignedUrl(row.storage_path,3600);if(link?.signedUrl)signedFiles[row.id]=link.signedUrl;}));}
  const canManage=!config.readOnly;
@@ -216,17 +216,20 @@ async function openTaskWorkspace(){
  }
  content.innerHTML=`<div class="data-page">
   <div class="data-page-head"><div><span class="tag">Manager workspace</span><h2>Assign and monitor staff work</h2><p>Assign work to linked staff accounts, track progress and review submitted reports.</p></div><a class="secondary-button" href="./staff.html" target="_blank" rel="noopener">Staff app preview</a></div>
-  <form id="assignmentForm" class="record-form"><h3>New work assignment</h3><div class="form-grid">
+  <div class="data-page-actions task-add-action"><button id="addAssignmentButton" class="primary-button" type="button">+ New assignment</button></div><form id="assignmentForm" class="record-form" hidden><h3>New work assignment</h3><div class="form-grid">
    <label>Work / assignment title<input name="title" required maxlength="180" placeholder="Enter work title"></label>
    <label>Assign to staff member<select name="assigned_to" required><option value="">Loading staff…</option></select></label>
    <label>Priority<select name="priority"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="urgent">Urgent</option></select></label>
    <label>Deadline<input name="due_at" type="datetime-local"></label>
    <label class="wide-field">Instructions / work details<textarea name="description" rows="3" placeholder="Describe the expected work and deliverables"></textarea></label>
-  </div><button class="primary-button" type="submit">Assign work</button><p id="assignmentMessage" class="form-message" role="status"></p></form>
+  </div><div class="record-form-actions"><button class="primary-button" type="submit">Assign work</button><button class="secondary-button" type="button" id="cancelAssignment">Cancel</button></div><p id="assignmentMessage" class="form-message" role="status"></p></form>
   <div class="records-heading"><h3>Assigned work</h3><span id="taskCount">Loading…</span></div><div id="managerTaskList" class="task-work-list">Loading assignments…</div>
   <div class="records-heading"><h3>Staff work reports</h3><span>Review and respond</span></div><div id="managerReportList" class="task-report-list">Loading reports…</div>
  </div>`;
- const staffSelect=document.querySelector('#assignmentForm [name="assigned_to"]');
+ const assignmentForm=document.getElementById("assignmentForm");
+  document.getElementById("addAssignmentButton").addEventListener("click",()=>{assignmentForm.hidden=false;assignmentForm.scrollIntoView({behavior:"smooth",block:"start"});});
+  document.getElementById("cancelAssignment").addEventListener("click",()=>{assignmentForm.reset();assignmentForm.hidden=true;});
+  const staffSelect=document.querySelector('#assignmentForm [name="assigned_to"]');
  const {data:staff,error:staffError}=await supabase.from("employees").select("user_id,full_name,employee_code,designation").eq("organization_id",currentOrg.id).eq("employment_status","active").not("user_id","is",null).order("full_name");
  if(staffError){staffSelect.innerHTML='<option value="">Could not load staff</option>';document.getElementById("assignmentMessage").textContent=staffError.message;}
  else if(!staff?.length){staffSelect.innerHTML='<option value="">No linked staff accounts yet</option>';document.getElementById("assignmentMessage").textContent="Add an employee with their work email in Administration & HR. Ask them to create an account in the Staff App using the same email; the account will link automatically.";}
@@ -240,7 +243,7 @@ async function openTaskWorkspace(){
   document.getElementById("assignmentMessage").textContent=error?"Assignment failed: "+error.message:"Work assigned successfully.";
   document.getElementById("assignmentMessage").className="form-message "+(error?"error":"success");
   button.disabled=false;button.textContent="Assign work";
-  if(!error){form.reset();await refreshManagerWork(staff);}
+  if(!error){form.reset();form.hidden=true;await refreshManagerWork(staff);}
  });
  await refreshManagerWork(staff||[]);
 }
