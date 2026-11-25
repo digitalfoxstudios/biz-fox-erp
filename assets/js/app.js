@@ -165,9 +165,9 @@ async function renderDataTable(config){
 async function openDataConfig(config){
  title.textContent=config.title;
  const canWrite=!config.readOnly;
- content.innerHTML=`<div class="data-page"><div class="data-page-head"><div><span class="tag">${config.readOnly?"Read only":"Workspace records"}</span><h2>${escapeHtml(config.title)}</h2><p>Organization: ${escapeHtml(currentOrg.name)}</p></div><button id="refreshRecords" class="secondary-button">Refresh</button></div>
+ content.innerHTML=`<div class="data-page"><div class="data-page-head"><div><span class="tag">${config.readOnly?"Read only":"Workspace records"}</span><h2>${escapeHtml(config.title)}</h2><p>Organization: ${escapeHtml(currentOrg.name)}</p></div><div class="data-page-actions">${canWrite?'<button id="addRecordButton" class="primary-button" type="button">+ Add new</button>':""}<button id="refreshRecords" class="secondary-button">Refresh</button></div></div>
  ${config.extras?.length?`<div class="submodule-links">${config.extras.map(([id,label])=>`<button data-submodule="${id}">${label}</button>`).join("")}</div>`:""}
- ${canWrite?`<form id="recordForm" class="record-form"><div class="form-grid">${config.fields.map(fieldMarkup).join("")}</div><button class="primary-button" type="submit">Save record</button><p id="recordMessage" class="form-message" role="status"></p></form>`:""}
+ ${canWrite?`<form id="recordForm" class="record-form" hidden><div class="form-grid">${config.fields.map(fieldMarkup).join("")}</div><div class="record-form-actions"><button class="primary-button" type="submit">Save record</button><button class="secondary-button" type="button" data-cancel-form hidden>Cancel</button></div><p id="recordMessage" class="form-message" role="status"></p></form>`:""}
  <div class="records-heading"><h3>Records</h3><span>Latest 100</span></div><div id="recordsTable" class="records-table">Loading records…</div></div>`;
  const needsEmployees=config.fields.some(field=>field[0]==="employee_id");
  const needsDepartments=config.fields.some(field=>field[0]==="department_id");
