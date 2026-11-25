@@ -42,15 +42,64 @@ async function renderStaffWorkspace(){
  const tasks=tasksResult.data||[],reports=reportsResult.data||[];
  const pending=tasks.filter(t=>["pending","in_progress","blocked"].includes(t.status)).length;
  $("staffSummary").innerHTML='<article class="staff-stat"><small>Total assignments</small><strong>'+tasks.length+'</strong></article><article class="staff-stat"><small>Active work</small><strong>'+pending+'</strong></article><article class="staff-stat"><small>Reports submitted</small><strong>'+reports.length+'</strong></article>';
- taskBox.innerHTML=tasks.length?tasks.map(t=>`<article class="staff-task-card"><div class="staff-task-top"><div><span class="staff-chip ${esc(t.priority)}">${esc(t.priority)} priority</span> <span class="staff-chip ${esc(t.status)}">${esc(t.status.replaceAll("_"," "))}</span><h3>${esc(t.title)}</h3><p>${esc(t.description||"No additional instructions were provided.")}</p><div class="staff-task-meta"><span class="staff-chip">Due: ${t.due_at?esc(new Date(t.due_at).toLocaleString()):"Not specified"}</span></div></div></div><form class="staff-report-form" data-task-form="${t.id}"><h4>Submit work report</h4><div class="staff-report-grid"><label>Report date<input name="report_date" type="date" value="${new Date().toISOString().slice(0,10)}" required></label><label>Hours spent<input name="hours_spent" type="number" min="0" max="24" step="0.25" placeholder="e.g. 3.5"></label><label class="wide">Work completed / action taken<textarea name="work_done" required minlength="3" placeholder="Describe what you completed today"></textarea></label><label class="wide">Challenges or pending issues<textarea name="challenges" placeholder="Mention any problems or support required"></textarea></label><label class="wide">Next steps<textarea name="next_steps" placeholder="What remains to be done?"></textarea></label><label class="wide">Current work status<select name="task_status"><option value="in_progress">In progress</option><option value="blocked">Blocked / need help</option><option value="completed">Completed</option></select></label></div><div class="staff-report-actions"><button class="staff-submit" type="submit">Submit work report</button></div><p class="staff-message" role="status"></p></form></article>`).join(""):'<div class="staff-empty">No work has been assigned to you yet. New assignments will appear here.</div>';
+ taskBox.innerHTML=tasks.length?tasks.map(t=>`<article class="staff-task-card"><div class="staff-task-top"><div><span class="staff-chip ${esc(t.priority)}">${esc(t.priority)} priority</span> <span class="staff-chip ${esc(t.status)}">${esc(t.status.replaceAll("_"," "))}</span><h3>${esc(t.title)}</h3><p>${esc(t.description||"No additional instructions were provided.")}</p><div class="staff-task-meta"><span class="staff-chip">Due: ${t.due_at?esc(new Date(t.due_at).toLocaleString()):"Not specified"}</span></div></div></div><form class="staff-report-form" data-task-form="${t.id}"><h4>Submit work report</h4><div class="staff-report-grid"><label>Report date<input name="report_date" type="date" value="${new Date().toISOString().slice(0,10)}" required></label><label>Hours spent<input name="hours_spent" type="number" min="0" max="24" step="0.25" placeholder="e.g. 3.5"></label><label class="wide">Work completed / action taken<textarea name="work_done" required minlength="3" placeholder="Describe what you completed today"></textarea></label><label class="wide">Challenges or pending issues<textarea name="challenges" placeholder="Mention any problems or support required"></textarea></label><label class="wide">Next steps<textarea name="next_steps" placeholder="What remains to be done?"></textarea></label><label class="wide">Current work status<select name="task_status"><option value="in_progress">In progress</option><option value="blocked">Blocked / need help</option><option value="completed">Completed</option></select></label><label class="wide">Site photos (multiple)<input name="site_photos" type="file" accept="image/jpeg,image/png" multiple><small>Upload up to 10 JPG or PNG photos, maximum 8 MB each.</small></label><div class="wide staff-photo-preview" data-photo-preview></div><div class="wide staff-location-panel"><div><b>Site location</b><small data-location-status>Location not captured. Tap the button at the work site.</small></div><button class="staff-outline-button" type="button" data-capture-location>Capture GPS location</button><input type="hidden" name="geo_latitude"><input type="hidden" name="geo_longitude"><input type="hidden" name="geo_accuracy_m"><input type="hidden" name="geo_captured_at"><input type="hidden" name="geo_status" value="not_requested"></div></div><div class="staff-report-actions"><button class="staff-submit" type="submit">Submit work report</button></div><p class="staff-message" role="status"></p></form></article>`).join(""):'<div class="staff-empty">No work has been assigned to you yet. New assignments will appear here.</div>';
+ taskBox.querySelectorAll("[data-task-form]").forEach(form=>{
+  const photoInput=form.querySelector('[name="site_photos"]'),preview=form.querySelector("[data-photo-preview]"),locationStatus=form.querySelector("[data-location-status]");
+  photoInput.addEventListener("change",()=>{
+   const files=Array.from(photoInput.files||[]);
+   if(files.length>10){photoInput.value="";preview.textContent="Please select no more than 10 photos.";return;}
+   const invalid=files.find(f=>!["image/jpeg","image/png"].includes(f.type)||f.size>8*1024*1024);
+   if(invalid){photoInput.value="";preview.textContent="Use JPG or PNG photos, maximum 8 MB each.";return;}
+   preview.innerHTML=files.map((f,i)=>'<span class="staff-photo-thumb"><img src="'+URL.createObjectURL(f)+'" alt="Site photo '+(i+1)+'"><small>'+esc(f.name)+'</small></span>').join("");
+  });
+  form.querySelector("[data-capture-location]").addEventListener("click",()=>{
+   const btn=form.querySelector("[data-capture-location]"),status=form.querySelector('[name="geo_status"]');
+   if(!navigator.geolocation){locationStatus.textContent="GPS is not supported by this device.";status.value="unavailable";return;}
+   btn.disabled=true;btn.textContent="Getting location…";locationStatus.textContent="Waiting for location permission…";
+   navigator.geolocation.getCurrentPosition(pos=>{
+    form.querySelector('[name="geo_latitude"]').value=pos.coords.latitude;
+    form.querySelector('[name="geo_longitude"]').value=pos.coords.longitude;
+    form.querySelector('[name="geo_accuracy_m"]').value=pos.coords.accuracy;
+    form.querySelector('[name="geo_captured_at"]').value=new Date(pos.timestamp).toISOString();
+    status.value="captured";locationStatus.textContent="Location captured · ±"+Math.round(pos.coords.accuracy)+" m · "+pos.coords.latitude.toFixed(6)+", "+pos.coords.longitude.toFixed(6);
+    btn.disabled=false;btn.textContent="Refresh GPS location";
+   },err=>{
+    status.value=err.code===1?"denied":"unavailable";
+    locationStatus.textContent=err.code===1?"Location permission denied. You can still submit the report.":"Location unavailable. Check GPS and try again.";
+    btn.disabled=false;btn.textContent="Try GPS again";
+   },{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+  });
+ });
  taskBox.querySelectorAll("[data-task-form]").forEach(form=>form.addEventListener("submit",async e=>{
   e.preventDefault();const fd=new FormData(form),button=form.querySelector("button[type=submit]"),message=form.querySelector(".staff-message"),taskId=form.dataset.taskForm;
   const work=String(fd.get("work_done")||"").trim();if(work.length<3){message.textContent="Please describe the work completed.";return;}
   button.disabled=true;button.textContent="Submitting…";
   const status=String(fd.get("task_status")||"in_progress");
   const report={organization_id:currentOrg.id,task_id:taskId,submitted_by:currentUser.id,report_date:String(fd.get("report_date")),work_done:work,hours_spent:fd.get("hours_spent")?Number(fd.get("hours_spent")):null,challenges:String(fd.get("challenges")||"").trim()||null,next_steps:String(fd.get("next_steps")||"").trim()||null,task_status:status};
-  const {error:reportError}=await supabase.from("task_reports").insert(report);
+  report.photo_paths=[];
+  report.geo_latitude=fd.get("geo_latitude")?Number(fd.get("geo_latitude")):null;
+  report.geo_longitude=fd.get("geo_longitude")?Number(fd.get("geo_longitude")):null;
+  report.geo_accuracy_m=fd.get("geo_accuracy_m")?Number(fd.get("geo_accuracy_m")):null;
+  report.geo_captured_at=fd.get("geo_captured_at")||null;
+  report.geo_status=String(fd.get("geo_status")||"not_requested");
+  const {data:createdReport,error:reportError}=await supabase.from("task_reports").insert(report).select("id").single();
   if(reportError){message.textContent="Report could not be submitted: "+reportError.message;button.disabled=false;button.textContent="Submit work report";return;}
+  const photos=Array.from(form.querySelector('[name="site_photos"]').files||[]),uploadedPaths=[];
+  try{
+   for(let i=0;i<photos.length;i++){
+    const photo=photos[i],safeName=photo.name.replace(/[^a-zA-Z0-9._-]/g,"_").slice(-90)||("site-"+(i+1)+".jpg");
+    const path=currentOrg.id+"/task-reports/"+createdReport.id+"/"+currentUser.id+"/"+crypto.randomUUID()+"-"+safeName;
+    const {error:uploadError}=await supabase.storage.from("task-reports").upload(path,photo,{contentType:photo.type,upsert:false});
+    if(uploadError)throw uploadError;uploadedPaths.push(path);
+   }
+  }catch(uploadError){
+   message.textContent="Report saved, but a photo could not upload: "+uploadError.message+". Please contact your manager; the report is saved without all photos.";
+   button.disabled=false;button.textContent="Submit work report";return;
+  }
+  if(uploadedPaths.length){
+   const {error:pathError}=await supabase.from("task_reports").update({photo_paths:uploadedPaths}).eq("id",createdReport.id).eq("organization_id",currentOrg.id);
+   if(pathError){message.textContent="Report saved, but photo links could not be attached: "+pathError.message;button.disabled=false;button.textContent="Submit work report";return;}
+  }
   const {error:taskError}=await supabase.from("tasks").update({status}).eq("id",taskId).eq("organization_id",currentOrg.id).eq("assigned_to",currentUser.id);
   message.textContent=taskError?"Report submitted, but task status could not be updated: "+taskError.message:"Work report submitted successfully.";
   message.style.color=taskError?"#b34a38":"#21734a";
@@ -58,7 +107,8 @@ async function renderStaffWorkspace(){
   if(!taskError)await renderStaffWorkspace();
  }));
  if(reportsResult.error){reportBox.innerHTML='<div class="staff-empty">'+esc(reportsResult.error.message)+'</div>';return;}
- reportBox.innerHTML=reports.length?reports.map(r=>`<article class="staff-report-card"><div class="staff-task-top"><div><span class="staff-chip ${esc(r.report_status)}">${esc(r.report_status.replaceAll("_"," "))}</span><small> · ${esc(r.report_date)} · ${r.hours_spent??"—"} hours</small><p>${esc(r.work_done)}</p>${r.challenges?'<p><b>Challenges:</b> '+esc(r.challenges)+'</p>':''}${r.manager_feedback?'<p><b>Manager feedback:</b> '+esc(r.manager_feedback)+'</p>':''}</div></div></article>`).join(""):'<div class="staff-empty">You have not submitted any work reports yet.</div>';
+ const photoLinks={};await Promise.all(reports.flatMap(r=>(r.photo_paths||[]).map(async path=>{const {data}=await supabase.storage.from("task-reports").createSignedUrl(path,3600);if(data?.signedUrl)photoLinks[path]=data.signedUrl;})));
+ reportBox.innerHTML=reports.length?reports.map(r=>`<article class="staff-report-card"><div class="staff-task-top"><div><span class="staff-chip ${esc(r.report_status)}">${esc(r.report_status.replaceAll("_"," "))}</span><small> · ${esc(r.report_date)} · ${r.hours_spent??"—"} hours</small><p>${esc(r.work_done)}</p>${r.challenges?'<p><b>Challenges:</b> '+esc(r.challenges)+'</p>':''}${r.manager_feedback?'<p><b>Manager feedback:</b> '+esc(r.manager_feedback)+'</p>':''}${(r.photo_paths||[]).length?'<div class="staff-saved-photos">'+r.photo_paths.map(path=>photoLinks[path]?'<a href="'+esc(photoLinks[path])+'" target="_blank" rel="noopener"><img src="'+esc(photoLinks[path])+'" alt="Uploaded work site photo"></a>':'').join('')+'</div>':''}${r.geo_status==="captured"&&r.geo_latitude!==null?'<p class="staff-geo-info">GPS: '+Number(r.geo_latitude).toFixed(6)+', '+Number(r.geo_longitude).toFixed(6)+' · ±'+Math.round(r.geo_accuracy_m||0)+' m · <a target="_blank" rel="noopener" href="https://www.google.com/maps?q='+r.geo_latitude+','+r.geo_longitude+'">View map</a></p>':''}</div></div></article>`).join(""):'<div class="staff-empty">You have not submitted any work reports yet.</div>';
 }
 $("staffRefresh").addEventListener("click",renderStaffWorkspace);
 $("staffSignOut").addEventListener("click",async()=>{await supabase.auth.signOut();location.reload();});
