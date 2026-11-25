@@ -58,9 +58,35 @@ function escapeHtml(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","
 function showMessage(message){let el=document.getElementById("appMessage");if(!el){el=document.createElement("div");el.id="appMessage";el.className="app-message";document.querySelector(".content").prepend(el);}el.textContent=message;el.hidden=false;}
 function addWorkspaceControls(){
   const actions=document.querySelector(".top-actions");
-  actions.innerHTML=`<span class="status-dot"></span><span class="status-text">Company workspace</span><button id="profileButton" class="profile-button" title="Account">${escapeHtml((currentUser.email||"U").slice(0,1).toUpperCase())}</button><button id="signOutButton" class="signout-button">Sign out</button>`;
-  document.getElementById("profileButton").title=currentUser.email||"Account";
-  document.getElementById("signOutButton").addEventListener("click",async()=>{await supabase.auth.signOut();location.href="./login.html";});
+  actions.innerHTML='<span class="status-dot"></span><span class="status-text">Company workspace</span>';
+}
+async function renderProfile(){
+  title.textContent="My Profile";
+  const meta=currentUser.user_metadata||{};
+  const displayName=meta.full_name||meta.name||meta.display_name||"Account holder";
+  let role="Member";
+  if(currentOrg){
+    const {data}=await supabase.from("organization_members").select("role").eq("organization_id",currentOrg.id).eq("user_id",currentUser.id).eq("status","active").maybeSingle();
+    if(data?.role)role=data.role;
+  }
+  const initial=escapeHtml((displayName!=="Account holder"?displayName:currentUser.email||"U").slice(0,1).toUpperCase());
+  content.innerHTML=`<section class="profile-page">
+    <div class="profile-hero"><div class="profile-avatar">${initial}</div><div><span class="eyebrow">ACCOUNT SETTINGS</span><h2>${escapeHtml(displayName)}</h2><p>Signed in to Biz FOX ERP</p></div></div>
+    <div class="profile-details">
+      <div class="profile-detail"><small>Full name</small><strong>${escapeHtml(displayName)}</strong></div>
+      <div class="profile-detail"><small>Email / login</small><strong>${escapeHtml(currentUser.email||"Not available")}</strong></div>
+      <div class="profile-detail"><small>Company</small><strong>${escapeHtml(currentOrg?.name||"No company linked")}</strong></div>
+      <div class="profile-detail"><small>Access role</small><strong>${escapeHtml(role.replaceAll("_"," "))}</strong></div>
+      <div class="profile-detail"><small>Account ID</small><strong class="profile-id">${escapeHtml(currentUser.id)}</strong></div>
+    </div>
+    <div class="profile-actions"><button class="signout-button profile-signout" id="profileSignOut" type="button">Sign out of Biz FOX ERP</button></div>
+  </section>`;
+  document.getElementById("profileSignOut").addEventListener("click",async()=>{
+    const button=document.getElementById("profileSignOut");button.disabled=true;button.textContent="Signing out…";
+    const {error}=await supabase.auth.signOut();
+    if(error){button.disabled=false;button.textContent="Sign out of Biz FOX ERP";showMessage("Sign out failed: "+error.message);return;}
+    location.replace("./login.html");
+  });
 }
 async function loadOrganizations(){
   const {data,error}=await supabase.from("organizations").select("id,name,slug").order("name");
@@ -275,6 +301,7 @@ async function refreshManagerWork(staff){
 }
 
 async function openPage(id){
+ if(id==="profile"){await renderProfile();return;}
  if(id==="tasks"){await openTaskWorkspace();return;}
  const m=modules.find(x=>x.id===id);if(!m){renderOverview();return;}
  const config=dataModules[id];
