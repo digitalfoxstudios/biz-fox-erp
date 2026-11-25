@@ -53,20 +53,20 @@ async function renderStaffWorkspace(){
    if(!photo)return;
    if(!["image/jpeg","image/png"].includes(photo.type)||photo.size>8*1024*1024){locationStatus.textContent="Photo must be JPG or PNG and no larger than 8 MB.";return;}
    if(selectedPhotos.length>=10){locationStatus.textContent="Maximum 10 site photos reached.";return;}
-   selectedPhotos.push(photo);renderPhotoPreviews();
    const geoStatus=form.querySelector('[name="geo_status"]');
-   if(!navigator.geolocation){geoStatus.value="unavailable";locationStatus.textContent="Photo added. GPS is not supported on this device.";return;}
-   locationStatus.textContent="Photo added. Capturing its GPS location…";
+   if(!navigator.geolocation){geoStatus.value="unavailable";locationStatus.textContent="GPS is required. Enable location services to save a site photo.";return;}
+   locationStatus.textContent="Checking GPS before saving the site photo…";
    navigator.geolocation.getCurrentPosition(pos=>{
     form.querySelector('[name="geo_latitude"]').value=pos.coords.latitude;
     form.querySelector('[name="geo_longitude"]').value=pos.coords.longitude;
     form.querySelector('[name="geo_accuracy_m"]').value=pos.coords.accuracy;
     form.querySelector('[name="geo_captured_at"]').value=new Date(pos.timestamp).toISOString();
     geoStatus.value="captured";
-    locationStatus.textContent="GPS attached to report · ±"+Math.round(pos.coords.accuracy)+" m · "+pos.coords.latitude.toFixed(6)+", "+pos.coords.longitude.toFixed(6);
+    selectedPhotos.push(photo);renderPhotoPreviews();
+    locationStatus.textContent="Photo saved with GPS · ±"+Math.round(pos.coords.accuracy)+" m · "+pos.coords.latitude.toFixed(6)+", "+pos.coords.longitude.toFixed(6);
    },err=>{
     geoStatus.value=err.code===1?"denied":"unavailable";
-    locationStatus.textContent=err.code===1?"Photo added, but location permission was denied. Enable location permission to attach GPS.":"Photo added, but GPS is unavailable. Turn on phone location and try another photo.";
+    locationStatus.textContent=err.code===1?"GPS permission denied. Allow location access and retake the photo.":"GPS unavailable. Turn on phone location and retake the photo.";
    },{enableHighAccuracy:true,timeout:20000,maximumAge:0});
   });
 
