@@ -8,7 +8,7 @@
   <title>Biz FOX ERP</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/css/app.css?v=11">
+  <link rel="stylesheet" href="./assets/css/app.css?v=12">
   <link rel="stylesheet" href="./assets/css/app-update.css?v=1">
 </head>
 <body>
@@ -33,6 +33,8 @@
         <button class="nav-item" data-page="reports">▥ <span>Reports & Audit</span></button>
         <button class="nav-item" data-page="security">♙ <span>Users & Security</span></button>
         <button class="nav-item nav-update-item" id="sidebarAppUpdate" type="button"><span class="nav-update-icon">↻</span><span>App updates</span><span class="nav-update-badge">NEW</span></button>
+        <p class="nav-label">ACCOUNT</p>
+        <button class="nav-item" data-page="profile" type="button">♙ <span>My Profile</span></button>
       </nav>
       <div class="sidebar-foot">Biz FOX ERP <span>Designed &amp; developed by Digital FOX Studio</span></div>
     </aside>
@@ -57,7 +59,7 @@
       <footer>© <span id="year"></span> Biz FOX ERP <span>•</span> Secure office operations <span>•</span> Designed &amp; developed by <strong>Digital FOX Studio</strong></footer>
     </main>
   </div>
-  <script type="module" src="./assets/js/app.js?v=10"></script>
+  <script type="module" src="./assets/js/app.js?v=11"></script>
   <script src="./assets/js/app-update.js?v=1"></script>
   <script>
     if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(() => {}));
