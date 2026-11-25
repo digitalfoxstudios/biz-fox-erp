@@ -150,7 +150,7 @@ async function renderDataTable(config){
   table.querySelectorAll("[data-edit-record]").forEach(button=>button.addEventListener("click",()=>{
    const row=data.find(item=>item.id===button.dataset.editRecord);const form=document.getElementById("recordForm");if(!row||!form)return;
    for(const field of config.fields){const input=form.elements[field[0]];if(!input||field[2]==="file")continue;input.value=row[field[0]]??"";}
-   form.dataset.editId=row.id;form.querySelector('button[type="submit"]').textContent="Update record";
+   form.dataset.editId=row.id;form.hidden=false;document.getElementById("addRecordButton")?.setAttribute("hidden","");form.querySelector("[data-cancel-form]").hidden=false;form.querySelector('button[type="submit"]').textContent="Update record";
    document.getElementById("recordMessage").textContent="Editing selected record. Save to apply changes.";
    form.scrollIntoView({behavior:"smooth",block:"start"});
   }));
@@ -182,6 +182,9 @@ async function openDataConfig(config){
   (departmentResult.data||[]).forEach(dep=>{const option=document.createElement("option");option.value=dep.id;option.textContent=dep.code?dep.code+" · "+dep.name:dep.name;departmentSelect?.append(option);});
  }
  document.getElementById("refreshRecords").addEventListener("click",()=>renderDataTable(config));
+  const recordForm=document.getElementById("recordForm");
+  document.getElementById("addRecordButton")?.addEventListener("click",()=>{recordForm.hidden=false;recordForm.reset();delete recordForm.dataset.editId;recordForm.querySelector("button[type=submit]").textContent="Save record";recordForm.querySelector("[data-cancel-form]").hidden=false;recordForm.scrollIntoView({behavior:"smooth",block:"start"});});
+  recordForm?.querySelector("[data-cancel-form]")?.addEventListener("click",()=>{recordForm.reset();delete recordForm.dataset.editId;recordForm.hidden=true;document.getElementById("addRecordButton")?.removeAttribute("hidden");recordForm.querySelector("[data-cancel-form]").hidden=true;recordForm.querySelector("button[type=submit]").textContent="Save record";});
  content.querySelectorAll("[data-submodule]").forEach(b=>b.addEventListener("click",()=>openDataConfig(extraConfigs[b.dataset.submodule])));
  if(canWrite)document.getElementById("recordForm").addEventListener("submit",async e=>{
   e.preventDefault();const form=e.currentTarget;const button=form.querySelector("button[type=submit]");button.disabled=true;button.textContent="Saving…";
@@ -198,7 +201,7 @@ async function openDataConfig(config){
     else {const {error:updateError}=await supabase.from("office_files").update({storage_path:path}).eq("id",saved.id);if(updateError)finalError=updateError;}
   }
   const msg=document.getElementById("recordMessage");msg.textContent=finalError?("Record saved, but an operation failed: "+finalError.message):"Record saved successfully.";msg.className="form-message "+(finalError?"error":"success");
-  button.disabled=false;button.textContent="Save record";if(!finalError){form.reset();delete form.dataset.editId;button.textContent="Save record";await renderDataTable(config);}
+  button.disabled=false;button.textContent="Save record";if(!finalError){form.reset();delete form.dataset.editId;form.hidden=true;form.querySelector("[data-cancel-form]").hidden=true;document.getElementById("addRecordButton")?.removeAttribute("hidden");button.textContent="Save record";await renderDataTable(config);}
  });
  await renderDataTable(config);
 }
