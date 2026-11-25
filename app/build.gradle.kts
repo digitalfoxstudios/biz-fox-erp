@@ -13,8 +13,8 @@ android {
         applicationId = "com.digitalfox.bizfoxerp"
         minSdk = 23
         targetSdk = 35
-        versionCode = 10
-        versionName = "1.0.9"
+        versionCode = 11
+        versionName = "1.1.0"
     }
     buildFeatures { buildConfig = true }
     flavorDimensions += "edition"
@@ -22,7 +22,7 @@ android {
         create("manager") {
             dimension = "edition"
             resValue("string", "app_name", "Biz FOX ERP")
-            buildConfigField("String", "APP_URL", "\"https://digitalfoxstudios.github.io/biz-fox-erp/?nativeVersion=1.0.9\"")
+            buildConfigField("String", "APP_URL", "\"https://digitalfoxstudios.github.io/biz-fox-erp/?nativeVersion=1.1.0\"")
             buildConfigField("String", "APP_NAME", "\"Biz FOX ERP\"")
             buildConfigField("String", "RELEASE_ASSET", "\"biz-fox-erp-manager.apk\"")
         }
@@ -30,7 +30,7 @@ android {
             dimension = "edition"
             applicationIdSuffix = ".staff"
             resValue("string", "app_name", "Biz FOX Staff")
-            buildConfigField("String", "APP_URL", "\"https://digitalfoxstudios.github.io/biz-fox-erp/staff.html?nativeVersion=1.0.9\"")
+            buildConfigField("String", "APP_URL", "\"https://digitalfoxstudios.github.io/biz-fox-erp/staff.html?nativeVersion=1.1.0\"")
             buildConfigField("String", "APP_NAME", "\"Biz FOX Staff\"")
             buildConfigField("String", "RELEASE_ASSET", "\"biz-fox-staff.apk\"")
         }
@@ -51,4 +51,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+}
+dependencies {
+    implementation("androidx.core:core-ktx:1.15.0")
 }
