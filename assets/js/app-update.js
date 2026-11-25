@@ -3,7 +3,7 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const versionFromUrl = new URLSearchParams(location.search).get("nativeVersion");
   if (versionFromUrl) sessionStorage.setItem("bizfox-native-version", versionFromUrl);
-  const installed = () => sessionStorage.getItem("bizfox-native-version") || "Web portal";
+  const installed = () => sessionStorage.getItem("bizfox-native-version") || (window.BizFoxAndroid ? "1.0.7" : "Web portal");
   let release = null;
   let overlay = null;
   async function loadRelease() {
@@ -72,7 +72,7 @@
       overlay.querySelector("#bfuLatest").textContent=latest||"Unavailable";
       const body=String(data.body||"No release notes were published.");
       overlay.querySelector("#bfuNotes").textContent=body.replace(/\*\*/g,"").replace(/\r/g,"");
-      const isNative=installed()!=="Web portal";
+      const isNative=!!window.BizFoxAndroid;
       const newer=isNative && compare(installed(),latest)<0;
       const status=overlay.querySelector("#bfuStatus");
       if(newer){status.className="bfu-status bfu-available";status.textContent="A new version is available. Update now to get the latest improvements.";action.textContent="Download and install";}
