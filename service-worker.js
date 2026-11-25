@@ -1,5 +1,5 @@
-const CACHE_NAME="biz-fox-erp-shell-v11";
-const APP_SHELL=["./","./index.html","./login.html","./staff.html","./staff.webmanifest","./offline.html","./manifest.webmanifest","./assets/icon.svg","./assets/biz-fox-erp-logo.png","./assets/css/app-update.css?v=1","./assets/css/app.css?v=11","./assets/js/app.js?v=10","./assets/js/supabase.js","./assets/js/auth.js?v=4","./assets/css/staff.css?v=6","./assets/js/staff.js?v=7"];
+const CACHE_NAME="biz-fox-erp-shell-v12";
+const APP_SHELL=["./","./index.html","./login.html","./staff.html","./staff.webmanifest","./offline.html","./manifest.webmanifest","./assets/icon.svg","./assets/biz-fox-erp-logo.png","./assets/css/app-update.css?v=1","./assets/css/app.css?v=12","./assets/js/app.js?v=11","./assets/js/supabase.js","./assets/js/auth.js?v=4","./assets/css/staff.css?v=6","./assets/js/staff.js?v=7"];
 self.addEventListener("install",event=>event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL))));
 self.addEventListener("activate",event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener("fetch",event=>{
