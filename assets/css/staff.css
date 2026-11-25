@@ -23,3 +23,35 @@
 
 /* Approved brand artwork — original logo image, no recreated mark. */
 .staff-logo{width:48px;height:48px;display:block;object-fit:contain;flex:0 0 48px;background:transparent;border-radius:0;color:inherit}
+
+
+/* DIGITAL FOX STUDIO — unified staff app brand system */
+:root{--fox-ink:#142238;--fox-navy:#101c30;--fox-orange:#f28a32;--fox-line:#e5eaf1}
+body{background:radial-gradient(circle at 12% 4%,#e8eef7 0,transparent 32%),#f5f7fa;color:var(--fox-ink)}
+.staff-header{height:78px;background:linear-gradient(100deg,#101c30,#1d3553);border-bottom:1px solid #30445e;box-shadow:0 6px 22px #101c3020}
+.staff-brand{gap:13px}
+.staff-logo{width:50px;height:50px;flex-basis:50px;object-fit:contain;background:transparent;border-radius:0}
+.staff-brand b{font-size:18px;letter-spacing:-.5px}
+.staff-brand small{font-size:9px;letter-spacing:1.4px;color:#c1ccda}
+.staff-shell{max-width:1180px;padding-top:42px}
+.staff-eyebrow{color:#d47a2c;letter-spacing:1.7px}
+.staff-intro h1,.staff-welcome h1{color:#172943;letter-spacing:-1.2px}
+.staff-intro p,.staff-welcome p{color:#6d7b90}
+.staff-auth-card{border:1px solid #e3e9f0;border-radius:19px;box-shadow:0 20px 55px #14223812;padding:32px}
+.staff-auth-card h2{color:#172943;letter-spacing:-.4px}
+.staff-auth-card input,.staff-report-form input,.staff-report-form textarea,.staff-report-form select,.staff-feedback{border-radius:10px;background:#fbfcfe}
+.staff-auth-card input:focus,.staff-report-form input:focus,.staff-report-form textarea:focus,.staff-report-form select:focus{border-color:#ef9b54;box-shadow:0 0 0 3px #f28a3218}
+#staffAuthSubmit,.staff-submit{background:linear-gradient(100deg,#f28a32,#df7428);border-radius:10px;box-shadow:0 5px 14px #e47a2a24}
+.staff-welcome{background:linear-gradient(115deg,#fff,#f8fafc);border:1px solid #e3e9f0;border-radius:17px;box-shadow:0 6px 20px #14223808}
+.staff-outline-button{border-radius:9px;border-color:#dce4ed}
+.staff-outline-button:hover{border-color:#edaa6b;background:#fff8f1}
+.staff-stat{border-radius:14px;border-color:#e3e9f0;box-shadow:0 5px 16px #14223806}
+.staff-stat strong{color:#172943}
+.staff-section-head h2{color:#172943;letter-spacing:-.4px}
+.staff-task-card,.staff-report-card{border-radius:15px;border-color:#e3e9f0;box-shadow:0 6px 20px #14223807}
+.staff-chip{border-radius:7px}
+.staff-chip.urgent,.staff-chip.high{background:#fff0e4;color:#a95720}
+.staff-chip.completed,.staff-chip.approved{background:#e8f7ef;color:#21734a}
+.staff-footer{color:#8491a4;padding:22px 12px}
+.staff-no-access{border-radius:18px;border-color:#e3e9f0}
+@media(max-width:720px){.staff-header{height:70px;padding:0 15px}.staff-shell{padding:26px 14px 42px}.staff-auth-card{padding:23px}.staff-welcome{border-radius:14px}.staff-summary{gap:9px}}
