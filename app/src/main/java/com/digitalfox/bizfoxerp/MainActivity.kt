@@ -1,6 +1,9 @@
 package com.digitalfox.bizfoxerp
 
 import android.app.Activity
+import android.Manifest
+import android.content.pm.PackageManager
+import android.webkit.GeolocationPermissions
 import android.app.AlertDialog
 import android.app.DownloadManager
 import android.content.BroadcastReceiver
@@ -39,6 +42,8 @@ class MainActivity : Activity() {
     private lateinit var web: WebView
     private lateinit var progress: ProgressBar
     private var fileCallback: ValueCallback<Array<Uri>>? = null
+    private var pendingGeoCallback: GeolocationPermissions.Callback? = null
+    private var pendingGeoOrigin: String? = null
     private var downloadReceiverRegistered = false
     private var activeDownloadId = -1L
     private var pendingInstallUri: Uri? = null
@@ -92,6 +97,7 @@ class MainActivity : Activity() {
         web = WebView(this).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
+            settings.setGeolocationEnabled(true)
             settings.allowFileAccess = false
             settings.allowContentAccess = true
             addJavascriptInterface(AndroidUpdateBridge(), "BizFoxAndroid")
@@ -111,8 +117,24 @@ class MainActivity : Activity() {
                 override fun onShowFileChooser(view: WebView?, callback: ValueCallback<Array<Uri>>?, params: FileChooserParams?): Boolean {
                     fileCallback?.onReceiveValue(null)
                     fileCallback = callback
-                    return try { startActivityForResult(params?.createIntent(), FILE_PICKER_REQUEST); true }
-                    catch (_: Exception) { fileCallback = null; false }
+                    return try {
+                        val chooser = params?.createIntent() ?: return false
+                        chooser.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.mode == FileChooserParams.MODE_OPEN_MULTIPLE)
+                        startActivityForResult(chooser, FILE_PICKER_REQUEST)
+                        true
+                    } catch (_: Exception) { fileCallback = null; false }
+                }
+                override fun onGeolocationPermissionsShowPrompt(origin: String?, callback: GeolocationPermissions.Callback?) {
+                    if (origin == null || callback == null) return
+                    val fine = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                    val coarse = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                    if (fine || coarse) {
+                        callback.invoke(origin, true, false)
+                    } else {
+                        pendingGeoOrigin = origin
+                        pendingGeoCallback = callback
+                        requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), LOCATION_REQUEST)
+                    }
                 }
             }
             setDownloadListener(DownloadListener { url, _, contentDisposition, mimeType, _ ->
@@ -251,6 +273,16 @@ class MainActivity : Activity() {
         if (pendingInstallUri != null && (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || packageManager.canRequestPackageInstalls())) installDownloadedApk()
     }
 
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_REQUEST) {
+            val granted = grantResults.any { it == PackageManager.PERMISSION_GRANTED }
+            pendingGeoCallback?.invoke(pendingGeoOrigin, granted, false)
+            pendingGeoCallback = null
+            pendingGeoOrigin = null
+        }
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FILE_PICKER_REQUEST) {
@@ -267,5 +299,5 @@ class MainActivity : Activity() {
     }
     @Suppress("DEPRECATION")
     override fun onBackPressed() { if (this::web.isInitialized && web.canGoBack()) web.goBack() else super.onBackPressed() }
-    companion object { private const val FILE_PICKER_REQUEST = 4102 }
+    companion object { private const val FILE_PICKER_REQUEST = 4102; private const val LOCATION_REQUEST = 4103 }
 }
