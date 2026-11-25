@@ -330,5 +330,5 @@ class MainActivity : Activity() {
     }
     @Suppress("DEPRECATION")
     override fun onBackPressed() { if (this::web.isInitialized && web.canGoBack()) web.goBack() else super.onBackPressed() }
-    companion object { private const val FILE_PICKER_REQUEST = 4102; private const val LOCATION_REQUEST = 4103; private const val CAMERA_CAPTURE_REQUEST = 4104 }
+    companion object { private const val FILE_PICKER_REQUEST = 4102; private const val LOCATION_REQUEST = 4103; private const val CAMERA_CAPTURE_REQUEST = 4104; private const val CAMERA_CAPTURE_REQUEST = 4104 }
 }
