@@ -118,7 +118,7 @@ const extraConfigs = {
 };
 function fieldMarkup(field){
  const [key,label,type,required,options]=field;const req=required?"required":"";
- if(type==="select")return `<label>${label}<select name="${key}" ${req}><option value="">Select ${label}</option>${(options||[]).map(x=>`<option value="${x}">${x.replaceAll("_"," ")}</option>`).join("")}</select></label>`;
+ if(type==="select")return `<label>${label}<select name="${key}" ${req}><option value="">Select ${label}</option>${(options||[]).map(x=>`<option value="${x}" ${key==="employment_status"&&x==="active"?"selected":""}>${x.replaceAll("_"," ")}</option>`).join("")}</select></label>`;
  if(type==="file")return `<label class="wide-field">${label}<input name="${key}" type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xlsx"></label>`;
  if(type==="textarea")return `<label class="wide-field">${label}<textarea name="${key}" rows="2" ${req}></textarea></label>`;
  return `<label>${label}<input name="${key}" type="${type}" ${type==="number"?'step="0.01" min="0"':""} ${req}></label>`;
