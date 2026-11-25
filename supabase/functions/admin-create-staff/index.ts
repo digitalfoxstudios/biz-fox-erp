@@ -20,7 +20,7 @@ Deno.serve(async(req:Request)=>{
  if(employee.employment_status!=="active")return json({error:"Only active employees can receive a login."},400);
  if(!employee.email)return json({error:"Add an email address to the employee record first."},400);
  if(employee.user_id)return json({error:"This employee already has a linked login."},409);
- const {data:invite,error:inviteError}=await admin.auth.admin.inviteUserByEmail(employee.email,{redirectTo:"https://digitalfoxstudios.github.io/biz-fox-erp/staff.html",data:{full_name:employee.full_name,account_type:"staff"}});
+ const {data:invite,error:inviteError}=await admin.auth.admin.inviteUserByEmail(employee.email,{redirectTo:"https://digitalfoxstudios.github.io/biz-fox-erp/staff.html?setup-password=1",data:{full_name:employee.full_name,account_type:"staff"}});
  if(inviteError||!invite.user)return json({error:inviteError?.message||"Invitation could not be sent."},400);
  const uid=invite.user.id;
  const {error:linkError}=await admin.from("employees").update({user_id:uid}).eq("id",employee.id).eq("organization_id",input.organization_id);
