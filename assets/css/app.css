@@ -193,3 +193,10 @@ footer{padding:18px 32px;background:#fff;border-top:1px solid #e5eaf1;color:#879
  footer{padding:15px}
 }
 @media(max-width:380px){.welcome-icon{display:none}.module-grid{grid-template-columns:1fr}}
+
+/* Manager work-evidence gallery and GPS link */
+.task-report-photos{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0}
+.task-report-photos a{display:block}
+.task-report-photos img{width:112px;height:88px;object-fit:cover;border:1px solid #e0e6ee;border-radius:9px;background:#f1f4f8}
+.task-report-location{font-size:11px!important;color:#64748b!important}
+.task-report-location a{color:#c66c27;font-weight:800}
