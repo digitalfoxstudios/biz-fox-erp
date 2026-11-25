@@ -2,9 +2,16 @@ package com.digitalfox.bizfoxerp
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings
 import android.webkit.JavascriptInterface
 import android.webkit.CookieManager
 import android.webkit.DownloadListener
@@ -14,11 +21,11 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import android.view.View
 import android.graphics.Color
 import android.graphics.Typeface
@@ -32,11 +39,39 @@ class MainActivity : Activity() {
     private lateinit var web: WebView
     private lateinit var progress: ProgressBar
     private var fileCallback: ValueCallback<Array<Uri>>? = null
+    private var downloadReceiverRegistered = false
+    private var activeDownloadId = -1L
+    private var pendingInstallUri: Uri? = null
     private val appUrl = BuildConfig.APP_URL
     private val releasesApi = "https://api.github.com/repos/digitalfoxstudios/biz-fox-erp/releases/latest"
 
+    private val downloadReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != DownloadManager.ACTION_DOWNLOAD_COMPLETE) return
+            val completedId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L)
+            if (completedId != activeDownloadId) return
+            val manager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+            manager.query(DownloadManager.Query().setFilterById(completedId)).use { cursor ->
+                if (!cursor.moveToFirst()) {
+                    Toast.makeText(this@MainActivity, "Could not find the downloaded update.", Toast.LENGTH_LONG).show()
+                    return
+                }
+                val status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                    pendingInstallUri = manager.getUriForDownloadedFile(completedId)
+                    if (pendingInstallUri != null) installDownloadedApk()
+                    else Toast.makeText(this@MainActivity, "Android could not open the downloaded APK.", Toast.LENGTH_LONG).show()
+                } else {
+                    val reason = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
+                    Toast.makeText(this@MainActivity, "Update download failed (code $reason). Please try again.", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        registerDownloadReceiver()
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Color.WHITE) }
         val bar = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
@@ -53,9 +88,7 @@ class MainActivity : Activity() {
             setTextColor(Color.WHITE); layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
         }
         bar.addView(brandMark); bar.addView(brand)
-        progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
-            max = 100; visibility = View.GONE
-        }
+        progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply { max = 100; visibility = View.GONE }
         web = WebView(this).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
@@ -64,9 +97,7 @@ class MainActivity : Activity() {
             addJavascriptInterface(AndroidUpdateBridge(), "BizFoxAndroid")
             CookieManager.getInstance().setAcceptCookie(true)
             webViewClient = object : WebViewClient() {
-                override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
-                    this@MainActivity.progress.visibility = View.VISIBLE
-                }
+                override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) { this@MainActivity.progress.visibility = View.VISIBLE }
                 override fun onPageFinished(view: WebView?, url: String?) { this@MainActivity.progress.visibility = View.GONE }
                 override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
                     if (request?.isForMainFrame == true) view?.loadUrl("file:///android_asset/offline.html")
@@ -80,24 +111,19 @@ class MainActivity : Activity() {
                 override fun onShowFileChooser(view: WebView?, callback: ValueCallback<Array<Uri>>?, params: FileChooserParams?): Boolean {
                     fileCallback?.onReceiveValue(null)
                     fileCallback = callback
-                    return try {
-                        startActivityForResult(params?.createIntent(), FILE_PICKER_REQUEST)
-                        true
-                    } catch (_: Exception) { fileCallback = null; false }
+                    return try { startActivityForResult(params?.createIntent(), FILE_PICKER_REQUEST); true }
+                    catch (_: Exception) { fileCallback = null; false }
                 }
             }
             setDownloadListener(DownloadListener { url, _, contentDisposition, mimeType, _ ->
                 try {
-                    val request = android.app.DownloadManager.Request(Uri.parse(url))
+                    val request = DownloadManager.Request(Uri.parse(url))
                     request.setMimeType(mimeType)
                     request.setTitle(android.webkit.URLUtil.guessFileName(url, contentDisposition, mimeType))
-                    request.setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    request.setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS,
-                        android.webkit.URLUtil.guessFileName(url, contentDisposition, mimeType))
-                    (getSystemService(DOWNLOAD_SERVICE) as android.app.DownloadManager).enqueue(request)
-                } catch (_: Exception) {
-                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                }
+                    request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, android.webkit.URLUtil.guessFileName(url, contentDisposition, mimeType))
+                    (getSystemService(DOWNLOAD_SERVICE) as DownloadManager).enqueue(request)
+                } catch (_: Exception) { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
             })
         }
         root.addView(bar)
@@ -107,45 +133,122 @@ class MainActivity : Activity() {
         if (savedInstanceState == null) web.loadUrl(appUrl) else web.restoreState(savedInstanceState)
     }
 
+    private fun registerDownloadReceiver() {
+        val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+        if (Build.VERSION.SDK_INT >= 33) registerReceiver(downloadReceiver, filter, Context.RECEIVER_EXPORTED)
+        else registerReceiver(downloadReceiver, filter)
+        downloadReceiverRegistered = true
+    }
+
     private inner class AndroidUpdateBridge {
-        @JavascriptInterface fun checkForUpdates() { runOnUiThread { checkForUpdates() } }
+        @JavascriptInterface fun checkForUpdates() { runOnUiThread { this@MainActivity.checkForUpdates() } }
+    }
+
+    private fun compareVersions(remote: String, installed: String): Int {
+        val a = remote.removePrefix("v").split(".").map { it.toIntOrNull() ?: 0 }
+        val b = installed.removePrefix("v").split(".").map { it.toIntOrNull() ?: 0 }
+        for (i in 0 until maxOf(a.size, b.size)) {
+            val difference = a.getOrElse(i) { 0 }.compareTo(b.getOrElse(i) { 0 })
+            if (difference != 0) return difference
+        }
+        return 0
     }
 
     private fun checkForUpdates() {
-        AlertDialog.Builder(this).setTitle("Biz FOX ERP updates")
-            .setMessage("Checking for the latest Android APK…").setCancelable(true).show().also { dialog ->
-                thread {
-                    var version: String? = null
-                    var apkUrl: String? = null
-                    try {
-                        val connection = URL(releasesApi).openConnection() as HttpURLConnection
-                        connection.connectTimeout = 10000; connection.readTimeout = 10000
-                        connection.setRequestProperty("Accept", "application/vnd.github+json")
-                        val json = JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
-                        version = json.optString("tag_name").removePrefix("v")
-                        val assets = json.optJSONArray("assets")
-                        if (assets != null) for (i in 0 until assets.length()) {
-                            val asset = assets.getJSONObject(i)
-                            if (asset.optString("name") == BuildConfig.RELEASE_ASSET) { apkUrl = asset.optString("browser_download_url"); break }
-                        }
-                        connection.disconnect()
-                    } catch (_: Exception) { }
-                    runOnUiThread {
-                        dialog.dismiss()
-                        if (apkUrl != null) {
-                            AlertDialog.Builder(this).setTitle("Update available")
-                                .setMessage("Biz FOX ERP version $version is available. Download and install the new APK?")
-                                .setNegativeButton("Later", null)
-                                .setPositiveButton("Download APK") { _, _ -> startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(apkUrl))) }
-                                .show()
-                        } else {
-                            AlertDialog.Builder(this).setTitle("No update found")
-                                .setMessage("No published Android APK update is available yet. Your installed app can continue to be used.")
-                                .setPositiveButton("OK", null).show()
-                        }
-                    }
+        val checkingDialog = AlertDialog.Builder(this).setTitle("Biz FOX ERP updates")
+            .setMessage("Checking the latest Android version…").setCancelable(false).show()
+        thread {
+            var remoteVersion: String? = null
+            var apkUrl: String? = null
+            var failure: String? = null
+            var connection: HttpURLConnection? = null
+            try {
+                connection = URL(releasesApi).openConnection() as HttpURLConnection
+                connection.connectTimeout = 12000
+                connection.readTimeout = 12000
+                connection.setRequestProperty("Accept", "application/vnd.github+json")
+                val responseCode = connection.responseCode
+                if (responseCode !in 200..299) throw IllegalStateException("GitHub returned HTTP $responseCode")
+                val json = JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
+                remoteVersion = json.optString("tag_name").removePrefix("v")
+                val assets = json.optJSONArray("assets")
+                if (assets != null) for (i in 0 until assets.length()) {
+                    val asset = assets.getJSONObject(i)
+                    if (asset.optString("name") == BuildConfig.RELEASE_ASSET) { apkUrl = asset.optString("browser_download_url"); break }
+                }
+                if (remoteVersion.isNullOrBlank() || apkUrl.isNullOrBlank()) throw IllegalStateException("No matching APK was published.")
+            } catch (error: Exception) { failure = error.message ?: "Network error" }
+            finally { connection?.disconnect() }
+            runOnUiThread {
+                checkingDialog.dismiss()
+                when {
+                    failure != null -> AlertDialog.Builder(this).setTitle("Update check failed")
+                        .setMessage("Could not check for updates. Check your internet connection and try again.\n\n$failure")
+                        .setPositiveButton("OK", null).show()
+                    compareVersions(remoteVersion!!, BuildConfig.VERSION_NAME) <= 0 -> AlertDialog.Builder(this)
+                        .setTitle("You're up to date")
+                        .setMessage("Biz FOX " + BuildConfig.VERSION_NAME + " is the latest version available.")
+                        .setPositiveButton("OK", null).show()
+                    else -> AlertDialog.Builder(this).setTitle("Update available")
+                        .setMessage("Biz FOX " + BuildConfig.VERSION_NAME + " → " + remoteVersion + " is available. Download it now? You can keep using the app while it downloads.")
+                        .setNegativeButton("Later", null)
+                        .setPositiveButton("Download update") { _, _ -> downloadUpdate(apkUrl!!, remoteVersion!!) }.show()
                 }
             }
+        }
+    }
+
+    private fun downloadUpdate(apkUrl: String, version: String) {
+        try {
+            val uri = Uri.parse(apkUrl)
+            if (uri.scheme != "https" || uri.host != "github.com") {
+                Toast.makeText(this, "The update source is not trusted.", Toast.LENGTH_LONG).show()
+                return
+            }
+            val request = DownloadManager.Request(uri)
+                .setTitle(BuildConfig.APP_NAME + " update")
+                .setDescription("Downloading version " + version)
+                .setMimeType("application/vnd.android.package-archive")
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setAllowedOverMetered(true)
+                .setAllowedOverRoaming(false)
+                .setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, "biz-fox-" + BuildConfig.RELEASE_ASSET)
+            activeDownloadId = (getSystemService(DOWNLOAD_SERVICE) as DownloadManager).enqueue(request)
+            Toast.makeText(this, "Update download started. You can keep using Biz FOX.", Toast.LENGTH_LONG).show()
+        } catch (error: Exception) {
+            AlertDialog.Builder(this).setTitle("Download could not start")
+                .setMessage(error.message ?: "Please try again.").setPositiveButton("OK", null).show()
+        }
+    }
+
+    private fun installDownloadedApk() {
+        val apkUri = pendingInstallUri ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls()) {
+            AlertDialog.Builder(this).setTitle("Allow Biz FOX to install updates")
+                .setMessage("Android requires permission to install updates downloaded by Biz FOX. Enable “Allow from this source”, then return here to continue.")
+                .setNegativeButton("Cancel") { _, _ -> pendingInstallUri = null }
+                .setPositiveButton("Open settings") { _, _ ->
+                    try { startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + packageName))) }
+                    catch (_: Exception) { Toast.makeText(this, "Open Android Settings and allow installs for Biz FOX.", Toast.LENGTH_LONG).show() }
+                }.show()
+            return
+        }
+        try {
+            val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(apkUri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(installIntent)
+            pendingInstallUri = null
+        } catch (error: Exception) {
+            Toast.makeText(this, "Android could not open the installer: " + error.message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (pendingInstallUri != null && (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || packageManager.canRequestPackageInstalls())) installDownloadedApk()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -155,8 +258,14 @@ class MainActivity : Activity() {
             fileCallback?.onReceiveValue(result); fileCallback = null
         }
     }
-    override fun onSaveInstanceState(outState: Bundle) { web.saveState(outState); super.onSaveInstanceState(outState) }
-    override fun onBackPressed() { if (this::web.isInitialized && web.canGoBack()) web.goBack() else super.onBackPressed() }
 
+    override fun onSaveInstanceState(outState: Bundle) { web.saveState(outState); super.onSaveInstanceState(outState) }
+    override fun onDestroy() {
+        if (downloadReceiverRegistered) { try { unregisterReceiver(downloadReceiver) } catch (_: Exception) { }; downloadReceiverRegistered = false }
+        if (this::web.isInitialized) web.destroy()
+        super.onDestroy()
+    }
+    @Suppress("DEPRECATION")
+    override fun onBackPressed() { if (this::web.isInitialized && web.canGoBack()) web.goBack() else super.onBackPressed() }
     companion object { private const val FILE_PICKER_REQUEST = 4102 }
 }
