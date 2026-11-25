@@ -11,6 +11,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
+import android.provider.MediaStore
+import androidx.core.content.FileProvider
+import java.io.File
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -42,6 +45,7 @@ class MainActivity : Activity() {
     private lateinit var web: WebView
     private lateinit var progress: ProgressBar
     private var fileCallback: ValueCallback<Array<Uri>>? = null
+    private var pendingCameraUri: Uri? = null
     private var pendingGeoCallback: GeolocationPermissions.Callback? = null
     private var pendingGeoOrigin: String? = null
     private var downloadReceiverRegistered = false
@@ -118,11 +122,15 @@ class MainActivity : Activity() {
                     fileCallback?.onReceiveValue(null)
                     fileCallback = callback
                     return try {
-                        val chooser = params?.createIntent() ?: return false
-                        chooser.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.mode == FileChooserParams.MODE_OPEN_MULTIPLE)
-                        startActivityForResult(chooser, FILE_PICKER_REQUEST)
+                        if (params?.isCaptureEnabled == true) {
+                            launchDirectCamera()
+                        } else {
+                            val chooser = params?.createIntent() ?: return false
+                            chooser.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.mode == FileChooserParams.MODE_OPEN_MULTIPLE)
+                            startActivityForResult(chooser, FILE_PICKER_REQUEST)
+                        }
                         true
-                    } catch (_: Exception) { fileCallback = null; false }
+                    } catch (_: Exception) { fileCallback?.onReceiveValue(null); fileCallback = null; pendingCameraUri = null; false }
                 }
                 override fun onGeolocationPermissionsShowPrompt(origin: String?, callback: GeolocationPermissions.Callback?) {
                     if (origin == null || callback == null) return
@@ -153,6 +161,24 @@ class MainActivity : Activity() {
         root.addView(web, LinearLayout.LayoutParams(-1, 0, 1f))
         setContentView(root)
         if (savedInstanceState == null) web.loadUrl(appUrl) else web.restoreState(savedInstanceState)
+    }
+
+    private fun launchDirectCamera() {
+        val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        if (cameraIntent.resolveActivity(packageManager) == null) {
+            fileCallback?.onReceiveValue(null)
+            fileCallback = null
+            Toast.makeText(this, "No camera app is available on this phone.", Toast.LENGTH_LONG).show()
+            return
+        }
+        val photoFile = File.createTempFile("bizfox-site-", ".jpg", cacheDir)
+        val authority = "${applicationContext.packageName}.fileprovider"
+        val outputUri = FileProvider.getUriForFile(this, authority, photoFile)
+        pendingCameraUri = outputUri
+        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputUri)
+        cameraIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        cameraIntent.clipData = android.content.ClipData.newUri(contentResolver, "Site photo", outputUri)
+        startActivityForResult(cameraIntent, CAMERA_CAPTURE_REQUEST)
     }
 
     private fun registerDownloadReceiver() {
@@ -285,7 +311,12 @@ class MainActivity : Activity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == FILE_PICKER_REQUEST) {
+        if (requestCode == CAMERA_CAPTURE_REQUEST) {
+            val result = if (resultCode == Activity.RESULT_OK) pendingCameraUri?.let { arrayOf(it) } else null
+            fileCallback?.onReceiveValue(result)
+            fileCallback = null
+            pendingCameraUri = null
+        } else if (requestCode == FILE_PICKER_REQUEST) {
             val result = if (resultCode == Activity.RESULT_OK && data != null) WebChromeClient.FileChooserParams.parseResult(resultCode, data) else null
             fileCallback?.onReceiveValue(result); fileCallback = null
         }
@@ -299,5 +330,5 @@ class MainActivity : Activity() {
     }
     @Suppress("DEPRECATION")
     override fun onBackPressed() { if (this::web.isInitialized && web.canGoBack()) web.goBack() else super.onBackPressed() }
-    companion object { private const val FILE_PICKER_REQUEST = 4102; private const val LOCATION_REQUEST = 4103 }
+    companion object { private const val FILE_PICKER_REQUEST = 4102; private const val LOCATION_REQUEST = 4103; private const val CAMERA_CAPTURE_REQUEST = 4104 }
 }
