@@ -111,3 +111,85 @@ html,body{width:100%;max-width:100%;overflow-x:clip}
  .data-page-actions button{flex:1}
  .record-form-actions button{flex:1}
 }
+
+
+/* DIGITAL FOX STUDIO — Biz FOX ERP visual system */
+:root{--fox-ink:#142238;--fox-navy:#101c30;--fox-panel:#172943;--fox-orange:#f28a32;--fox-gold:#ffb45f;--fox-paper:#f5f7fa;--fox-line:#e5eaf1;--fox-muted:#718096}
+body{background:var(--fox-paper);color:var(--fox-ink)}
+.sidebar{width:276px;padding:24px 16px 18px;background:linear-gradient(180deg,#101c30 0%,#14253d 100%);border-right:1px solid #263a56}
+.brand{gap:13px;padding:3px 9px 26px;border-bottom:1px solid #ffffff12;margin-bottom:12px}
+.brand-logo{width:50px;height:50px;flex-basis:50px;object-fit:contain}
+.brand strong{font-size:18px;letter-spacing:-.55px}
+.brand small{font-size:9px;letter-spacing:1.05px;text-transform:uppercase;color:#a9b7cb}
+.nav-label{padding:20px 12px 8px;font-size:9px;letter-spacing:1.55px;color:#8091aa}
+.nav-item{min-height:43px;margin:3px 0;padding:10px 12px;gap:13px;border:1px solid transparent;border-radius:10px;color:#bdc9d9;font-family:inherit;font-size:14px;transition:background .18s,border-color .18s,color .18s}
+.nav-item>span{font-size:12px;font-weight:600}
+.nav-item:hover{background:#ffffff0d;color:#fff}
+.nav-item.active{background:linear-gradient(100deg,#f28a32 0%,#dc7025 100%);border-color:#ffb66d;color:#fff;box-shadow:0 7px 18px #f28a3230,inset 0 1px #ffffff30}
+.nav-item.active{box-shadow:0 7px 18px #f28a3230}
+.nav-update-item{border-color:#43536a!important;background:#1b304b!important}
+.nav-update-item:hover{border-color:var(--fox-gold)!important;background:#263e5d!important}
+.sidebar-foot{border-top:1px solid #ffffff18;color:#e6edf6;padding:17px 10px 3px;font-weight:700;letter-spacing:.2px}
+.sidebar-foot span{color:#98a9bf;font-weight:500;letter-spacing:0}
+.main{margin-left:276px;background:#f5f7fa}
+.topbar{height:82px;padding:0 32px;background:#fff;border-bottom:1px solid var(--fox-line);box-shadow:0 3px 15px #14223806}
+.topbar h1{font-size:21px;letter-spacing:-.5px;color:#142238}
+.topbar .eyebrow{color:#d47a2c;letter-spacing:1.65px}
+.content{max-width:1440px;padding:28px 32px 34px}
+.welcome{position:relative;min-height:176px;padding:30px 34px;border:1px solid #29425f;border-radius:18px;background:radial-gradient(circle at 88% 18%,#37516f 0,transparent 32%),linear-gradient(115deg,#13243b 0%,#203b5b 60%,#2b4565 100%);box-shadow:0 12px 28px #13243b18}
+.welcome:after{content:"";position:absolute;right:0;bottom:0;width:180px;height:4px;background:linear-gradient(90deg,transparent,var(--fox-orange))}
+.welcome .eyebrow{color:#ffbd7d}
+.welcome h2{font-size:clamp(22px,2.4vw,29px);letter-spacing:-.8px}
+.welcome p{font-size:13px;color:#d2dce9}
+.welcome-icon{font-size:76px;color:#ffad60;text-shadow:0 8px 28px #ff9a3c30}
+.stats-grid{gap:16px;margin:22px 0 31px}
+.stat-card{position:relative;min-height:142px;padding:19px 20px;border:1px solid #e7ebf1;border-radius:15px;box-shadow:0 5px 18px #1a2d4607;transition:transform .18s,box-shadow .18s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 10px 25px #1a2d4610}
+.stat-icon{width:36px;height:36px;border-radius:11px;font-size:16px}
+.stat-card p{font-size:12px;font-weight:650;color:#6e7c91;margin:12px 0 3px}
+.stat-card strong{font-size:27px;letter-spacing:-.7px;color:#172943}
+.stat-card small{font-size:10px;color:#8995a7}
+.section-heading{margin:0 0 14px}
+.section-heading h3{font-size:17px;letter-spacing:-.35px;color:#172943}
+.section-heading p{font-size:11px;color:#8390a3}
+.module-grid{gap:14px}
+.module-card{position:relative;min-height:132px;padding:17px 18px;border:1px solid #e5eaf1;border-radius:14px;box-shadow:0 4px 14px #1a2d4605;transition:transform .18s,border-color .18s,box-shadow .18s}
+.module-card:before{content:"";position:absolute;left:0;top:16px;bottom:16px;width:3px;border-radius:0 3px 3px 0;background:#f28a32;opacity:0;transition:opacity .18s}
+.module-card:hover{transform:translateY(-3px);border-color:#f1bd8d;box-shadow:0 12px 25px #1a2d4610}
+.module-card:hover:before{opacity:1}
+.module-card .module-icon{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#fff1e5;color:#d76d22;font-size:17px}
+.module-card strong{font-size:12px;margin:11px 0 5px;color:#1d304a}
+.module-card small{font-size:10px;line-height:1.55;color:#7d8ba0}
+.notice{border-color:#f1d7bd;background:#fff9f3;border-radius:12px;padding:16px 18px}
+.notice strong{font-size:11px;color:#a95e24}
+.notice p{font-size:10px;color:#826d5b}
+footer{padding:18px 32px;background:#fff;border-top:1px solid #e5eaf1;color:#8793a5}
+.empty-page,.data-page{border-color:#e5eaf1;border-radius:15px;box-shadow:0 5px 18px #1a2d4606}
+.primary-button{background:linear-gradient(100deg,#f28a32,#df7428);box-shadow:0 5px 13px #e47a2a24}
+.primary-button:hover{filter:brightness(1.04)}
+.secondary-button,.signout-button{border-color:#dfe5ed;border-radius:9px}
+.login-body{background:radial-gradient(circle at 18% 15%,#e5edf7 0,#f5f7fa 42%,#eef2f7 100%)}
+.login-wrap{width:min(460px,100%)}
+.login-brand{padding-bottom:25px}
+.login-card{border:1px solid #e3e9f0;border-radius:19px;box-shadow:0 22px 65px #13243b16;padding:32px}
+.login-heading .eyebrow{color:#d47a2c}
+.login-heading h1{letter-spacing:-.7px;color:#172943}
+.login-card input{height:46px;border-radius:10px;background:#fbfcfe}
+.login-card input:focus{border-color:#ef9b54;box-shadow:0 0 0 3px #f28a3218}
+.login-card .primary-button{height:46px;border-radius:10px;font-size:13px}
+.login-foot{color:#8793a5}
+@media(max-width:1050px){.module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+ .sidebar{width:min(292px,86vw);padding:20px 14px}
+ .main{margin-left:0}
+ .topbar{min-height:74px;padding:12px 15px}
+ .content{padding:17px 13px 25px}
+ .welcome{min-height:154px;padding:22px 19px;border-radius:15px}
+ .welcome-icon{font-size:48px}
+ .stats-grid{gap:10px;margin:15px 0 24px}
+ .stat-card{min-height:126px;padding:14px}
+ .module-grid{gap:10px}
+ .module-card{min-height:124px;padding:14px}
+ footer{padding:15px}
+}
+@media(max-width:380px){.welcome-icon{display:none}.module-grid{grid-template-columns:1fr}}
