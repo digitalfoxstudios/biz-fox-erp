@@ -2,7 +2,7 @@ name: Deploy Biz FOX ERP to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/multi-tenant-platform]
   workflow_dispatch:
 
 permissions:
@@ -29,6 +29,7 @@ jobs:
           node --check assets/js/app.js
           node --check assets/js/supabase.js
           node --check assets/js/auth.js
+          node --check assets/js/platform-admin.js
           node --check assets/js/staff.js
           node --check service-worker.js
       - name: Configure Pages
