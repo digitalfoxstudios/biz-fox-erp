@@ -25,7 +25,9 @@ async function boot(user){
  const {data:orgs,error:orgError}=await supabase.from("organizations").select("id,name").in("id",ids).order("name");
  if(orgError||!orgs?.length){showNoAccess("Your organization could not be loaded. Contact your office manager.");return;}
  staffOrganizations=orgs;currentOrg=orgs[0];
- portal.hidden=false;$("staffGreeting").textContent="My assignments";$("staffOrgName").textContent=currentOrg.name+" · Signed in as "+(user.email||"staff");
+ portal.hidden=false;$("staffGreeting").textContent="My assignments";$("staffOrgName").textContent=currentOrg.name+" · Employee workspace";
+ $("staffProfileName").textContent=user.user_metadata?.full_name||user.user_metadata?.name||((user.email||"employee@staff.bizfox.invalid").split("@")[0]);
+ $("staffProfileDetails").textContent="Username: "+((user.email||"").split("@")[0])+" · Role: Employee · Company: "+currentOrg.name;
  await renderStaffWorkspace();
 }
 function showNoAccess(message="Your staff login is not linked to an active employee record. Ask the administrator to create your employee record and issue your username and password."){
@@ -112,7 +114,8 @@ async function renderStaffWorkspace(){
  reportBox.innerHTML=reports.length?reports.map(r=>`<article class="staff-report-card"><div class="staff-task-top"><div><span class="staff-chip ${esc(r.report_status)}">${esc(r.report_status.replaceAll("_"," "))}</span><small> · ${esc(r.report_date)} · ${r.hours_spent??"—"} hours</small><p>${esc(r.work_done)}</p>${r.challenges?'<p><b>Challenges:</b> '+esc(r.challenges)+'</p>':''}${r.manager_feedback?'<p><b>Manager feedback:</b> '+esc(r.manager_feedback)+'</p>':''}${(r.photo_paths||[]).length?'<div class="staff-saved-photos">'+r.photo_paths.map(path=>photoLinks[path]?'<a href="'+esc(photoLinks[path])+'" target="_blank" rel="noopener"><img src="'+esc(photoLinks[path])+'" alt="Uploaded work site photo"></a>':'').join('')+'</div>':''}${r.geo_status==="captured"&&r.geo_latitude!==null?'<p class="staff-geo-info">GPS: '+Number(r.geo_latitude).toFixed(6)+', '+Number(r.geo_longitude).toFixed(6)+' · ±'+Math.round(r.geo_accuracy_m||0)+' m · <a target="_blank" rel="noopener" href="https://www.google.com/maps?q='+r.geo_latitude+','+r.geo_longitude+'">View map</a></p>':''}</div></div></article>`).join(""):'<div class="staff-empty">You have not submitted any work reports yet.</div>';
 }
 $("staffRefresh").addEventListener("click",renderStaffWorkspace);
-$("staffSignOut").addEventListener("click",async()=>{await supabase.auth.signOut();location.reload();});
+$("staffProfileToggle").addEventListener("click",()=>{const card=$("staffProfileCard"),open=card.hidden;card.hidden=!open;$("staffProfileToggle").setAttribute("aria-expanded",String(open));});
+$("staffSignOut").addEventListener("click",async()=>{await supabase.auth.signOut();location.replace("./login.html");});
 $("staffNoAccessSignOut").addEventListener("click",async()=>{await supabase.auth.signOut();location.reload();});
 supabase.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_OUT"){currentUser=null;portal.hidden=true;noAccess.hidden=true;authPanel.hidden=false;loginForm.hidden=false;setupForm.hidden=true;}if(event==="PASSWORD_RECOVERY")showPasswordSetup();});
 const {data:{session}}=await supabase.auth.getSession();
