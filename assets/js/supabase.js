@@ -49,6 +49,38 @@ async function storeResponse(key, response) {
   const item = { key, body: await response.clone().text(), status: response.status, statusText: response.statusText, headers: [...response.headers.entries()], savedAt: Date.now() };
   await dbAction("responses", "readwrite", store => store.put(item));
 }
+async function mergePendingRows(url, cachedBody) {
+  let parsed;
+  try { parsed = JSON.parse(cachedBody); } catch { return cachedBody; }
+  if (!Array.isArray(parsed)) return cachedBody;
+  const table = new URL(url).pathname.split("/").pop();
+  const items = await outboxItems().catch(() => []);
+  for (const item of items) {
+    const pendingUrl = new URL(item.url);
+    if (pendingUrl.pathname.split("/").pop() !== table) continue;
+    const filters = new URL(url).searchParams;
+    const idFilter = filters.get("id");
+    if (item.method === "POST") {
+      try {
+        const body = JSON.parse(item.body);
+        const rows = Array.isArray(body) ? body : [body];
+        rows.forEach(row => {
+          if (row && !parsed.some(existing => existing.id && existing.id === row.id)) {
+            if (!row.created_at) row.created_at = new Date(item.createdAt).toISOString();
+            parsed.push(row);
+          }
+        });
+      } catch {}
+    } else if (idFilter?.startsWith("eq.")) {
+      const id = idFilter.slice(3);
+      const index = parsed.findIndex(row => row.id === id);
+      if (item.method === "PATCH" && index >= 0) {
+        try { Object.assign(parsed[index], JSON.parse(item.body)); } catch {}
+      } else if (item.method === "DELETE" && index >= 0) parsed.splice(index, 1);
+    }
+  }
+  return JSON.stringify(parsed);
+}
 async function outboxItems() {
   const db = await openOfflineDb();
   return new Promise((resolve, reject) => {
@@ -71,6 +103,8 @@ async function queueRequest(url, method, headers, body) {
     const addId = row => {
       if (row && typeof row === "object" && !Array.isArray(row)) {
         if (!row.id) row.id = crypto.randomUUID();
+        if (!row.created_at) row.created_at = new Date().toISOString();
+        if (!row.updated_at) row.updated_at = row.created_at;
         return row;
       }
       return row;
@@ -95,6 +129,8 @@ async function syncOutbox() {
     for (const item of items) {
       const headers = new Headers(item.headers);
       try {
+        const sessionResult = await supabase.auth.getSession();
+        if (sessionResult.data?.session?.access_token) headers.set("Authorization", "Bearer " + sessionResult.data.session.access_token);
         const response = await nativeFetch(item.url, { method: item.method, headers, body: item.body || undefined });
         if (response.ok || response.status === 409) {
           await dbAction("outbox", "readwrite", store => store.delete(item.id));
@@ -154,7 +190,10 @@ window.fetch = async (input, init = {}) => {
       return response;
     } catch (error) {
       const cached = await cachedResponse(key).catch(() => null);
-      if (cached) return new Response(cached.body, { status: cached.status, statusText: cached.statusText, headers: cached.headers });
+      if (cached) {
+        const body = await mergePendingRows(url.href, cached.body).catch(() => cached.body);
+        return new Response(body, { status: cached.status, statusText: cached.statusText, headers: cached.headers });
+      }
       throw error;
     }
   }
