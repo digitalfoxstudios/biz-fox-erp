@@ -71,8 +71,8 @@ async function mergePendingRows(url, cachedBody) {
           }
         });
       } catch {}
-    } else if (idFilter?.startsWith("eq.")) {
-      const id = idFilter.slice(3);
+    } else if (pendingUrl.searchParams.get("id")?.startsWith("eq.")) {
+      const id = pendingUrl.searchParams.get("id").slice(3);
       const index = parsed.findIndex(row => row.id === id);
       if (item.method === "PATCH" && index >= 0) {
         try { Object.assign(parsed[index], JSON.parse(item.body)); } catch {}
@@ -124,6 +124,7 @@ let syncRunning = false;
 async function syncOutbox() {
   if (!navigator.onLine || syncRunning) return;
   syncRunning = true;
+  let syncedCount = 0;
   try {
     const items = await outboxItems();
     for (const item of items) {
@@ -135,6 +136,7 @@ async function syncOutbox() {
         if (response.ok || response.status === 409) {
           await dbAction("outbox", "readwrite", store => store.delete(item.id));
           await dbAction("responses", "readwrite", store => store.clear());
+          syncedCount++;
           continue;
         }
         const message = await response.clone().text();
@@ -150,8 +152,8 @@ async function syncOutbox() {
     syncRunning = false;
     await setOfflineState();
     const state = window.BizFoxOfflineState;
-    if (state.online && state.pending === 0) {
-      window.dispatchEvent(new CustomEvent("bizfox:synccomplete"));
+    if (state.online && state.pending === 0 && syncedCount > 0) {
+      window.dispatchEvent(new CustomEvent("bizfox:synccomplete", { detail: { synced: syncedCount } }));
     }
   }
 }
