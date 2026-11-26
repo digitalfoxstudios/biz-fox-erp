@@ -306,6 +306,12 @@ async function openTaskWorkspace(){
   <div class="data-page-actions task-add-action"><button id="addAssignmentButton" class="primary-button" type="button">+ New assignment</button></div><form id="assignmentForm" class="record-form" hidden><h3>New work assignment</h3><div class="form-grid">
    <label>Work / assignment title<input name="title" required maxlength="180" placeholder="Enter work title"></label>
    <label>Assign to staff member<select name="assigned_to" required><option value="">Loading staff…</option></select></label>
+   <label>Customer<select name="customer_id"><option value="">No customer linked</option></select></label>
+   <label>Site contact name<input name="site_contact_name" placeholder="Optional site contact"></label>
+   <label>Site contact phone<input name="site_contact_phone" type="tel" placeholder="Optional contact number"></label>
+   <label class="wide-field">Work site address<input name="site_address" placeholder="Leave blank to use customer address"></label>
+   <label>Site latitude<input name="site_latitude" type="number" step="any" placeholder="Optional"></label>
+   <label>Site longitude<input name="site_longitude" type="number" step="any" placeholder="Optional"></label>
    <label>Priority<select name="priority"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="urgent">Urgent</option></select></label>
    <label>Deadline<input name="due_at" type="datetime-local"></label>
    <label class="wide-field">Instructions / work details<textarea name="description" rows="3" placeholder="Describe the expected work and deliverables"></textarea></label>
@@ -321,11 +327,14 @@ async function openTaskWorkspace(){
  if(staffError){staffSelect.innerHTML='<option value="">Could not load staff</option>';document.getElementById("assignmentMessage").textContent=staffError.message;}
  else if(!staff?.length){staffSelect.innerHTML='<option value="">No linked staff accounts yet</option>';document.getElementById("assignmentMessage").textContent="Add the employee in Administration & HR, then use Create username & password in the employee list. Give the employee those credentials to sign in to the unified app.";}
  else{staffSelect.innerHTML='<option value="">Choose staff member</option>'+staff.map(x=>'<option value="'+escapeHtml(x.user_id)+'">'+escapeHtml([x.employee_code,x.full_name,x.designation].filter(Boolean).join(" · "))+'</option>').join("");}
+ const customerSelect=document.querySelector('#assignmentForm [name="customer_id"]');
+ const {data:customers,error:customerError}=await supabase.from("customers").select("id,customer_name,customer_code").eq("organization_id",currentOrg.id).eq("status","active").order("customer_name");
+ customerSelect.innerHTML=customerError?'<option value="">Customer list unavailable</option>':'<option value="">No customer linked</option>'+(customers||[]).map(c=>'<option value="'+escapeHtml(c.id)+'">'+escapeHtml([c.customer_code,c.customer_name].filter(Boolean).join(" · "))+'</option>').join("");
  document.getElementById("assignmentForm").addEventListener("submit",async e=>{
   e.preventDefault();const form=e.currentTarget;const button=form.querySelector('button[type="submit"]');const fd=new FormData(form);
   if(!fd.get("assigned_to")){document.getElementById("assignmentMessage").textContent="Please select a linked staff member.";return;}
   button.disabled=true;button.textContent="Assigning…";
-  const payload={organization_id:currentOrg.id,title:String(fd.get("title")).trim(),description:String(fd.get("description")||"").trim()||null,priority:String(fd.get("priority")||"normal"),assigned_to:String(fd.get("assigned_to")),created_by:currentUser.id,due_at:fd.get("due_at")?new Date(String(fd.get("due_at"))).toISOString():null};
+  const payload={organization_id:currentOrg.id,title:String(fd.get("title")).trim(),description:String(fd.get("description")||"").trim()||null,priority:String(fd.get("priority")||"normal"),assigned_to:String(fd.get("assigned_to")),created_by:currentUser.id,customer_id:String(fd.get("customer_id")||"")||null,site_address:String(fd.get("site_address")||"").trim()||null,site_contact_name:String(fd.get("site_contact_name")||"").trim()||null,site_contact_phone:String(fd.get("site_contact_phone")||"").trim()||null,site_latitude:fd.get("site_latitude")?Number(fd.get("site_latitude")):null,site_longitude:fd.get("site_longitude")?Number(fd.get("site_longitude")):null,due_at:fd.get("due_at")?new Date(String(fd.get("due_at"))).toISOString():null};
   const {error}=await supabase.from("tasks").insert(payload);
   document.getElementById("assignmentMessage").textContent=error?"Assignment failed: "+error.message:"Work assigned successfully.";
   document.getElementById("assignmentMessage").className="form-message "+(error?"error":"success");
@@ -335,16 +344,18 @@ async function openTaskWorkspace(){
  await refreshManagerWork(staff||[]);
 }
 async function refreshManagerWork(staff){
- const [taskResult,reportResult,expenseResult]=await Promise.all([
+ const [taskResult,reportResult,expenseResult,customerResult]=await Promise.all([
   supabase.from("tasks").select("*").eq("organization_id",currentOrg.id).order("created_at",{ascending:false}).limit(100),
   supabase.from("task_reports").select("*").eq("organization_id",currentOrg.id).order("created_at",{ascending:false}).limit(100),
-  supabase.from("task_expenses").select("*").eq("organization_id",currentOrg.id).order("created_at",{ascending:false}).limit(200)
+  supabase.from("task_expenses").select("*").eq("organization_id",currentOrg.id).order("created_at",{ascending:false}).limit(200),
+  supabase.from("customers").select("id,customer_name,phone,contact_person,shipping_address,billing_address,city,state,pincode").eq("organization_id",currentOrg.id)
  ]);
  const taskBox=document.getElementById("managerTaskList"),reportBox=document.getElementById("managerReportList"),expenseBox=document.getElementById("managerExpenseList");if(!taskBox||!reportBox||!expenseBox)return;
  if(taskResult.error){taskBox.innerHTML='<p class="form-error">'+escapeHtml(taskResult.error.message)+'</p>';return;}
  const staffMap=Object.fromEntries((staff||[]).map(x=>[x.user_id,x.full_name]));
- const tasks=taskResult.data||[];document.getElementById("taskCount").textContent=tasks.length+" assignments";
- taskBox.innerHTML=tasks.length?tasks.map(t=>`<article class="task-work-card"><div class="task-work-main"><div><span class="task-priority priority-${escapeHtml(t.priority)}">${escapeHtml(t.priority)}</span><span class="task-state state-${escapeHtml(t.status)}">${escapeHtml(t.status.replaceAll("_"," "))}</span></div><h3>${escapeHtml(t.title)}</h3><p>${escapeHtml(t.description||"No extra instructions")}</p><small>Assigned to: ${escapeHtml(staffMap[t.assigned_to]||"Staff account")} · Due: ${t.due_at?escapeHtml(new Date(t.due_at).toLocaleString()):"No deadline"}</small><div class="task-manager-actions"><button type="button" data-task-status="${t.id}" data-next-status="in_progress" ${t.status==="in_progress"?"disabled":""}>Mark in progress</button><button type="button" data-task-status="${t.id}" data-next-status="completed" ${t.status==="completed"?"disabled":""}>Mark completed</button></div></div></article>`).join(""):'<div class="empty-records">No assignments yet. Create the first assignment above.</div>';
+ const tasks=taskResult.data||[],customerMap=Object.fromEntries((customerResult.data||[]).map(c=>[c.id,c]));document.getElementById("taskCount").textContent=tasks.length+" assignments";
+ const taskCustomerBlock=(t)=>{const c=customerMap[t.customer_id]||{};const address=t.site_address||c.shipping_address||c.billing_address||[c.city,c.state,c.pincode].filter(Boolean).join(", ");const contact=t.site_contact_name||c.contact_person;const phone=t.site_contact_phone||c.phone;const hasSite=t.customer_id||address||contact||phone||t.site_latitude!=null;return hasSite?`<div class="task-customer-details"><b>Customer / site details</b>${c.customer_name?`<p>${escapeHtml(c.customer_name)}</p>`:""}${address?`<p>Address: ${escapeHtml(address)}</p>`:""}${contact?`<p>Contact: ${escapeHtml(contact)}</p>`:""}${phone?`<p>Phone: <a href="tel:${escapeHtml(phone)}">${escapeHtml(phone)}</a></p>`:""}${t.site_latitude!=null&&t.site_longitude!=null?`<p><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${t.site_latitude},${t.site_longitude}">Open site map</a></p>`:""}</div>`:"";};
+ taskBox.innerHTML=tasks.length?tasks.map(t=>`<article class="task-work-card"><div class="task-work-main"><div><span class="task-priority priority-${escapeHtml(t.priority)}">${escapeHtml(t.priority)}</span><span class="task-state state-${escapeHtml(t.status)}">${escapeHtml(t.status.replaceAll("_"," "))}</span></div><h3>${escapeHtml(t.title)}</h3><p>${escapeHtml(t.description||"No extra instructions")}</p>${taskCustomerBlock(t)}<small>Assigned to: ${escapeHtml(staffMap[t.assigned_to]||"Staff account")} · Due: ${t.due_at?escapeHtml(new Date(t.due_at).toLocaleString()):"No deadline"}</small><div class="task-manager-actions"><button type="button" data-task-status="${t.id}" data-next-status="in_progress" ${t.status==="in_progress"?"disabled":""}>Mark in progress</button><button type="button" data-task-status="${t.id}" data-next-status="completed" ${t.status==="completed"?"disabled":""}>Mark completed</button></div></div></article>`).join(""):'<div class="empty-records">No assignments yet. Create the first assignment above.</div>';
 taskBox.querySelectorAll("[data-task-status]").forEach(button=>button.addEventListener("click",async()=>{
   const id=button.dataset.taskStatus,status=button.dataset.nextStatus;
   button.disabled=true;button.textContent="Saving…";
