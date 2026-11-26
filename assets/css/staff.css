@@ -77,3 +77,5 @@ body{background:radial-gradient(circle at 12% 4%,#e8eef7 0,transparent 32%),#f5f
 .staff-profile-card .staff-eyebrow{font-size:9px;letter-spacing:1.2px;color:#bf6a2a;font-weight:800}
 .staff-profile-card .staff-submit{width:auto;min-width:112px;padding:10px 16px}
 @media(max-width:540px){.staff-profile-card{align-items:flex-start;flex-direction:column}.staff-profile-card .staff-submit{width:100%}}
+
+.staff-network-status{font-size:11px;color:#d5deeb;white-space:nowrap}.staff-header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}@media(max-width:540px){.staff-network-status{width:100%;text-align:right}.staff-header-actions{justify-content:flex-end}}
