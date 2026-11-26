@@ -43,7 +43,7 @@ begin
  insert into public.organization_members(organization_id,user_id,role,status) values(v_org.id,v_owner_id,'owner','active');
  return jsonb_build_object('id',v_org.id,'name',v_org.name,'slug',v_org.slug,'status',v_org.account_status,'owner_email',lower(trim(p_owner_email)),'plan',v_plan.name);
 end; $$;
-revoke all on function public.platform_create_tenant(text,text,text,text) from public;
+revoke all on function public.platform_create_tenant(text,text,text,text) from anon, public;
 grant execute on function public.platform_create_tenant(text,text,text,text) to authenticated;
 create or replace function public.platform_set_tenant_status(p_tenant_id uuid,p_status text)
 returns boolean language plpgsql security definer set search_path=public as $$
@@ -53,7 +53,7 @@ begin
  update public.organizations set account_status=p_status,updated_at=now() where id=p_tenant_id;
  if not found then raise exception 'Business account not found'; end if; return true;
 end; $$;
-revoke all on function public.platform_set_tenant_status(uuid,text) from public;
+revoke all on function public.platform_set_tenant_status(uuid,text) from anon, public;
 grant execute on function public.platform_set_tenant_status(uuid,text) to authenticated;
 create or replace function public.platform_list_tenants()
 returns table(id uuid,name text,slug text,account_status text,billing_email text,created_at timestamptz,plan_name text,member_count bigint)
@@ -64,5 +64,5 @@ begin
  (select count(*) from public.organization_members m where m.organization_id=o.id)
  from public.organizations o left join public.platform_subscription_plans p on p.id=o.subscription_plan_id order by o.created_at desc;
 end; $$;
-revoke all on function public.platform_list_tenants() from public;
+revoke all on function public.platform_list_tenants() from anon, public;
 grant execute on function public.platform_list_tenants() to authenticated;
