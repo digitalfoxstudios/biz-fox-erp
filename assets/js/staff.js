@@ -10,7 +10,9 @@ $("staffAuthForm").addEventListener("submit",async e=>{
  if(!/^[a-z0-9._-]{3,32}$/.test(username)){showAuthMessage("Enter a valid username.");return;}
  if(!/^[0-9]{8}$/.test(password)){showAuthMessage("Password must contain exactly 8 digits.");return;}
  button.disabled=true;button.textContent="Signing in…";
- const result=await supabase.auth.signInWithPassword({email:username+"@staff.bizfox.invalid",password});
+ let result;
+ try{result=await supabase.auth.signInWithPassword({email:username+"@staff.bizfox.invalid",password});}
+ catch(error){button.disabled=false;button.textContent="Sign in";showAuthMessage("Could not connect. Check your internet connection and try again.");return;}
  button.disabled=false;button.textContent="Sign in";
  if(result.error){showAuthMessage("Incorrect username or password. Contact your administrator if you need new credentials.");return;}
  if(result.data.session)await boot(result.data.session.user);
@@ -48,14 +50,14 @@ async function renderStaffWorkspace(){
  taskBox.innerHTML=tasks.length?tasks.map(t=>`<article class="staff-task-card"><div class="staff-task-top"><div><span class="staff-chip ${esc(t.priority)}">${esc(t.priority)} priority</span> <span class="staff-chip ${esc(t.status)}">${esc(t.status.replaceAll("_"," "))}</span><h3>${esc(t.title)}</h3><p>${esc(t.description||"No additional instructions were provided.")}</p><div class="staff-task-meta"><span class="staff-chip">Due: ${t.due_at?esc(new Date(t.due_at).toLocaleString()):"Not specified"}</span></div></div></div><form class="staff-report-form" data-task-form="${t.id}"><h4>Submit work report</h4><div class="staff-report-grid"><label>Report date<input name="report_date" type="date" value="${new Date().toISOString().slice(0,10)}" required></label><label>Hours spent<input name="hours_spent" type="number" min="0" max="24" step="0.25" placeholder="e.g. 3.5"></label><label class="wide">Work completed / action taken<textarea name="work_done" required minlength="3" placeholder="Describe what you completed today"></textarea></label><label class="wide">Challenges or pending issues<textarea name="challenges" placeholder="Mention any problems or support required"></textarea></label><label class="wide">Next steps<textarea name="next_steps" placeholder="What remains to be done?"></textarea></label><label class="wide">Current work status<select name="task_status"><option value="in_progress">In progress</option><option value="blocked">Blocked / need help</option><option value="completed">Completed</option></select></label><div class="wide staff-photo-controls"><b>Work site photos</b><button class="staff-outline-button" type="button" data-open-camera>Take site photo</button><input name="camera_photo" type="file" accept="image/*" capture="environment" hidden><small>Camera capture only. Take up to 10 site photos. GPS location is captured automatically with each photo.</small></div><div class="wide staff-photo-preview" data-photo-preview></div><div class="wide staff-location-panel"><div><b>Photo GPS location</b><small data-location-status>GPS will be captured automatically when you take a site photo.</small></div><input type="hidden" name="geo_latitude"><input type="hidden" name="geo_longitude"><input type="hidden" name="geo_accuracy_m"><input type="hidden" name="geo_captured_at"><input type="hidden" name="geo_status" value="not_requested"></div></div><div class="staff-report-actions"><button class="staff-submit" type="submit">Submit work report</button></div><p class="staff-message" role="status"></p></form></article>`).join(""):'<div class="staff-empty">No work has been assigned to you yet. New assignments will appear here.</div>';
  taskBox.querySelectorAll("[data-task-form]").forEach(form=>{
   const cameraInput=form.querySelector('[name="camera_photo"]'),preview=form.querySelector("[data-photo-preview]"),locationStatus=form.querySelector("[data-location-status]");
-  let selectedPhotos=[];
-  const renderPhotoPreviews=()=>{preview.innerHTML=selectedPhotos.map((f,i)=>'<span class="staff-photo-thumb"><img src="'+URL.createObjectURL(f)+'" alt="Site photo '+(i+1)+'"><small>Site photo '+(i+1)+'</small></span>').join("");};
-  form.querySelector("[data-open-camera]").addEventListener("click",()=>{if(selectedPhotos.length>=10){locationStatus.textContent="Maximum 10 site photos reached.";return;}cameraInput.click();});
+  form.__form.__selectedPhotos=[];
+  const renderPhotoPreviews=()=>{preview.innerHTML=form.__selectedPhotos.map((f,i)=>'<span class="staff-photo-thumb"><img src="'+URL.createObjectURL(f)+'" alt="Site photo '+(i+1)+'"><small>Site photo '+(i+1)+'</small></span>').join("");};
+  form.querySelector("[data-open-camera]").addEventListener("click",()=>{if(form.__selectedPhotos.length>=10){locationStatus.textContent="Maximum 10 site photos reached.";return;}cameraInput.click();});
   cameraInput.addEventListener("change",()=>{
    const photo=cameraInput.files&&cameraInput.files[0];cameraInput.value="";
    if(!photo)return;
    if(!["image/jpeg","image/png"].includes(photo.type)||photo.size>8*1024*1024){locationStatus.textContent="Photo must be JPG or PNG and no larger than 8 MB.";return;}
-   if(selectedPhotos.length>=10){locationStatus.textContent="Maximum 10 site photos reached.";return;}
+   if(form.__selectedPhotos.length>=10){locationStatus.textContent="Maximum 10 site photos reached.";return;}
    const geoStatus=form.querySelector('[name="geo_status"]');
    if(!navigator.geolocation){geoStatus.value="unavailable";locationStatus.textContent="GPS is required. Enable location services to save a site photo.";return;}
    locationStatus.textContent="Checking GPS before saving the site photo…";
@@ -65,7 +67,7 @@ async function renderStaffWorkspace(){
     form.querySelector('[name="geo_accuracy_m"]').value=pos.coords.accuracy;
     form.querySelector('[name="geo_captured_at"]').value=new Date(pos.timestamp).toISOString();
     geoStatus.value="captured";
-    selectedPhotos.push(photo);renderPhotoPreviews();
+    form.__selectedPhotos.push(photo);renderPhotoPreviews();
     locationStatus.textContent="Photo saved with GPS · ±"+Math.round(pos.coords.accuracy)+" m · "+pos.coords.latitude.toFixed(6)+", "+pos.coords.longitude.toFixed(6);
    },err=>{
     geoStatus.value=err.code===1?"denied":"unavailable";
@@ -88,7 +90,7 @@ async function renderStaffWorkspace(){
   report.geo_status=String(fd.get("geo_status")||"not_requested");
   const {data:createdReport,error:reportError}=await supabase.from("task_reports").insert(report).select("id").single();
   if(reportError){message.textContent="Report could not be submitted: "+reportError.message;button.disabled=false;button.textContent="Submit work report";return;}
-  const photos=selectedPhotos,uploadedPaths=[];
+  const photos=form.__selectedPhotos,uploadedPaths=[];
   try{
    for(let i=0;i<photos.length;i++){
     const photo=photos[i],safeName=photo.name.replace(/[^a-zA-Z0-9._-]/g,"_").slice(-90)||("site-"+(i+1)+".jpg");
@@ -125,10 +127,9 @@ $("staffRefresh").addEventListener("click",renderStaffWorkspace);
 $("staffProfileToggle").addEventListener("click",()=>{const card=$("staffProfileCard"),open=card.hidden;card.hidden=!open;$("staffProfileToggle").setAttribute("aria-expanded",String(open));});
 $("staffSignOut").addEventListener("click",async()=>{await supabase.auth.signOut();location.replace("./login.html");});
 $("staffNoAccessSignOut").addEventListener("click",async()=>{await supabase.auth.signOut();location.reload();});
-supabase.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_OUT"){currentUser=null;portal.hidden=true;noAccess.hidden=true;authPanel.hidden=false;loginForm.hidden=false;setupForm.hidden=true;}if(event==="PASSWORD_RECOVERY")showPasswordSetup();});
+supabase.auth.onAuthStateChange((event)=>{if(event==="SIGNED_OUT"){currentUser=null;currentOrg=null;portal.hidden=true;noAccess.hidden=true;authPanel.hidden=false;}});
 const {data:{session}}=await supabase.auth.getSession();
-if(setupRequested)showPasswordSetup(session?"":"Open this page using the secure password link sent to your email.");
-else if(session)await boot(session.user);
+if(session)await boot(session.user);
 
 document.getElementById("staffAppUpdate").addEventListener("click",()=>{
  if(window.BizFoxAndroid?.checkForUpdates){window.BizFoxAndroid.checkForUpdates();return;}
