@@ -80,6 +80,20 @@ async function mergePendingRows(url, cachedBody) {
   }
   return JSON.stringify(parsed);
 }
+async function queueStorageUpload(url, method, headers, body) {
+  let bytes;
+  if (body instanceof Blob) bytes = await body.arrayBuffer();
+  else if (body instanceof ArrayBuffer) bytes = body;
+  else if (ArrayBuffer.isView(body)) bytes = body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength);
+  else throw new Error("This file type cannot be stored for offline upload.");
+  const id = crypto.randomUUID();
+  await dbAction("outbox", "readwrite", store => store.put({
+    id, kind: "storage", url, method, headers: [...headers.entries()], body: bytes, createdAt: Date.now(), attempts: 0
+  }));
+  await setOfflineState();
+  const key = new URL(url).pathname.split("/storage/v1/object/")[1] || "";
+  return new Response(JSON.stringify({ Key: key, Id: "offline-" + id }), { status: 200, headers: { "Content-Type": "application/json" } });
+}
 async function outboxItems() {
   const db = await openOfflineDb();
   return new Promise((resolve, reject) => {
@@ -201,9 +215,19 @@ window.fetch = async (input, init = {}) => {
   const method = String(init.method || (typeof input === "string" ? "GET" : input.method) || "GET").toUpperCase();
   const url = new URL(requestUrl, location.href);
   const isDatabaseApi = url.origin === SUPABASE_URL && url.pathname.startsWith("/rest/v1/");
-  if (!isDatabaseApi) return nativeFetch(input, init);
+  const isStorageUpload = url.origin === SUPABASE_URL && url.pathname.startsWith("/storage/v1/object/") && ["POST","PUT"].includes(method);
+  if (!isDatabaseApi && !isStorageUpload) return nativeFetch(input, init);
   const headers = new Headers(init.headers || (typeof input === "string" ? undefined : input.headers));
   const key = responseKey(url.href, headers);
+
+  if (isStorageUpload) {
+    try { const response = await nativeFetch(input, init); serverReachable = true; return response; }
+    catch (error) {
+      serverReachable = false;
+      await setOfflineState();
+      return queueStorageUpload(url.href, method, headers, init.body);
+    }
+  }
 
   if (method === "GET") {
     try {
