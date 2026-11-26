@@ -28,7 +28,7 @@ async function boot(user){
  portal.hidden=false;$("staffGreeting").textContent="My assignments";$("staffOrgName").textContent=currentOrg.name+" · Signed in as "+(user.email||"staff");
  await renderStaffWorkspace();
 }
-function showNoAccess(message="Your login is not linked to an active employee record. Ask your office manager to add your employee record using this same email address. It will link automatically; then sign in again."){
+function showNoAccess(message="Your staff login is not linked to an active employee record. Ask the administrator to create your employee record and issue your username and password."){
  authPanel.hidden=true;portal.hidden=true;noAccess.hidden=false;
  const p=noAccess.querySelector("p");if(p)p.textContent=message;
 }
