@@ -323,3 +323,22 @@ body{background:#f3f6fb}
 @media(max-width:720px){.sales-summary{grid-template-columns:1fr 1fr}.sales-toolbar{align-items:flex-start;flex-direction:column}.sales-line-row,.sales-lines-head>div{grid-template-columns:minmax(130px,1fr) 64px 88px 72px 30px;gap:5px}.sales-line-row input,.sales-line-row select{padding:8px 5px;font-size:12px}.sales-calculation{flex-direction:column;align-items:stretch}.sales-calculation label{max-width:none}.sales-calculation>div{min-width:0}.sales-head-mark{display:none}}
 
 .brand-splash{position:fixed;inset:0;z-index:9999;background:#101827;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:12px;transition:opacity .25s ease,visibility .25s ease}.brand-splash img{width:124px;height:124px;object-fit:contain;margin-bottom:12px}.brand-splash strong{font-size:26px}.brand-splash small{font-size:10px;letter-spacing:2px;color:#ffad5e}.brand-splash.hidden{opacity:0;visibility:hidden;pointer-events:none}.top-actions{gap:10px}.status-dot.offline{background:#d97706}.notify-enable{border:1px solid #dce3ec;background:#fff;border-radius:9px;padding:7px 10px;cursor:pointer;color:#25364c}
+
+
+/* Mobile workspace header and action layout refinement */
+@media(max-width:600px){
+  .data-page-head{display:grid;grid-template-columns:minmax(0,1fr);align-items:start;gap:14px}
+  .data-page-head>div:first-child{min-width:0}
+  .data-page-head h2{overflow-wrap:anywhere}
+  .data-page-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%;margin:0 0 18px}
+  .data-page-actions button,
+  .data-page-actions .primary-button{box-sizing:border-box;width:100%;min-width:0;min-height:48px;margin:0;padding:12px 10px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap;flex:none}
+  .submodule-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:17px}
+  .submodule-links button{width:100%;min-height:44px;padding:9px 10px;white-space:nowrap;text-align:center}
+}
+@media(min-width:601px){
+  .data-page-head{align-items:center}
+  .data-page-actions{flex-wrap:nowrap}
+  .data-page-actions .primary-button{white-space:nowrap;min-width:112px}
+  .data-page-actions .secondary-button{white-space:nowrap;min-width:96px}
+}
