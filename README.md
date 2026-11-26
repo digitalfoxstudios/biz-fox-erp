@@ -104,3 +104,10 @@ Set the Supabase Auth **Site URL** to:
 Allow that URL and the staff portal path in the Supabase Auth redirect URL list so email confirmation and password recovery return to the app.
 
 Never add a secret or service-role key to `assets/js/supabase.js`.
+
+
+## Multi-tenant platform rollout
+
+The multi-tenant platform foundation is being introduced on the `feature/multi-tenant-platform` branch while preserving the existing single-workspace source as the baseline. Platform Super Admin authentication routes to `platform-admin.html`. The platform console supports business provisioning, plan selection, business status management and tenant listing through permission-checked database functions.
+
+New business provisioning requires the owner's Supabase Auth account to exist first. The platform console does not create passwords or bypass Auth invitations. Every tenant-owned business record continues to use the existing `organization_id` isolation model and organization membership roles. Subscription plan prices are initial configuration values and must be reviewed before commercial launch.
