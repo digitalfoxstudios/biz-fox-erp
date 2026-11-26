@@ -191,6 +191,7 @@ window.BizFoxOffline = {
 };
 window.addEventListener("online", syncOutbox);
 window.addEventListener("online", setOfflineState);
+window.addEventListener("online", () => window.dispatchEvent(new CustomEvent("bizfox:online")));
 window.addEventListener("offline", setOfflineState);
 window.addEventListener("load", () => { setOfflineState(); if (navigator.onLine) syncOutbox(); });
 window.setInterval?.(() => { if (navigator.onLine) syncOutbox(); }, 60000);
