@@ -23,6 +23,13 @@ let currentUser=null;
 let currentOrg=null;
 let organizations=[];
 let activePage="overview";
+let activeDataConfig=null;
+const pageBackStack=[];
+function updateBackButton(){const b=document.getElementById("workspaceBackButton");if(b)b.disabled=pageBackStack.length===0;}
+function rememberCurrentPage(){pageBackStack.push({page:activePage,config:activeDataConfig});if(pageBackStack.length>30)pageBackStack.shift();}
+async function goBack(){const p=pageBackStack.pop();if(!p){updateBackButton();return;}if(p.config){activePage=p.page;await openDataConfig(p.config);}else{activeDataConfig=null;if(p.page==="overview")await renderOverview();else await openPage(p.page);}document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.page===activePage));updateBackButton();}
+const backButtonObserver=new MutationObserver(()=>{if(!document.getElementById("workspaceBackButton")){const bar=document.createElement("div");bar.className="workspace-backbar";bar.innerHTML='<button id="workspaceBackButton" class="workspace-back-button" type="button">← Back</button>';content.prepend(bar);bar.querySelector("button").addEventListener("click",goBack);}updateBackButton();});
+backButtonObserver.observe(content,{childList:true});
 
 let appRegistration=null;
 let appUpdateNotice=null;
@@ -243,6 +250,7 @@ async function renderDataTable(config){
  }
 }
 async function openDataConfig(config){
+ activeDataConfig=config;
  title.textContent=config.title;
  const canWrite=!config.readOnly;
  content.innerHTML=`<div class="data-page"><div class="data-page-head"><div><span class="tag">${config.readOnly?"Read only":"Workspace records"}</span><h2>${escapeHtml(config.title)}</h2><p>Organization: ${escapeHtml(currentOrg.name)}</p></div><div class="data-page-actions">${canWrite?'<button id="addRecordButton" class="primary-button" type="button">+ Add new</button>':""}<button id="refreshRecords" class="secondary-button">Refresh</button></div></div>
@@ -265,7 +273,7 @@ async function openDataConfig(config){
   const recordForm=document.getElementById("recordForm");
   document.getElementById("addRecordButton")?.addEventListener("click",()=>{recordForm.hidden=false;recordForm.reset();delete recordForm.dataset.editId;recordForm.querySelector("button[type=submit]").textContent="Save record";recordForm.querySelector("[data-cancel-form]").hidden=false;recordForm.scrollIntoView({behavior:"smooth",block:"start"});});
   recordForm?.querySelector("[data-cancel-form]")?.addEventListener("click",()=>{recordForm.reset();delete recordForm.dataset.editId;recordForm.hidden=true;document.getElementById("addRecordButton")?.removeAttribute("hidden");recordForm.querySelector("[data-cancel-form]").hidden=true;recordForm.querySelector("button[type=submit]").textContent="Save record";});
- content.querySelectorAll("[data-submodule]").forEach(b=>b.addEventListener("click",()=>openDataConfig(extraConfigs[b.dataset.submodule])));
+ content.querySelectorAll("[data-submodule]").forEach(b=>b.addEventListener("click",()=>{rememberCurrentPage();openDataConfig(extraConfigs[b.dataset.submodule]);updateBackButton();}));
  if(canWrite)document.getElementById("recordForm").addEventListener("submit",async e=>{
   e.preventDefault();const form=e.currentTarget;const button=form.querySelector("button[type=submit]");button.disabled=true;button.textContent="Saving…";
   const payload={organization_id:currentOrg.id};
@@ -493,6 +501,7 @@ async function openSalesWorkspace(initialTab="customers"){
 
 async function openPage(id){
  activePage=id;
+ activeDataConfig=null;
  if(id==="profile"){await renderProfile();return;}
  if(id==="tasks"){await openTaskWorkspace();return;}
  if(id==="reports"){await openReportsWorkspace();return;}
@@ -503,7 +512,7 @@ async function openPage(id){
  title.textContent=m.name;
  content.innerHTML=`<div class="empty-page"><span class="module-icon">${m.icon}</span><h2>${m.name}</h2><span class="tag">Under development</span><p>${m.desc}. This module is on the implementation roadmap and will be connected to the workspace in a later phase.</p></div>`;
 }
-document.addEventListener("click",e=>{const b=e.target.closest("[data-page]");if(!b)return;const id=b.dataset.page;if(id==="overview")renderOverview();else openPage(id);document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.page===id));document.getElementById("sidebar").classList.remove("open");});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-page]");if(!b)return;const id=b.dataset.page;if(id===activePage&&!activeDataConfig)return;rememberCurrentPage();if(id==="overview")renderOverview();else openPage(id);updateBackButton();document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.page===id));document.getElementById("sidebar").classList.remove("open");});
 window.addEventListener("bizfox:online",()=>{setTimeout(()=>{if(currentUser&&activePage==="overview")renderOverview();else if(currentUser)openPage(activePage);},1200);});
 window.addEventListener("bizfox:synccomplete",()=>{if(currentUser){if(activePage==="overview")renderOverview();else openPage(activePage);}});
 document.getElementById("menuToggle").addEventListener("click",()=>document.getElementById("sidebar").classList.toggle("open"));
