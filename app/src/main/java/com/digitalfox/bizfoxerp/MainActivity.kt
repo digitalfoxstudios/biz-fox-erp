@@ -93,21 +93,6 @@ class MainActivity : Activity() {
         createNotificationChannel()
         val root = FrameLayout(this).apply { setBackgroundColor(Color.WHITE) }
         val mainLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Color.WHITE) }
-        val bar = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
-            setPadding(16, 10, 12, 10); setBackgroundColor(Color.rgb(25, 45, 72))
-        }
-        val brandMark = ImageView(this).apply {
-            setImageResource(R.drawable.biz_fox_logo)
-            scaleType = ImageView.ScaleType.FIT_CENTER
-            contentDescription = "Biz FOX ERP logo"
-            layoutParams = LinearLayout.LayoutParams(42, 42).apply { rightMargin = 11 }
-        }
-        val brand = TextView(this).apply {
-            text = BuildConfig.APP_NAME + if (BuildConfig.APP_NAME == "Biz FOX Staff") "\nSTAFF WORKSPACE" else "\nOFFICE WORKSPACE"; textSize = 16f; setTypeface(null, Typeface.BOLD)
-            setTextColor(Color.WHITE); layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
-        }
-        bar.addView(brandMark); bar.addView(brand)
         progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply { max = 100; visibility = View.GONE }
         web = WebView(this).apply {
             settings.javaScriptEnabled = true
@@ -186,7 +171,6 @@ class MainActivity : Activity() {
                 } catch (_: Exception) { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
             })
         }
-        mainLayout.addView(bar)
         mainLayout.addView(progress, LinearLayout.LayoutParams(-1, 4))
         mainLayout.addView(web, LinearLayout.LayoutParams(-1, 0, 1f))
         root.addView(mainLayout, FrameLayout.LayoutParams(-1, -1))
