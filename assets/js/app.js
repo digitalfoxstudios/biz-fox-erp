@@ -344,9 +344,47 @@ taskBox.querySelectorAll("[data-task-status]").forEach(button=>button.addEventLi
  }));
 }
 
+async function openReportsWorkspace(){
+ title.textContent="Reports & Audit";
+ content.innerHTML=`<div class="data-page"><div class="data-page-head"><div><span class="tag">Management intelligence</span><h2>Reports & Audit Centre</h2><p>Operational overview and traceable activity from your company workspace.</p></div><div class="data-page-actions"><button id="exportAuditCsv" class="secondary-button" type="button">Export audit CSV</button><button id="printReports" class="primary-button" type="button">Print report</button></div></div>
+ <div class="report-kpi-grid" id="reportKpis"><div class="chart-loading">Loading report data…</div></div>
+ <div class="dashboard-panels"><section class="dashboard-panel"><div class="panel-heading"><div><h3>Task performance</h3><p>Current task status distribution</p></div></div><div id="reportTaskChart" class="task-status-chart"></div></section><section class="dashboard-panel"><div class="panel-heading"><div><h3>Work report review</h3><p>Employee submissions awaiting manager action</p></div></div><div id="reportReviewSummary" class="report-review-summary"></div></section></div>
+ <section class="dashboard-panel"><div class="panel-heading"><div><h3>Recent audit activity</h3><p>Latest recorded changes in this workspace</p></div><span class="tag">Latest 30</span></div><div id="auditRecords" class="records-table">Loading audit history…</div></section></div>`;
+ const org=currentOrg.id;
+ const [tasks,reports,employees,projects,audit]=await Promise.all([
+  supabase.from("tasks").select("id,status,priority").eq("organization_id",org).limit(500),
+  supabase.from("task_reports").select("id,report_status,created_at,submitted_by").eq("organization_id",org).order("created_at",{ascending:false}).limit(500),
+  supabase.from("employees").select("id,employment_status").eq("organization_id",org).limit(500),
+  supabase.from("projects").select("id,status").eq("organization_id",org).limit(500),
+  supabase.from("audit_logs").select("created_at,actor_user_id,action,entity_type,entity_id,details").eq("organization_id",org).order("created_at",{ascending:false}).limit(30)
+ ]);
+ const t=tasks.data||[],r=reports.data||[],e=employees.data||[],p=projects.data||[],logs=audit.data||[];
+ document.getElementById("reportKpis").innerHTML=[
+  ["Total assignments",t.length,"All recorded tasks"],
+  ["Completed tasks",t.filter(x=>x.status==="completed").length,"Marked as completed"],
+  ["Active employees",e.filter(x=>x.employment_status==="active").length,"Currently active"],
+  ["Active projects",p.filter(x=>["active","in_progress"].includes(x.status)).length,"Under execution"]
+ ].map(([label,value,desc])=>`<article class="report-kpi"><small>${label}</small><strong>${value}</strong><span>${desc}</span></article>`).join("");
+ const statuses=[["Pending",t.filter(x=>x.status==="pending").length,"pending"],["In progress",t.filter(x=>x.status==="in_progress").length,"progress"],["Completed",t.filter(x=>x.status==="completed").length,"complete"],["Blocked",t.filter(x=>x.status==="blocked").length,"other"]];
+ const total=t.length,chart=document.getElementById("reportTaskChart");
+ chart.innerHTML=total?'<div class="task-chart-total"><strong>'+total+'</strong><span>Tasks recorded</span></div><div class="task-chart-bars">'+statuses.map(([label,count,kind])=>'<div class="task-chart-row"><div><span>'+label+'</span><b>'+count+'</b></div><div class="task-chart-track"><i class="chart-'+kind+'" style="width:'+Math.round(count/total*100)+'%"></i></div></div>').join("")+'</div>':'<div class="dashboard-empty">No task records are available yet.</div>';
+ const pending=r.filter(x=>!["approved","rejected"].includes(x.report_status)).length,approved=r.filter(x=>x.report_status==="approved").length;
+ document.getElementById("reportReviewSummary").innerHTML='<div class="review-big"><strong>'+pending+'</strong><span>Awaiting review</span></div><div class="review-small"><span>Approved reports</span><b>'+approved+'</b></div><div class="review-small"><span>Total submissions</span><b>'+r.length+'</b></div><button class="secondary-button" type="button" data-page="tasks">Open task review →</button>';
+ const auditBox=document.getElementById("auditRecords");
+ auditBox.innerHTML=audit.error?'<p class="form-error">'+escapeHtml(audit.error.message)+'</p>':logs.length?'<div class="table-scroll"><table><thead><tr><th>Date & time</th><th>Action</th><th>Record type</th><th>Actor</th><th>Details</th></tr></thead><tbody>'+logs.map(x=>'<tr><td>'+escapeHtml(x.created_at?new Date(x.created_at).toLocaleString():"—")+'</td><td>'+escapeHtml(x.action||"—")+'</td><td>'+escapeHtml(x.entity_type||"—")+'</td><td>'+escapeHtml(x.actor_user_id||"—")+'</td><td>'+escapeHtml(typeof x.details==="string"?x.details:JSON.stringify(x.details||{}))+'</td></tr>').join("")+'</tbody></table></div>':'<div class="empty-records">No audit activity is recorded yet.</div>';
+ document.getElementById("exportAuditCsv").addEventListener("click",()=>{
+  if(!logs.length){showMessage("There are no audit records to export.");return;}
+  const cols=["created_at","actor_user_id","action","entity_type","entity_id","details"];
+  const quote=v=>'"'+String(typeof v==="object"?JSON.stringify(v??{}):v??"").replace(/"/g,'""')+'"';
+  const csv=[cols.join(","),...logs.map(row=>cols.map(col=>quote(row[col])).join(","))].join("\r\n");
+  const url=URL.createObjectURL(new Blob(["\\uFEFF",csv],{type:"text/csv;charset=utf-8"})),link=document.createElement("a");
+  link.href=url;link.download="biz-fox-audit-report-"+new Date().toISOString().slice(0,10)+".csv";link.click();URL.revokeObjectURL(url);
+ });
+ document.getElementById("printReports").addEventListener("click",()=>window.print());
+}
 async function openPage(id){
  if(id==="profile"){await renderProfile();return;}
- if(id==="tasks"){await openTaskWorkspace();return;}
+ if(id==="tasks"){await openTaskWorkspace();return;}\n if(id==="reports"){await openReportsWorkspace();return;}
  const m=modules.find(x=>x.id===id);if(!m){renderOverview();return;}
  const config=dataModules[id];
  if(config){await openDataConfig(config);return;}
