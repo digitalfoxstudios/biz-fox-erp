@@ -107,6 +107,8 @@ class MainActivity : Activity() {
                 override fun onPageFinished(view: WebView?, url: String?) { this@MainActivity.progress.visibility = View.GONE }
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val target = request?.url ?: return false
+                    // Allow embedded map tiles/frames to render inside the employee/admin workspace.
+                    if (request?.isForMainFrame == false) return false
                     val appHost = Uri.parse(appUrl).host
                     if (target.scheme == "https" && target.host != null && target.host != appHost) {
                         try { startActivity(Intent(Intent.ACTION_VIEW, target)) } catch (_: Exception) {
