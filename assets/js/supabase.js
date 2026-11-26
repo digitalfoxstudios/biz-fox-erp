@@ -87,12 +87,22 @@ async function queueStorageUpload(url, method, headers, body) {
   else if (ArrayBuffer.isView(body)) bytes = body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength);
   else throw new Error("This file type cannot be stored for offline upload.");
   const id = crypto.randomUUID();
+  const createdAt = await nextQueueTime();
   await dbAction("outbox", "readwrite", store => store.put({
-    id, kind: "storage", url, method, headers: [...headers.entries()], body: bytes, createdAt: Date.now(), attempts: 0
+    id, kind: "storage", url, method, headers: [...headers.entries()], body: bytes, createdAt, attempts: 0
   }));
   await setOfflineState();
   const key = new URL(url).pathname.split("/storage/v1/object/")[1] || "";
   return new Response(JSON.stringify({ Key: key, Id: "offline-" + id }), { status: 200, headers: { "Content-Type": "application/json" } });
+}
+let lastQueueTime = 0;
+async function nextQueueTime() {
+  if (!lastQueueTime) {
+    const existing = await outboxItems().catch(() => []);
+    lastQueueTime = existing.length ? existing[existing.length - 1].createdAt : 0;
+  }
+  lastQueueTime = Math.max(Date.now(), lastQueueTime + 1);
+  return lastQueueTime;
 }
 async function outboxItems() {
   const db = await openOfflineDb();
@@ -127,8 +137,9 @@ async function queueRequest(url, method, headers, body) {
     localRecord = Array.isArray(prepared) ? prepared[0] : prepared;
   }
   const id = crypto.randomUUID();
+  const createdAt = await nextQueueTime();
   await dbAction("outbox", "readwrite", store => store.put({
-    id, url, method, headers: [...headers.entries()], body: queuedBody, createdAt: Date.now(), attempts: 0
+    id, url, method, headers: [...headers.entries()], body: queuedBody, createdAt, attempts: 0
   }));
   await setOfflineState();
   return localRecord;
