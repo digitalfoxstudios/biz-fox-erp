@@ -13,9 +13,9 @@ android {
         applicationId = "com.digitalfox.bizfoxerp"
         minSdk = 23
         targetSdk = 35
-        versionCode = 13
-        versionName = "1.2.1"
-        buildConfigField("String", "APP_URL", "\"https://digitalfoxstudios.github.io/biz-fox-erp/?nativeVersion=1.2.1\"")
+        versionCode = 14
+        versionName = "1.3.0"
+        buildConfigField("String", "APP_URL", "\"https://digitalfoxstudios.github.io/biz-fox-erp/?nativeVersion=1.3.0\"")
         buildConfigField("String", "APP_NAME", "\"Biz FOX ERP\"")
         buildConfigField("String", "RELEASE_ASSET", "\"biz-fox-erp.apk\"")
     }
