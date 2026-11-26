@@ -311,7 +311,7 @@ async function openTaskWorkspace(){
    <label class="wide-field">Instructions / work details<textarea name="description" rows="3" placeholder="Describe the expected work and deliverables"></textarea></label>
   </div><div class="record-form-actions"><button class="primary-button" type="submit">Assign work</button><button class="secondary-button" type="button" id="cancelAssignment">Cancel</button></div><p id="assignmentMessage" class="form-message" role="status"></p></form>
   <div class="records-heading"><h3>Assigned work</h3><span id="taskCount">Loading…</span></div><div id="managerTaskList" class="task-work-list">Loading assignments…</div>
-  <div class="records-heading"><h3>Staff work reports</h3><span>Review and respond</span></div><div id="managerReportList" class="task-report-list">Loading reports…</div>
+  <div class="records-heading"><h3>Staff work reports</h3><span>Review and respond</span></div><div id="managerReportList" class="task-report-list">Loading reports…</div>\n   <div class="records-heading"><h3>Travel & material expense claims</h3><span>Review employee purchases and travel costs</span></div><div id="managerExpenseList" class="task-report-list">Loading expense claims…</div>
  </div>`;
  const assignmentForm=document.getElementById("assignmentForm");
   document.getElementById("addAssignmentButton").addEventListener("click",()=>{assignmentForm.hidden=false;assignmentForm.scrollIntoView({behavior:"smooth",block:"start"});});
@@ -335,11 +335,12 @@ async function openTaskWorkspace(){
  await refreshManagerWork(staff||[]);
 }
 async function refreshManagerWork(staff){
- const [taskResult,reportResult]=await Promise.all([
+ const [taskResult,reportResult,expenseResult]=await Promise.all([
   supabase.from("tasks").select("*").eq("organization_id",currentOrg.id).order("created_at",{ascending:false}).limit(100),
-  supabase.from("task_reports").select("*").eq("organization_id",currentOrg.id).order("created_at",{ascending:false}).limit(100)
+  supabase.from("task_reports").select("*").eq("organization_id",currentOrg.id).order("created_at",{ascending:false}).limit(100),
+  supabase.from("task_expenses").select("*").eq("organization_id",currentOrg.id).order("created_at",{ascending:false}).limit(200)
  ]);
- const taskBox=document.getElementById("managerTaskList"),reportBox=document.getElementById("managerReportList");if(!taskBox||!reportBox)return;
+ const taskBox=document.getElementById("managerTaskList"),reportBox=document.getElementById("managerReportList"),expenseBox=document.getElementById("managerExpenseList");if(!taskBox||!reportBox||!expenseBox)return;
  if(taskResult.error){taskBox.innerHTML='<p class="form-error">'+escapeHtml(taskResult.error.message)+'</p>';return;}
  const staffMap=Object.fromEntries((staff||[]).map(x=>[x.user_id,x.full_name]));
  const tasks=taskResult.data||[];document.getElementById("taskCount").textContent=tasks.length+" assignments";
@@ -366,6 +367,16 @@ taskBox.querySelectorAll("[data-task-status]").forEach(button=>button.addEventLi
   modal.querySelector("#taskMapFrame").src="https://maps.google.com/maps?q="+query+"&z=17&output=embed";
   modal.querySelector("#taskMapExternal").href="https://www.google.com/maps/search/?api=1&query="+query;
   modal.classList.add("open");
+ }));
+ if(expenseResult.error){expenseBox.innerHTML='<p class="form-error">'+escapeHtml(expenseResult.error.message)+'</p>';return;}
+ const expenses=expenseResult.data||[],expenseReceipts={};
+ await Promise.all(expenses.flatMap(e=>(e.receipt_paths||[]).map(async path=>{const {data}=await supabase.storage.from("task-expenses").createSignedUrl(path,3600);if(data?.signedUrl)expenseReceipts[path]=data.signedUrl;})));
+ expenseBox.innerHTML=expenses.length?expenses.map(e=>`<article class="task-report-card"><div class="report-card-head"><div><strong>${escapeHtml(taskMap[e.task_id]||"Work assignment")}</strong><small>${escapeHtml(staffMap[e.submitted_by]||"Staff member")} · ${escapeHtml(e.expense_date)}</small></div><span class="task-state state-${escapeHtml(e.status)}">${escapeHtml(e.status.replaceAll("_"," "))}</span></div><p><b>${escapeHtml(({travel:"Travel charges",material:"Sourced material",other:"Other task expense"})[e.expense_type]||e.expense_type)}:</b> ${escapeHtml(e.description)}</p><p><b>Claimed amount:</b> ₹${Number(e.amount).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}</p><small>Vendor: ${escapeHtml(e.vendor_name||"—")} · Quantity: ${escapeHtml(e.quantity??"—")} ${escapeHtml(e.unit||"")}</small>${(e.receipt_paths||[]).length?'<div class="task-report-photos">'+e.receipt_paths.map((p,i)=>expenseReceipts[p]?'<a href="'+escapeHtml(expenseReceipts[p])+'" target="_blank" rel="noopener">Receipt '+(i+1)+'</a>':'').join('')+'</div>':''}<label>Manager feedback<textarea id="expense-feedback-${e.id}" rows="2" placeholder="Add approval notes or correction instructions">${escapeHtml(e.manager_feedback||"")}</textarea></label><div class="report-actions"><button class="secondary-button" data-review-expense="${e.id}" data-status="approved">Approve claim</button><button class="secondary-button" data-review-expense="${e.id}" data-status="revision_requested">Request changes</button><button class="secondary-button" data-review-expense="${e.id}" data-status="rejected">Reject</button></div></article>`).join(""):'<div class="empty-records">No employee expense claims submitted yet.</div>';
+ expenseBox.querySelectorAll("[data-review-expense]").forEach(button=>button.addEventListener("click",async()=>{
+  const id=button.dataset.reviewExpense,status=button.dataset.status,feedback=document.getElementById("expense-feedback-"+id).value.trim();
+  button.disabled=true;const {error}=await supabase.from("task_expenses").update({status,manager_feedback:feedback||null,reviewed_by:currentUser.id,reviewed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",id).eq("organization_id",currentOrg.id);
+  if(error){showMessage("Could not update expense claim: "+error.message);button.disabled=false;return;}
+  await refreshManagerWork(staff);
  }));
  reportBox.querySelectorAll("[data-review-report]").forEach(button=>button.addEventListener("click",async()=>{
   const id=button.dataset.reviewReport,status=button.dataset.status,feedback=document.getElementById("feedback-"+id).value.trim();
