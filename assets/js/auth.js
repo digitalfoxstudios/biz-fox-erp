@@ -17,6 +17,8 @@ form.addEventListener("submit",async e=>{
  const {data,error}=await supabase.auth.signInWithPassword({email,password});
  submit.disabled=false;submit.textContent="Sign in";
  if(error){setMessage("Incorrect username/email or password. Check your details or contact the administrator.","error");return;}
+ const {data:platform}=await supabase.from("platform_super_admins").select("id").eq("user_id",data.user.id).maybeSingle();
+ if(platform){location.replace("./platform-admin.html");return;}
  const {data:members,error:roleError}=await supabase.from("organization_members").select("role").eq("user_id",data.user.id).eq("status","active");
  if(roleError){await supabase.auth.signOut();setMessage("Could not verify account permissions. Please try again.","error");return;}
  const roles=(members||[]).map(x=>x.role);
@@ -25,6 +27,8 @@ form.addEventListener("submit",async e=>{
 });
 supabase.auth.getSession().then(async({data})=>{
  if(!data.session)return;
+ const {data:platform}=await supabase.from("platform_super_admins").select("id").eq("user_id",data.session.user.id).maybeSingle();
+ if(platform){location.replace("./platform-admin.html");return;}
  const {data:members}=await supabase.from("organization_members").select("role").eq("user_id",data.session.user.id).eq("status","active");
  const roles=(members||[]).map(x=>x.role);
  location.replace(roles.includes("staff")&&!roles.some(r=>["owner","admin","manager"].includes(r))?"./staff.html":"./index.html");
