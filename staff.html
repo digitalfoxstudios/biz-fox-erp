@@ -18,6 +18,9 @@
       <button class="nav-item" data-staff-page="expenses">₹ <span>Travel & Material Expenses</span></button>
       <button class="nav-item" data-staff-page="attendance">◷ <span>Attendance</span></button>
       <button class="nav-item" data-staff-page="reports">▤ <span>Work Reports</span></button>
+      <p class="nav-label">ACCOUNT</p>
+      <button class="nav-item" data-staff-page="profile" type="button">♙ <span>My Profile</span></button>
+      <button class="nav-item staff-sidebar-logout" id="staffSidebarSignOut" type="button">⇥ <span>Sign out</span></button>
     </nav>
     <div class="sidebar-foot">Biz FOX ERP <span>Digital FOX Studio</span></div>
   </aside>
@@ -25,7 +28,7 @@
     <header class="topbar staff-topbar">
       <button id="staffMenuToggle" class="menu-toggle" type="button" aria-label="Open navigation">☰</button>
       <div><span class="eyebrow">EMPLOYEE WORKSPACE</span><h1 id="staffPageTitle">Overview</h1></div>
-      <div class="top-actions"><span id="staffNetworkStatus" class="status-text">Checking connection…</span><button id="staffEnableNotifications" class="staff-outline-button" type="button">🔔</button><button id="staffAppUpdate" class="staff-outline-button" type="button">App updates</button><button id="staffProfileToggle" class="profile-button" type="button" aria-label="My profile">ME</button></div>
+      <div class="top-actions"><span id="staffNetworkStatus" class="status-text">Checking connection…</span><button id="staffEnableNotifications" class="staff-outline-button" type="button">🔔</button><button id="staffAppUpdate" class="staff-outline-button" type="button">App updates</button></div>
     </header>
     <div class="content staff-content">
       <section id="staffAuth" class="staff-auth">
@@ -61,11 +64,14 @@
           <div class="staff-section-head"><div><h2>My attendance</h2><p>Record your daily check-in and check-out with optional GPS location.</p></div><button id="staffAttendanceRefresh" class="staff-outline-button">Refresh</button></div>
           <div id="staffAttendanceActions" class="staff-attendance-actions"></div><div id="staffAttendanceHistory" class="staff-report-list">Loading attendance…</div>
         </section>
+        <section id="staffPageProfile" class="staff-page-panel" hidden>
+          <div class="staff-section-head"><div><h2>My Profile</h2><p>Your employee account and company details.</p></div></div>
+          <div class="staff-profile-page"><div class="staff-profile-hero"><div class="staff-profile-avatar" id="staffProfileAvatar">ME</div><div><span class="staff-eyebrow">EMPLOYEE ACCOUNT</span><h2 id="staffProfilePageName">Employee</h2><p id="staffProfilePageRole">Employee · Biz FOX ERP</p></div></div><div class="staff-profile-details" id="staffProfilePageDetails"></div></div>
+        </section>
         <section id="staffPageReports" class="staff-page-panel" hidden>
           <div class="staff-section-head"><div><h2>My submitted reports</h2><p>Work completion, GPS details and manager feedback.</p></div></div>
           <div id="staffReports" class="staff-report-list">Loading reports…</div>
         </section>
-        <section id="staffProfileCard" class="staff-profile-card" hidden><div><span class="staff-eyebrow">ACCOUNT PROFILE</span><h3 id="staffProfileName">Employee account</h3><p id="staffProfileDetails"></p></div><button id="staffSignOut" class="staff-submit" type="button">Sign out</button></section>
       </section>
       <section id="staffNoAccess" class="staff-no-access" hidden><h1>Staff account not linked yet</h1><p>Your staff login is not linked to an active employee record in Biz FOX ERP.</p><p>Ask your administrator to create your employee record and issue your username and password. Then sign in again.</p><button id="staffNoAccessSignOut" class="staff-outline-button">Sign out</button></section>
     </div>
