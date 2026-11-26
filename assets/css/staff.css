@@ -181,3 +181,18 @@ body{background:radial-gradient(circle at 12% 4%,#e8eef7 0,transparent 32%),#f5f
  .staff-expense-form .wide{grid-column:1}
 }
 @media(max-width:380px){.staff-topbar .top-actions .status-text{display:none}.staff-topbar .staff-outline-button{font-size:9px}.staff-expense-summary{grid-template-columns:1fr 1fr}}
+
+.staff-task-customer{margin:13px 0;padding:13px 14px;border:1px solid #e2eaf4;border-radius:10px;background:#f7f9fc;color:#33445c;font-size:13px}
+.staff-task-customer b{display:block;color:#1c2d46;margin-bottom:7px}
+.staff-task-customer p{margin:5px 0!important;line-height:1.45}
+.staff-task-customer a{color:#b96829;font-weight:700;text-decoration:underline}
+.staff-expense-category-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 13px}
+.staff-expense-category-fields[hidden]{display:none!important}
+.staff-attendance-actions{margin-bottom:17px}
+.staff-attendance-today{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px;border-radius:14px;background:#fff;border:1px solid #e5ebf2;box-shadow:0 4px 16px #1b2c4508}
+.staff-attendance-today small{font-size:10px;font-weight:800;letter-spacing:1px;color:#b96a2e}
+.staff-attendance-today h3{margin:7px 0;color:#172943;font-size:19px}
+.staff-attendance-today p{margin:0;color:#66758a;font-size:13px}
+.staff-attendance-buttons{display:flex;align-items:center;gap:8px}
+.staff-attendance-buttons .staff-submit{width:auto;min-width:125px}
+@media(max-width:600px){.staff-expense-category-fields{grid-template-columns:1fr}.staff-attendance-today{align-items:flex-start;flex-direction:column}.staff-attendance-buttons{width:100%}.staff-attendance-buttons .staff-submit{width:100%}}
