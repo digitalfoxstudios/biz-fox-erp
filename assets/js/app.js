@@ -384,7 +384,8 @@ async function openReportsWorkspace(){
 }
 async function openPage(id){
  if(id==="profile"){await renderProfile();return;}
- if(id==="tasks"){await openTaskWorkspace();return;}\n if(id==="reports"){await openReportsWorkspace();return;}
+ if(id==="tasks"){await openTaskWorkspace();return;}
+ if(id==="reports"){await openReportsWorkspace();return;}
  const m=modules.find(x=>x.id===id);if(!m){renderOverview();return;}
  const config=dataModules[id];
  if(config){await openDataConfig(config);return;}
