@@ -22,6 +22,7 @@ const params=new URLSearchParams(location.search);
 let currentUser=null;
 let currentOrg=null;
 let organizations=[];
+let activePage="overview";
 
 let appRegistration=null;
 let appUpdateNotice=null;
@@ -115,6 +116,7 @@ async function countFor(table){
   return error?null:count;
 }
 async function renderOverview(){
+ activePage="overview";
  title.textContent="Overview";
  if(!currentOrg){renderOnboarding();return;}
  content.innerHTML=`<section class="welcome"><div><span class="eyebrow">CENTRAL OFFICE DASHBOARD</span><h2>Welcome to Biz FOX ERP</h2><p>${escapeHtml(currentOrg.name)} · Your business at a glance</p><div class="welcome-meta"><span><i></i> Secure workspace connected</span><span id="dashboardDate"></span></div></div><span class="welcome-icon">✦</span></section>
@@ -490,6 +492,7 @@ async function openSalesWorkspace(initialTab="customers"){
 }
 
 async function openPage(id){
+ activePage=id;
  if(id==="profile"){await renderProfile();return;}
  if(id==="tasks"){await openTaskWorkspace();return;}
  if(id==="reports"){await openReportsWorkspace();return;}
@@ -501,6 +504,8 @@ async function openPage(id){
  content.innerHTML=`<div class="empty-page"><span class="module-icon">${m.icon}</span><h2>${m.name}</h2><span class="tag">Under development</span><p>${m.desc}. This module is on the implementation roadmap and will be connected to the workspace in a later phase.</p></div>`;
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-page]");if(!b)return;const id=b.dataset.page;if(id==="overview")renderOverview();else openPage(id);document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.page===id));document.getElementById("sidebar").classList.remove("open");});
+window.addEventListener("bizfox:online",()=>{setTimeout(()=>{if(currentUser&&activePage==="overview")renderOverview();else if(currentUser)openPage(activePage);},1200);});
+window.addEventListener("bizfox:synccomplete",()=>{if(currentUser){if(activePage==="overview")renderOverview();else openPage(activePage);}});
 document.getElementById("menuToggle").addEventListener("click",()=>document.getElementById("sidebar").classList.toggle("open"));
 document.getElementById("sidebarAppUpdate").addEventListener("click",()=>{
  const item=document.getElementById("sidebarAppUpdate");
