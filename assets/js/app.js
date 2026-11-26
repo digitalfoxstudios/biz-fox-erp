@@ -113,7 +113,7 @@ async function loadOrganizations(){
 }
 function renderOnboarding(){
   title.textContent="Company access";
-  content.innerHTML=`<div class="empty-page"><span class="module-icon">▣</span><h2>Company workspace access required</h2><p>This Biz FOX ERP installation is configured for one company. Your account does not have access to the company workspace.</p><p>Contact the company administrator to activate your account. New company workspaces cannot be created from this portal.</p><button class="primary-button" id="companySignOut" type="button">Sign out</button></div>`;
+  content.innerHTML=`<div class="empty-page"><span class="module-icon">▣</span><h2>Company workspace access required</h2><p>Your account is not currently linked to an active business workspace.</p><p>Ask the Biz FOX ERP Platform Administrator to provision your business and link your login. Business workspaces are isolated; you will only see records belonging to businesses where your account has an active membership.</p><button class="primary-button" id="companySignOut" type="button">Sign out</button></div>`;
   document.getElementById("companySignOut").addEventListener("click",async()=>{await supabase.auth.signOut();location.href="./login.html";});
 }
 async function countFor(table){
