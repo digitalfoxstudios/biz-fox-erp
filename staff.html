@@ -1,52 +1,72 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101827">
-  <meta name="description" content="Biz FOX Staff — work assignments and daily reports">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827"><meta name="description" content="Biz FOX ERP employee workspace">
   <title>Biz FOX ERP · Employee Workspace</title>
-  <link rel="manifest" href="./staff.webmanifest">
-  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/css/staff.css?v=13">
-  <link rel="stylesheet" href="./assets/css/app-update.css?v=1">
+  <link rel="manifest" href="./staff.webmanifest"><link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./assets/css/app.css?v=22"><link rel="stylesheet" href="./assets/css/staff.css?v=14"><link rel="stylesheet" href="./assets/css/app-update.css?v=1">
 </head>
 <body>
-  <header class="staff-header">
-    <a class="staff-brand" href="./staff.html"><img class="staff-logo" src="./assets/biz-fox-erp-logo.png" alt="Biz FOX ERP"><span><b>Biz FOX ERP</b><small>EMPLOYEE WORKSPACE</small></span></a>
-    <div class="staff-header-actions"><span id="staffNetworkStatus" class="staff-network-status">Checking connection…</span><button id="staffEnableNotifications" class="staff-outline-button" type="button">Enable notifications</button><button id="staffAppUpdate" class="staff-outline-button" type="button">App updates</button></div>
-  </header>
-  <main class="staff-shell">
-    <section id="staffAuth" class="staff-auth">
-      <div class="staff-intro"><span class="staff-eyebrow">YOUR WORK, IN ONE PLACE</span><h1>Employee workspace</h1><p>Sign in using the username and password provided by your company administrator.</p></div>
-      <form id="staffAuthForm" class="staff-auth-card">
-        <h2 id="staffAuthTitle">Staff sign in</h2>
-        <label>Username<input name="username" type="text" autocomplete="username" required placeholder="Enter your username"></label>
-        <label>8-digit password<input name="password" type="password" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" minlength="8" autocomplete="current-password" required placeholder="Enter 8-digit password"></label>
-        <button id="staffAuthSubmit" type="submit">Sign in</button>
-        <p id="staffAuthMessage" class="staff-message" role="status"></p>
-        <p class="staff-message">Staff accounts are created by the company administrator. Self-registration is disabled.</p>
-      </form>
-   </section>
-    <section id="staffPortal" hidden>
-      <div class="staff-welcome"><div><span class="staff-eyebrow">STAFF WORKSPACE</span><h1 id="staffGreeting">My assignments</h1><p id="staffOrgName"></p></div><button id="staffProfileToggle" class="staff-outline-button" type="button" aria-expanded="false">My profile</button></div>
-      <section id="staffProfileCard" class="staff-profile-card" hidden><div><span class="staff-eyebrow">ACCOUNT PROFILE</span><h3 id="staffProfileName">Employee account</h3><p id="staffProfileDetails"></p></div><button id="staffSignOut" class="staff-submit" type="button">Sign out</button></section>
-      <div class="staff-summary" id="staffSummary"></div>
-      <div class="staff-section-head"><div><h2>My assigned work</h2><p>Open an assignment to submit a progress report.</p></div><button id="staffRefresh" class="staff-outline-button">Refresh</button></div>
-      <div id="staffTasks" class="staff-task-list">Loading assignments…</div>
-      <div class="staff-section-head"><div><h2>My submitted reports</h2><p>Reports and manager feedback.</p></div></div>
-      <div id="staffReports" class="staff-report-list">Loading reports…</div>
-    </section>
-    <section id="staffNoAccess" class="staff-no-access" hidden>
-      <h1>Staff account not linked yet</h1>
-      <p>Your staff login is not linked to an active employee record in Biz FOX ERP.</p>
-      <p>Ask your administrator to create your employee record and issue your username and password. Then sign in again.</p>
-      <button id="staffNoAccessSignOut" class="staff-outline-button">Sign out</button>
-    </section>
+<div class="app-shell staff-app-shell">
+  <aside class="sidebar staff-sidebar" id="staffSidebar">
+    <a class="brand" href="./staff.html"><img class="brand-logo" src="./assets/biz-fox-erp-logo.png" alt="Biz FOX ERP"><span><strong>Biz FOX</strong><small>EMPLOYEE WORKSPACE</small></span></a>
+    <nav id="staffNavigation" aria-label="Employee navigation">
+      <p class="nav-label">MY WORKSPACE</p>
+      <button class="nav-item active" data-staff-page="overview">▦ <span>Overview</span></button>
+      <button class="nav-item" data-staff-page="tasks">✓ <span>My Assignments</span></button>
+      <button class="nav-item" data-staff-page="expenses">₹ <span>Travel & Material Expenses</span></button>
+      <button class="nav-item" data-staff-page="reports">▤ <span>Work Reports</span></button>
+    </nav>
+    <div class="sidebar-foot">Biz FOX ERP <span>Digital FOX Studio</span></div>
+  </aside>
+  <main class="main staff-main">
+    <header class="topbar staff-topbar">
+      <button id="staffMenuToggle" class="menu-toggle" type="button" aria-label="Open navigation">☰</button>
+      <div><span class="eyebrow">EMPLOYEE WORKSPACE</span><h1 id="staffPageTitle">Overview</h1></div>
+      <div class="top-actions"><span id="staffNetworkStatus" class="status-text">Checking connection…</span><button id="staffEnableNotifications" class="staff-outline-button" type="button">🔔</button><button id="staffAppUpdate" class="staff-outline-button" type="button">App updates</button><button id="staffProfileToggle" class="profile-button" type="button" aria-label="My profile">ME</button></div>
+    </header>
+    <div class="content staff-content">
+      <section id="staffAuth" class="staff-auth">
+        <div class="staff-intro"><span class="staff-eyebrow">YOUR WORK, IN ONE PLACE</span><h1>Employee workspace</h1><p>Sign in using the username and password provided by your company administrator.</p></div>
+        <form id="staffAuthForm" class="staff-auth-card"><h2 id="staffAuthTitle">Staff sign in</h2>
+          <label>Username<input name="username" type="text" autocomplete="username" required placeholder="Enter your username"></label>
+          <label>8-digit password<input name="password" type="password" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" minlength="8" autocomplete="current-password" required placeholder="Enter 8-digit password"></label>
+          <button id="staffAuthSubmit" type="submit">Sign in</button><p id="staffAuthMessage" class="staff-message" role="status"></p>
+          <p class="staff-message">Staff accounts are created by the company administrator. Self-registration is disabled.</p>
+        </form>
+      </section>
+      <section id="staffPortal" hidden>
+        <section id="staffPageOverview" class="staff-page-panel">
+          <div class="welcome staff-welcome-panel"><div><span class="eyebrow">WELCOME BACK</span><h2 id="staffGreeting">My workspace</h2><p id="staffOrgName"></p></div><span class="welcome-icon">◈</span></div>
+          <div id="staffSummary" class="stats-grid staff-summary"></div>
+          <div class="section-heading"><div><h3>Quick access</h3><p>Open your assigned work or submit an expense claim</p></div></div>
+          <div class="module-grid staff-quick-grid">
+            <button class="module-card" data-staff-page="tasks"><span class="module-icon">✓</span><strong>My Assignments</strong><small>View work assigned by your manager</small></button>
+            <button class="module-card" data-staff-page="expenses"><span class="module-icon">₹</span><strong>Travel & Material Expenses</strong><small>Submit task-linked expenses and receipts</small></button>
+            <button class="module-card" data-staff-page="reports"><span class="module-icon">▤</span><strong>Work Reports</strong><small>Review reports and manager feedback</small></button>
+          </div>
+        </section>
+        <section id="staffPageTasks" class="staff-page-panel" hidden>
+          <div class="staff-section-head"><div><h2>My assigned work</h2><p>Open an assignment to submit a progress report or expense claim.</p></div><button id="staffRefresh" class="staff-outline-button">Refresh</button></div>
+          <div id="staffTasks" class="staff-task-list">Loading assignments…</div>
+        </section>
+        <section id="staffPageExpenses" class="staff-page-panel" hidden>
+          <div class="staff-section-head"><div><h2>Travel & material expenses</h2><p>All expense claims are linked to assigned tasks and sent to your manager for review.</p></div><button id="staffExpenseRefresh" class="staff-outline-button">Refresh</button></div>
+          <div id="staffExpenseSummary" class="staff-expense-summary"></div><div id="staffExpenses" class="staff-report-list">Loading expenses…</div>
+        </section>
+        <section id="staffPageReports" class="staff-page-panel" hidden>
+          <div class="staff-section-head"><div><h2>My submitted reports</h2><p>Work completion, GPS details and manager feedback.</p></div></div>
+          <div id="staffReports" class="staff-report-list">Loading reports…</div>
+        </section>
+        <section id="staffProfileCard" class="staff-profile-card" hidden><div><span class="staff-eyebrow">ACCOUNT PROFILE</span><h3 id="staffProfileName">Employee account</h3><p id="staffProfileDetails"></p></div><button id="staffSignOut" class="staff-submit" type="button">Sign out</button></section>
+      </section>
+      <section id="staffNoAccess" class="staff-no-access" hidden><h1>Staff account not linked yet</h1><p>Your staff login is not linked to an active employee record in Biz FOX ERP.</p><p>Ask your administrator to create your employee record and issue your username and password. Then sign in again.</p><button id="staffNoAccessSignOut" class="staff-outline-button">Sign out</button></section>
+    </div>
+    <footer>Biz FOX ERP <span>·</span> Employee Workspace <span>·</span> Digital FOX Studio</footer>
   </main>
-  <footer class="staff-footer">Biz FOX ERP · Employee Workspace · Digital FOX Studio</footer>
-  <script src="./assets/js/app-update.js?v=1"></script>
-  <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(() => {}));</script>
-  <script type="module" src="./assets/js/staff.js?v=20"></script>
-</body>
-</html>
+</div>
+<script src="./assets/js/app-update.js?v=1"></script>
+<script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(() => {}));</script>
+<script type="module" src="./assets/js/staff.js?v=21"></script>
+</body></html>
