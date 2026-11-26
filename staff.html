@@ -16,6 +16,7 @@
       <button class="nav-item active" data-staff-page="overview">▦ <span>Overview</span></button>
       <button class="nav-item" data-staff-page="tasks">✓ <span>My Assignments</span></button>
       <button class="nav-item" data-staff-page="expenses">₹ <span>Travel & Material Expenses</span></button>
+      <button class="nav-item" data-staff-page="attendance">◷ <span>Attendance</span></button>
       <button class="nav-item" data-staff-page="reports">▤ <span>Work Reports</span></button>
     </nav>
     <div class="sidebar-foot">Biz FOX ERP <span>Digital FOX Studio</span></div>
@@ -45,6 +46,7 @@
             <button class="module-card" data-staff-page="tasks"><span class="module-icon">✓</span><strong>My Assignments</strong><small>View work assigned by your manager</small></button>
             <button class="module-card" data-staff-page="expenses"><span class="module-icon">₹</span><strong>Travel & Material Expenses</strong><small>Submit task-linked expenses and receipts</small></button>
             <button class="module-card" data-staff-page="reports"><span class="module-icon">▤</span><strong>Work Reports</strong><small>Review reports and manager feedback</small></button>
+            <button class="module-card" data-staff-page="attendance"><span class="module-icon">◷</span><strong>Attendance</strong><small>Check in, check out and view attendance history</small></button>
           </div>
         </section>
         <section id="staffPageTasks" class="staff-page-panel" hidden>
@@ -54,6 +56,10 @@
         <section id="staffPageExpenses" class="staff-page-panel" hidden>
           <div class="staff-section-head"><div><h2>Travel & material expenses</h2><p>All expense claims are linked to assigned tasks and sent to your manager for review.</p></div><button id="staffExpenseRefresh" class="staff-outline-button">Refresh</button></div>
           <div id="staffExpenseSummary" class="staff-expense-summary"></div><div id="staffExpenses" class="staff-report-list">Loading expenses…</div>
+        </section>
+        <section id="staffPageAttendance" class="staff-page-panel" hidden>
+          <div class="staff-section-head"><div><h2>My attendance</h2><p>Record your daily check-in and check-out with optional GPS location.</p></div><button id="staffAttendanceRefresh" class="staff-outline-button">Refresh</button></div>
+          <div id="staffAttendanceActions" class="staff-attendance-actions"></div><div id="staffAttendanceHistory" class="staff-report-list">Loading attendance…</div>
         </section>
         <section id="staffPageReports" class="staff-page-panel" hidden>
           <div class="staff-section-head"><div><h2>My submitted reports</h2><p>Work completion, GPS details and manager feedback.</p></div></div>
