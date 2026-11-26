@@ -105,16 +105,53 @@ async function countFor(table){
   return error?null:count;
 }
 async function renderOverview(){
-  title.textContent="Overview";
-  if(!currentOrg){renderOnboarding();return;}
-  content.innerHTML=`<div class="welcome"><div><span class="eyebrow">CENTRAL OFFICE DASHBOARD</span><h2>Welcome to Biz FOX ERP</h2><p>${escapeHtml(currentOrg.name)} · Your centralized office workspace</p></div><span class="welcome-icon">✦</span></div>
-  <div class="stats-grid"><article class="stat-card"><span class="stat-icon blue">▤</span><p>Open files</p><strong id="filesCount">…</strong><small>Registered office files</small></article><article class="stat-card"><span class="stat-icon green">✓</span><p>Pending tasks</p><strong id="tasksCount">…</strong><small>Tasks awaiting completion</small></article><article class="stat-card"><span class="stat-icon amber">₹</span><p>Projects</p><strong id="projectsCount">…</strong><small>Project records</small></article><article class="stat-card"><span class="stat-icon violet">♙</span><p>Employees</p><strong id="employeesCount">…</strong><small>Staff directory records</small></article></div>
-  <div class="section-heading"><div><h3>Office modules</h3><p>Choose a module to open its workspace.</p></div></div><div class="module-grid" id="moduleGrid"></div>
-  <div class="notice"><strong>Connected workspace</strong><p>Dashboard totals are read from your secured Supabase workspace. Modules are being implemented in phases; unfinished modules are clearly marked.</p></div>`;
-  document.getElementById("moduleGrid").innerHTML=modules.map(m=>`<button class="module-card" data-page="${m.id}"><span class="module-icon">${m.icon}</span><strong>${m.name}</strong><small>${m.desc}</small></button>`).join("");
-  const [files,tasks,projects,employees]=await Promise.all([countFor("office_files"),countFor("tasks"),countFor("projects"),countFor("employees")]);
-  [["filesCount",files],["tasksCount",tasks],["projectsCount",projects],["employeesCount",employees]].forEach(([id,n])=>{const el=document.getElementById(id);if(el)el.textContent=n===null?"—":n;});
+ title.textContent="Overview";
+ if(!currentOrg){renderOnboarding();return;}
+ content.innerHTML=`<section class="welcome"><div><span class="eyebrow">CENTRAL OFFICE DASHBOARD</span><h2>Welcome to Biz FOX ERP</h2><p>${escapeHtml(currentOrg.name)} · Your business at a glance</p><div class="welcome-meta"><span><i></i> Secure workspace connected</span><span id="dashboardDate"></span></div></div><span class="welcome-icon">✦</span></section>
+ <div class="dashboard-section-title"><div><span class="eyebrow">LIVE WORKSPACE</span><h3>Business overview</h3><p>Live totals from your company records</p></div><button class="secondary-button" id="dashboardRefresh" type="button">↻ Refresh</button></div>
+ <div class="stats-grid dashboard-stats">
+ <article class="stat-card"><span class="stat-icon blue">▤</span><p>Office files</p><strong id="filesCount">—</strong><small>Registered documents</small></article>
+ <article class="stat-card"><span class="stat-icon green">✓</span><p>Active tasks</p><strong id="tasksCount">—</strong><small>Work not yet completed</small></article>
+ <article class="stat-card"><span class="stat-icon amber">⌂</span><p>Projects</p><strong id="projectsCount">—</strong><small>Company projects</small></article>
+ <article class="stat-card"><span class="stat-icon violet">♙</span><p>Employees</p><strong id="employeesCount">—</strong><small>Active staff members</small></article>
+ </div>
+ <div class="dashboard-panels">
+ <section class="dashboard-panel"><div class="panel-heading"><div><h3>Work status</h3><p>Distribution of assigned tasks</p></div><span class="panel-symbol">◷</span></div><div id="taskStatusChart" class="task-status-chart"><div class="chart-loading">Loading task status…</div></div></section>
+ <section class="dashboard-panel"><div class="panel-heading"><div><h3>Quick actions</h3><p>Jump straight into daily work</p></div><span class="panel-symbol">✦</span></div><div class="quick-action-grid">
+ <button data-page="tasks"><span>＋</span><b>Assign work</b><small>Create a staff task</small></button>
+ <button data-page="administration"><span>♙</span><b>Add employee</b><small>Manage staff accounts</small></button>
+ <button data-page="documents"><span>▤</span><b>Register file</b><small>Start an e-Office file</small></button>
+ <button data-page="finance"><span>₹</span><b>Add bill</b><small>Record an expense</small></button>
+ </div></section>
+ </div>
+ <section class="dashboard-panel dashboard-recent"><div class="panel-heading"><div><h3>Recent work</h3><p>Latest assignments and their current status</p></div><button class="text-action" data-page="tasks">View all work →</button></div><div id="recentWorkList" class="recent-work-list"><div class="chart-loading">Loading recent work…</div></div></section>
+ <div class="section-heading"><div><h3>Office modules</h3><p>Choose a module to open its workspace.</p></div></div><div class="module-grid" id="moduleGrid"></div>`;
+ document.getElementById("dashboardDate").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+ document.getElementById("moduleGrid").innerHTML=modules.map(m=>`<button class="module-card" data-page="${m.id}"><span class="module-icon">${m.icon}</span><strong>${escapeHtml(m.name)}</strong><small>${escapeHtml(m.desc)}</small></button>`).join("");
+ document.getElementById("dashboardRefresh").addEventListener("click",renderOverview);
+ const org=currentOrg.id;
+ const [files,tasks,projects,employees,recent]=await Promise.all([
+  supabase.from("office_files").select("id",{count:"exact",head:true}).eq("organization_id",org),
+  supabase.from("tasks").select("id,status,title,priority,due_at,created_at").eq("organization_id",org).order("created_at",{ascending:false}).limit(100),
+  supabase.from("projects").select("id",{count:"exact",head:true}).eq("organization_id",org),
+  supabase.from("employees").select("id",{count:"exact",head:true}).eq("organization_id",org).eq("employment_status","active"),
+  supabase.from("office_files").select("id,subject,file_number,status,created_at").eq("organization_id",org).order("created_at",{ascending:false}).limit(4)
+ ]);
+ const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
+ set("filesCount",files.error?"—":files.count??0);
+ set("tasksCount",tasks.error?"—":(tasks.data||[]).filter(t=>!["completed","cancelled"].includes(t.status)).length);
+ set("projectsCount",projects.error?"—":projects.count??0);
+ set("employeesCount",employees.error?"—":employees.count??0);
+ const taskRows=tasks.data||[],total=taskRows.length;
+ const counts={pending:0,in_progress:0,completed:0,other:0};
+ taskRows.forEach(t=>{if(t.status==="pending")counts.pending++;else if(t.status==="in_progress")counts.in_progress++;else if(t.status==="completed")counts.completed++;else counts.other++;});
+ const chart=document.getElementById("taskStatusChart");
+ chart.innerHTML=total?`<div class="task-chart-total"><strong>${total}</strong><span>Total assignments</span></div><div class="task-chart-bars">${[["Pending",counts.pending,"pending"],["In progress",counts.in_progress,"progress"],["Completed",counts.completed,"complete"],["Other",counts.other,"other"]].map(([label,count,kind])=>`<div class="task-chart-row"><div><span>${label}</span><b>${count}</b></div><div class="task-chart-track"><i class="chart-${kind}" style="width:${Math.round(count/total*100)}%"></i></div></div>`).join("")}</div>`:'<div class="dashboard-empty">No assignments yet. Use Quick actions to create your first task.</div>';
+ const recentBox=document.getElementById("recentWorkList");
+ const recentTasks=taskRows.slice(0,5);
+ recentBox.innerHTML=recentTasks.length?recentTasks.map(t=>`<article class="recent-work-item"><span class="recent-work-icon">✓</span><div><b>${escapeHtml(t.title||"Untitled task")}</b><small>${t.created_at?new Date(t.created_at).toLocaleDateString():"Recently created"} · ${escapeHtml(t.priority||"normal")} priority</small></div><span class="task-state state-${escapeHtml(t.status||"pending")}">${escapeHtml((t.status||"pending").replaceAll("_"," "))}</span></article>`).join(""):((recent.data||[]).length?(recent.data||[]).map(file=>`<article class="recent-work-item"><span class="recent-work-icon">▤</span><div><b>${escapeHtml(file.subject||file.file_number||"Office file")}</b><small>File registered · ${file.created_at?new Date(file.created_at).toLocaleDateString():""}</small></div><span class="task-state state-pending">${escapeHtml(file.status||"registered")}</span></article>`).join(""):'<div class="dashboard-empty">No recent work or files yet. Your latest records will appear here.</div>');
 }
+
 const dataModules = {
   administration:{table:"employees",title:"Employee directory",fields:[["employee_code","Employee code","text",1],["full_name","Full name","text",1],["department_id","Department","select",0,[]],["designation","Designation","text"],["email","Work email (optional)","email"],["phone","Phone","tel"],["employment_status","Employment status","select",1,["active","inactive"]],["date_of_joining","Date of joining","date"],["notes","Notes","textarea"]],columns:["employee_code","full_name","designation","email","employment_status","phone"],extras:[["attendance_records","Attendance register"],["leave_requests","Leave requests"]]},
   departments:{table:"departments",title:"Departments",fields:[["name","Department name","text",1],["code","Department code","text"],["description","Description","textarea"]],columns:["name","code","description","is_active"]},
