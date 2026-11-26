@@ -130,16 +130,17 @@ async function renderOverview(){
  document.getElementById("moduleGrid").innerHTML=modules.map(m=>`<button class="module-card" data-page="${m.id}"><span class="module-icon">${m.icon}</span><strong>${escapeHtml(m.name)}</strong><small>${escapeHtml(m.desc)}</small></button>`).join("");
  document.getElementById("dashboardRefresh").addEventListener("click",renderOverview);
  const org=currentOrg.id;
- const [files,tasks,projects,employees,recent]=await Promise.all([
+ const [files,tasks,activeTasks,projects,employees,recent]=await Promise.all([
   supabase.from("office_files").select("id",{count:"exact",head:true}).eq("organization_id",org),
   supabase.from("tasks").select("id,status,title,priority,due_at,created_at").eq("organization_id",org).order("created_at",{ascending:false}).limit(100),
+  supabase.from("tasks").select("id",{count:"exact",head:true}).eq("organization_id",org).in("status",["pending","in_progress","blocked"]),
   supabase.from("projects").select("id",{count:"exact",head:true}).eq("organization_id",org),
   supabase.from("employees").select("id",{count:"exact",head:true}).eq("organization_id",org).eq("employment_status","active"),
   supabase.from("office_files").select("id,subject,file_number,status,created_at").eq("organization_id",org).order("created_at",{ascending:false}).limit(4)
  ]);
  const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
  set("filesCount",files.error?"—":files.count??0);
- set("tasksCount",tasks.error?"—":(tasks.data||[]).filter(t=>!["completed","cancelled"].includes(t.status)).length);
+ set("tasksCount",activeTasks.error?"—":activeTasks.count??0);
  set("projectsCount",projects.error?"—":projects.count??0);
  set("employeesCount",employees.error?"—":employees.count??0);
  const taskRows=tasks.data||[],total=taskRows.length;
