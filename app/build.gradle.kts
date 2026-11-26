@@ -13,18 +13,13 @@ android {
         applicationId = "com.digitalfox.bizfoxerp"
         minSdk = 23
         targetSdk = 35
-    }
-    buildFeatures { buildConfig = true }
-    defaultConfig {
-        applicationId = "com.digitalfox.bizfoxerp"
-        minSdk = 23
-        targetSdk = 35
         versionCode = 12
         versionName = "1.2.0"
-        buildConfigField("String", "APP_URL", "\\"https://digitalfoxstudios.github.io/biz-fox-erp/?nativeVersion=1.2.0\\"")
-        buildConfigField("String", "APP_NAME", "\\"Biz FOX ERP\\"")
-        buildConfigField("String", "RELEASE_ASSET", "\\"biz-fox-erp.apk\\"")
+        buildConfigField("String", "APP_URL", "\"https://digitalfoxstudios.github.io/biz-fox-erp/?nativeVersion=1.2.0\"")
+        buildConfigField("String", "APP_NAME", "\"Biz FOX ERP\"")
+        buildConfigField("String", "RELEASE_ASSET", "\"biz-fox-erp.apk\"")
     }
+    buildFeatures { buildConfig = true }
     signingConfigs {
         create("release") {
             if (!releaseStoreFile.isNullOrBlank()) storeFile = file(releaseStoreFile)
