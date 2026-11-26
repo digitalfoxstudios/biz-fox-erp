@@ -323,8 +323,15 @@ async function refreshManagerWork(staff){
  if(taskResult.error){taskBox.innerHTML='<p class="form-error">'+escapeHtml(taskResult.error.message)+'</p>';return;}
  const staffMap=Object.fromEntries((staff||[]).map(x=>[x.user_id,x.full_name]));
  const tasks=taskResult.data||[];document.getElementById("taskCount").textContent=tasks.length+" assignments";
- taskBox.innerHTML=tasks.length?tasks.map(t=>`<article class="task-work-card"><div class="task-work-main"><div><span class="task-priority priority-${escapeHtml(t.priority)}">${escapeHtml(t.priority)}</span><span class="task-state state-${escapeHtml(t.status)}">${escapeHtml(t.status.replaceAll("_"," "))}</span></div><h3>${escapeHtml(t.title)}</h3><p>${escapeHtml(t.description||"No extra instructions")}</p><small>Assigned to: ${escapeHtml(staffMap[t.assigned_to]||"Staff account")} · Due: ${t.due_at?escapeHtml(new Date(t.due_at).toLocaleString()):"No deadline"}</small></div></article>`).join(""):'<div class="empty-records">No assignments yet. Create the first assignment above.</div>';
- if(reportResult.error){reportBox.innerHTML='<p class="form-error">'+escapeHtml(reportResult.error.message)+'</p>';return;}
+ taskBox.innerHTML=tasks.length?tasks.map(t=>`<article class="task-work-card"><div class="task-work-main"><div><span class="task-priority priority-${escapeHtml(t.priority)}">${escapeHtml(t.priority)}</span><span class="task-state state-${escapeHtml(t.status)}">${escapeHtml(t.status.replaceAll("_"," "))}</span></div><h3>${escapeHtml(t.title)}</h3><p>${escapeHtml(t.description||"No extra instructions")}</p><small>Assigned to: ${escapeHtml(staffMap[t.assigned_to]||"Staff account")} · Due: ${t.due_at?escapeHtml(new Date(t.due_at).toLocaleString()):"No deadline"}</small><div class="task-manager-actions"><button type="button" data-task-status="${t.id}" data-next-status="in_progress" ${t.status==="in_progress"?"disabled":""}>Mark in progress</button><button type="button" data-task-status="${t.id}" data-next-status="completed" ${t.status==="completed"?"disabled":""}>Mark completed</button></div></div></article>`).join(""):'<div class="empty-records">No assignments yet. Create the first assignment above.</div>';
+taskBox.querySelectorAll("[data-task-status]").forEach(button=>button.addEventListener("click",async()=>{
+  const id=button.dataset.taskStatus,status=button.dataset.nextStatus;
+  button.disabled=true;button.textContent="Saving…";
+  const {error}=await supabase.from("tasks").update({status}).eq("id",id).eq("organization_id",currentOrg.id);
+  if(error){showMessage("Task status could not be updated: "+error.message);button.disabled=false;button.textContent=status==="completed"?"Mark completed":"Mark in progress";return;}
+  await refreshManagerWork(staff);
+ }));
+  if(reportResult.error){reportBox.innerHTML='<p class="form-error">'+escapeHtml(reportResult.error.message)+'</p>';return;}
  const taskMap=Object.fromEntries(tasks.map(t=>[t.id,t.title]));
  const reports=reportResult.data||[];
  const reportPhotoLinks={};await Promise.all(reports.flatMap(r=>(r.photo_paths||[]).map(async path=>{const {data}=await supabase.storage.from("task-reports").createSignedUrl(path,3600);if(data?.signedUrl)reportPhotoLinks[path]=data.signedUrl;})));
