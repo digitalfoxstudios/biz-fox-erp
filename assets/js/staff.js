@@ -1,13 +1,13 @@
 import { supabase } from "./supabase.js";
 const $=id=>document.getElementById(id);
 const authPanel=$("staffAuth"),portal=$("staffPortal"),noAccess=$("staffNoAccess");
-let currentUser=null,currentOrg=null,staffOrganizations=[],tasksCache=[],reportsCache=[],expensesCache=[];
+let currentUser=null,currentOrg=null,currentEmployee=null,staffOrganizations=[],tasksCache=[],reportsCache=[],expensesCache=[],taskCustomerMap={};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const money=v=>"₹"+Number(v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
 const showAuthMessage=(message,kind="error")=>{const el=$("staffAuthMessage");el.textContent=message;el.style.color=kind==="success"?"#21734a":"#b34a38";};
-const today=()=>new Date().toISOString().slice(0,10);
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 function showPage(page){
- const names={overview:"Overview",tasks:"My Assignments",expenses:"Travel & Material Expenses",reports:"Work Reports"};
+ const names={overview:"Overview",tasks:"My Assignments",expenses:"Travel & Material Expenses",attendance:"Attendance",reports:"Work Reports"};
  document.querySelectorAll(".staff-page-panel").forEach(el=>el.hidden=el.id!=="staffPage"+page[0].toUpperCase()+page.slice(1));
  document.querySelectorAll("[data-staff-page]").forEach(el=>el.classList.toggle("active",el.dataset.staffPage===page));
  $("staffPageTitle").textContent=names[page]||"Overview";
@@ -37,12 +37,13 @@ async function boot(user){
  const ids=allowed.map(m=>m.organization_id);
  const {data:orgs,error:orgError}=await supabase.from("organizations").select("id,name").in("id",ids).order("name");
  if(orgError||!orgs?.length){showNoAccess("Your organization could not be loaded. Contact your office manager.");return;}
- staffOrganizations=orgs;currentOrg=orgs[0];portal.hidden=false;
+ staffOrganizations=orgs;currentOrg=orgs[0];
+ const {data:employee}=await supabase.from("employees").select("id,full_name,employee_code,designation,phone").eq("organization_id",currentOrg.id).eq("user_id",user.id).eq("employment_status","active").maybeSingle();currentEmployee=employee||null;portal.hidden=false;
  $("staffGreeting").textContent=user.user_metadata?.full_name||user.user_metadata?.name||"My workspace";
  $("staffOrgName").textContent=currentOrg.name+" · Employee account";
  $("staffProfileName").textContent=$("staffGreeting").textContent;
  $("staffProfileDetails").textContent="Username: "+((user.email||"").split("@")[0])+" · Role: Employee · Company: "+currentOrg.name;
- setupStaffNotifications();updateStaffNetworkStatus();showPage("overview");await renderStaffWorkspace();
+ setupStaffNotifications();updateStaffNetworkStatus();showPage("overview");await renderStaffWorkspace();await renderAttendance();
 }
 function showNoAccess(message="Your staff login is not linked to an active employee record. Ask the administrator to create your employee record and issue your username and password."){
  authPanel.hidden=true;portal.hidden=true;noAccess.hidden=false;const p=noAccess.querySelector("p");if(p)p.textContent=message;
@@ -58,11 +59,12 @@ async function renderStaffWorkspace(){
  const taskBox=$("staffTasks"),reportBox=$("staffReports"),expenseBox=$("staffExpenses");
  if(tasksResult.error){taskBox.innerHTML='<div class="staff-empty">'+esc(tasksResult.error.message)+'</div>';return;}
  tasksCache=tasksResult.data||[];reportsCache=reportsResult.data||[];expensesCache=expensesResult.data||[];
+ const customerIds=[...new Set(tasksCache.map(t=>t.customer_id).filter(Boolean))];taskCustomerMap={};if(customerIds.length){const {data:customerRows}=await supabase.from("customers").select("id,customer_name,phone,contact_person,shipping_address,billing_address,city,state,pincode").in("id",customerIds);taskCustomerMap=Object.fromEntries((customerRows||[]).map(c=>[c.id,c]));}
  const active=tasksCache.filter(t=>["pending","in_progress","blocked"].includes(t.status)).length;
  const expTotal=expensesCache.reduce((s,e)=>s+Number(e.amount||0),0);
  $("staffSummary").innerHTML='<article class="stat-card"><span class="stat-icon blue">✓</span><p>Total assignments</p><strong>'+tasksCache.length+'</strong><small>All assigned tasks</small></article><article class="stat-card"><span class="stat-icon green">◷</span><p>Active work</p><strong>'+active+'</strong><small>Pending or in progress</small></article><article class="stat-card"><span class="stat-icon amber">▤</span><p>Work reports</p><strong>'+reportsCache.length+'</strong><small>Reports submitted</small></article><article class="stat-card"><span class="stat-icon violet">₹</span><p>Expense claims</p><strong>'+money(expTotal)+'</strong><small>'+expensesCache.length+' submitted claims</small></article>';
  taskBox.innerHTML=tasksCache.length?tasksCache.map(t=>`<article class="staff-task-card" data-task-card="${t.id}">
-  <div class="staff-task-top"><div><span class="staff-chip ${esc(t.priority)}">${esc(t.priority)} priority</span> <span class="staff-chip ${esc(t.status)}">${esc(t.status.replaceAll("_"," "))}</span><h3>${esc(t.title)}</h3><p>${esc(t.description||"No additional instructions were provided.")}</p><div class="staff-task-meta"><span class="staff-chip">Due: ${t.due_at?esc(new Date(t.due_at).toLocaleString()):"Not specified"}</span></div></div></div>
+  <div class="staff-task-top"><div><span class="staff-chip ${esc(t.priority)}">${esc(t.priority)} priority</span> <span class="staff-chip ${esc(t.status)}">${esc(t.status.replaceAll("_"," "))}</span><h3>${esc(t.title)}</h3><p>${esc(t.description||"No additional instructions were provided.")}</p>${(()=>{const c=taskCustomerMap[t.customer_id]||{};const addr=t.site_address||c.shipping_address||c.billing_address||[c.city,c.state,c.pincode].filter(Boolean).join(", ");const contact=t.site_contact_name||c.contact_person;const phone=t.site_contact_phone||c.phone;return t.customer_id||addr||contact||phone||t.site_latitude!=null?`<div class="staff-task-customer"><b>Customer / site details</b>${c.customer_name?`<p>${esc(c.customer_name)}</p>`:""}${addr?`<p>Address: ${esc(addr)}</p>`:""}${contact?`<p>Contact: ${esc(contact)}</p>`:""}${phone?`<p>Phone: <a href="tel:${esc(phone)}">${esc(phone)}</a></p>`:""}${t.site_latitude!=null&&t.site_longitude!=null?`<p><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${t.site_latitude},${t.site_longitude}">Open customer location map</a></p>`:""}</div>`:"";})()}<div class="staff-task-meta"><span class="staff-chip">Due: ${t.due_at?esc(new Date(t.due_at).toLocaleString()):"Not specified"}</span></div></div></div>
   <div class="staff-task-actions"><button type="button" class="staff-outline-button" data-toggle-report="${t.id}">Submit work report</button><button type="button" class="staff-outline-button" data-toggle-expense="${t.id}">Add travel / material expense</button></div>
   <form class="staff-report-form" data-task-form="${t.id}" hidden><h4>Work completion report</h4><div class="staff-report-grid">
    <label>Report date<input name="report_date" type="date" value="${today()}" required></label><label>Hours spent<input name="hours_spent" type="number" min="0" max="24" step="0.25" placeholder="e.g. 3.5"></label>
@@ -78,11 +80,9 @@ async function renderStaffWorkspace(){
    <label>Expense category<select name="expense_type" required><option value="travel">Travel charges</option><option value="material">Sourced material purchase</option><option value="other">Other task expense</option></select></label>
    <label>Expense date<input name="expense_date" type="date" value="${today()}" required></label>
    <label class="wide">Expense details<input name="description" required minlength="3" placeholder="e.g. Travel to client site / 2 CCTV cable rolls"></label>
-   <label>Vendor / shop / travel provider<input name="vendor_name" placeholder="Optional"></label>
+   <div class="wide staff-expense-category-fields" data-material-fields hidden><label>Vendor / shop name<input name="vendor_name" placeholder="Shop or supplier name"></label><label>Quantity<input name="quantity" type="number" min="0.001" step="0.001" placeholder="e.g. 2"></label><label>Unit<select name="unit"><option value="">Select unit</option><option>Nos</option><option>Pieces</option><option>Pairs</option><option>Sets</option><option>Meters</option><option>Feet</option><option>Kilometers</option><option>Square feet</option><option>Square meters</option><option>Cubic feet</option><option>Kilograms</option><option>Grams</option><option>Litres</option><option>Millilitres</option><option>Boxes</option><option>Packets</option><option>Rolls</option><option>Bundles</option><option>Hours</option><option>Days</option></select></label><label>Rate per unit (₹)<input name="unit_rate" type="number" min="0" step="0.01" placeholder="Optional"></label></div>
+   <div class="wide staff-expense-category-fields" data-travel-fields hidden><label>Travel mode<select name="travel_mode"><option value="">Select travel mode</option><option>Two-wheeler</option><option>Car</option><option>Taxi / Cab</option><option>Bus</option><option>Train</option><option>Auto-rickshaw</option><option>Other</option></select></label><label>From location<input name="from_location" placeholder="Starting point"></label><label>To location<input name="to_location" placeholder="Destination"></label><label>Distance (km)<input name="distance_km" type="number" min="0" step="0.1" placeholder="Optional"></label></div>
    <label>Payment method<select name="payment_method"><option value="">Select</option><option>Cash</option><option>UPI</option><option>Card</option><option>Personal account</option><option>Company advance</option></select></label>
-   <label>Quantity<input name="quantity" type="number" min="0.001" step="0.001" placeholder="e.g. 2"></label>
-   <label>Unit<input name="unit" placeholder="km, litre, pcs, metre, box"></label>
-   <label>Rate per unit (₹)<input name="unit_rate" type="number" min="0" step="0.01" placeholder="Optional"></label>
    <label>Total amount (₹)<input name="amount" type="number" min="0.01" step="0.01" required placeholder="Enter amount"></label>
    <label class="wide">Bill / receipt attachment<input name="receipts" type="file" accept="image/jpeg,image/png,application/pdf" multiple><small>Attach bill or receipt photos/PDF, up to 5 files and 8 MB each.</small></label>
   </div><div class="staff-report-actions"><button class="staff-submit" type="submit">Submit expense claim</button></div><p class="staff-message" role="status"></p></form>
@@ -129,20 +129,20 @@ function setupReportForms(taskBox){
  });
 }
 function setupExpenseForms(taskBox){
- taskBox.querySelectorAll("[data-expense-form]").forEach(form=>form.addEventListener("submit",async e=>{
+ taskBox.querySelectorAll("[data-expense-form]").forEach(form=>{const category=form.querySelector('[name="expense_type"]');const updateFields=()=>{form.querySelector("[data-material-fields]").hidden=category.value!=="material";form.querySelector("[data-travel-fields]").hidden=category.value!=="travel";};category.addEventListener("change",updateFields);updateFields();form.addEventListener("submit",async e=>{
   e.preventDefault();const fd=new FormData(form),button=form.querySelector('button[type="submit"]'),message=form.querySelector(".staff-message"),taskId=form.dataset.expenseForm;
-  const amount=Number(fd.get("amount")),description=String(fd.get("description")||"").trim(),files=Array.from(fd.getAll("receipts")).filter(x=>x instanceof File&&x.size);
-  if(!description||description.length<3||!Number.isFinite(amount)||amount<=0){message.textContent="Enter valid expense details and amount.";return;}
+  const amount=Number(fd.get("amount")),description=String(fd.get("description")||"").trim(),files=Array.from(fd.getAll("receipts")).filter(x=>x instanceof File&&x.size),category=String(fd.get("expense_type")),qty=fd.get("quantity")?Number(fd.get("quantity")):null,rate=fd.get("unit_rate")?Number(fd.get("unit_rate")):null;
+  if(!description||description.length<3||!Number.isFinite(amount)||amount<=0){message.textContent="Enter valid expense details and amount.";return;}if(category==="material"&&(!qty||qty<=0||!fd.get("unit"))){message.textContent="For material purchases, enter quantity and select a unit.";return;}if(category==="travel"&&!fd.get("travel_mode")){message.textContent="Select the travel mode.";return;}
   if(files.length>5||files.some(f=>f.size>8*1024*1024||!["image/jpeg","image/png","application/pdf"].includes(f.type))){message.textContent="Attach up to 5 JPG, PNG or PDF receipts, each no larger than 8 MB.";return;}
   button.disabled=true;button.textContent="Submitting claim…";
   const id=crypto.randomUUID(),paths=files.map((f,i)=>currentOrg.id+"/expenses/"+id+"/"+currentUser.id+"/"+crypto.randomUUID()+"-"+(f.name||("receipt-"+(i+1))).replace(/[^a-zA-Z0-9._-]/g,"_").slice(-80));
-  const record={id,organization_id:currentOrg.id,task_id:taskId,submitted_by:currentUser.id,expense_date:String(fd.get("expense_date")),expense_type:String(fd.get("expense_type")),description,vendor_name:String(fd.get("vendor_name")||"").trim()||null,quantity:fd.get("quantity")?Number(fd.get("quantity")):null,unit:String(fd.get("unit")||"").trim()||null,unit_rate:fd.get("unit_rate")?Number(fd.get("unit_rate")):null,amount,payment_method:String(fd.get("payment_method")||"")||null,receipt_paths:paths,status:"pending_review"};
+  const record={id,organization_id:currentOrg.id,task_id:taskId,submitted_by:currentUser.id,expense_date:String(fd.get("expense_date")),expense_type:category,description,vendor_name:String(fd.get("vendor_name")||"").trim()||null,quantity:qty,unit:String(fd.get("unit")||"").trim()||null,unit_rate:rate,travel_mode:String(fd.get("travel_mode")||"")||null,from_location:String(fd.get("from_location")||"").trim()||null,to_location:String(fd.get("to_location")||"").trim()||null,distance_km:fd.get("distance_km")?Number(fd.get("distance_km")):null,amount,payment_method:String(fd.get("payment_method")||"")||null,receipt_paths:paths,status:"pending_review"};
   const {error}=await supabase.from("task_expenses").insert(record);
   if(error){message.textContent="Expense claim could not be saved: "+error.message;button.disabled=false;button.textContent="Submit expense claim";return;}
   try{for(let i=0;i<files.length;i++){const {error:upErr}=await supabase.storage.from("task-expenses").upload(paths[i],files[i],{contentType:files[i].type,upsert:false});if(upErr)throw upErr;}}
   catch(err){message.textContent="Claim saved, but a receipt upload failed: "+err.message+"; contact your manager.";button.disabled=false;button.textContent="Submit expense claim";return;}
-  const state=await window.BizFoxOffline?.getStatus();message.textContent=state?.pending?"Claim and receipts saved locally; they will sync when network returns.":"Expense claim submitted for manager approval.";message.style.color="#21734a";button.disabled=false;button.textContent="Submit expense claim";form.reset();await renderStaffWorkspace();showPage("expenses");
- }));
+  const state=await window.BizFoxOffline?.getStatus();message.textContent=state?.pending?"Claim and receipts saved locally; they will sync when network returns.":"Expense claim submitted for manager approval.";message.style.color="#21734a";button.disabled=false;button.textContent="Submit expense claim";form.reset();form.querySelector("[data-material-fields]").hidden=true;form.querySelector("[data-travel-fields]").hidden=true;await renderStaffWorkspace();showPage("expenses");
+ });});
 }
 function updateStaffNetworkStatus(){const el=$("staffNetworkStatus");if(!el)return;const state=window.BizFoxOfflineState||{online:navigator.onLine,pending:0};el.textContent=!state.online?"Offline · "+state.pending+" waiting":state.failed?"Sync failed · "+state.failed:state.pending?"Syncing · "+state.pending:"Online · Synced";}
 function setupStaffNotifications(){if(!currentUser||window.bizFoxStaffAlertChannel)return;try{window.bizFoxStaffAlertChannel=supabase.channel("bizfox-staff-alerts-"+currentUser.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"tasks",filter:"assigned_to=eq."+currentUser.id},payload=>window.BizFoxOffline?.notify("New work assigned",payload.new?.title||"A new task has been assigned.")).on("postgres_changes",{event:"UPDATE",schema:"public",table:"tasks",filter:"assigned_to=eq."+currentUser.id},payload=>window.BizFoxOffline?.notify("Assignment updated",payload.new?.title||"Your work assignment changed.")).subscribe();}catch(error){console.warn("Staff notifications unavailable",error);}}
