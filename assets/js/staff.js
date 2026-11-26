@@ -50,6 +50,25 @@ function showNoAccess(message="Your staff login is not linked to an active emplo
 }
 function taskTitle(id){return tasksCache.find(t=>t.id===id)?.title||"Assigned task";}
 function expenseLabel(type){return ({travel:"Travel",material:"Sourced material",other:"Other"})[type]||type;}
+
+function captureAttendanceLocation(){return new Promise(resolve=>{if(!navigator.geolocation){resolve(null);return;}navigator.geolocation.getCurrentPosition(p=>resolve({latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy:p.coords.accuracy}),()=>resolve(null),{enableHighAccuracy:true,timeout:12000,maximumAge:0});});}
+async function renderAttendance(){
+ const box=$("staffAttendanceHistory"),actions=$("staffAttendanceActions");if(!box||!actions||!currentOrg)return;
+ if(!currentEmployee){actions.innerHTML='<p class="staff-message">Your employee profile is not linked. Ask your administrator to link your staff login to an employee record.</p>';box.innerHTML="";return;}
+ const {data:rows,error}=await supabase.from("attendance_records").select("*").eq("organization_id",currentOrg.id).eq("employee_id",currentEmployee.id).order("attendance_date",{ascending:false}).limit(45);
+ if(error){box.innerHTML='<div class="staff-empty">'+esc(error.message)+'</div>';return;}
+ const day=rows?.find(x=>x.attendance_date===today()),checkedIn=!!day?.check_in,checkedOut=!!day?.check_out;
+ actions.innerHTML='<div class="staff-attendance-today"><div><small>TODAY · '+esc(today())+'</small><h3>'+esc(checkedOut?"Attendance completed":checkedIn?"You are checked in":"Not checked in yet")+'</h3><p>'+(checkedIn?"Check-in: "+esc(new Date(day.check_in).toLocaleTimeString()):"Record your arrival when you start work.")+(checkedOut?" · Check-out: "+esc(new Date(day.check_out).toLocaleTimeString()):"")+'</p></div><div class="staff-attendance-buttons">'+(!checkedIn?'<button id="staffCheckIn" class="staff-submit">Check in</button>':!checkedOut?'<button id="staffCheckOut" class="staff-submit">Check out</button>':'<span class="staff-expense-state approved">Day completed</span>')+'</div></div>';
+ const save=async isIn=>{const button=$(isIn?"staffCheckIn":"staffCheckOut");if(!button)return;button.disabled=true;button.textContent="Capturing location…";const loc=await captureAttendanceLocation(),now=new Date().toISOString();let result;
+  if(isIn){const payload={organization_id:currentOrg.id,employee_id:currentEmployee.id,attendance_date:today(),check_in:now,status:"present",recorded_by:currentUser.id,check_in_latitude:loc?.latitude??null,check_in_longitude:loc?.longitude??null,check_in_accuracy_m:loc?.accuracy??null};result=await supabase.from("attendance_records").insert(payload);}
+  else{result=await supabase.from("attendance_records").update({check_out:now,check_out_latitude:loc?.latitude??null,check_out_longitude:loc?.longitude??null,check_out_accuracy_m:loc?.accuracy??null}).eq("id",day.id).eq("employee_id",currentEmployee.id).eq("organization_id",currentOrg.id);}
+  if(result.error){button.disabled=false;button.textContent=isIn?"Check in":"Check out";showAuthMessage("Attendance could not be saved: "+result.error.message);return;}
+  await renderAttendance();
+ };
+ $("staffCheckIn")?.addEventListener("click",()=>save(true));$("staffCheckOut")?.addEventListener("click",()=>save(false));
+ box.innerHTML=rows?.length?rows.map(row=>'<article class="staff-report-card"><div class="staff-task-top"><div><span class="staff-expense-state '+(row.check_out?"approved":"")+'">'+esc(row.status)+'</span><h3>'+esc(new Date(row.attendance_date+"T00:00:00").toLocaleDateString())+'</h3><p>Check-in: '+(row.check_in?esc(new Date(row.check_in).toLocaleTimeString()):"—")+' · Check-out: '+(row.check_out?esc(new Date(row.check_out).toLocaleTimeString()):"—")+'</p>'+(row.check_in_latitude!=null?'<small>Check-in GPS: '+Number(row.check_in_latitude).toFixed(5)+', '+Number(row.check_in_longitude).toFixed(5)+' · <a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query='+row.check_in_latitude+','+row.check_in_longitude+'">Map</a></small>':"")+'</div></div></article>').join(""):'<div class="staff-empty">No attendance history yet.</div>';
+}
+
 async function renderStaffWorkspace(){
  const [tasksResult,reportsResult,expensesResult]=await Promise.all([
   supabase.from("tasks").select("*").eq("organization_id",currentOrg.id).eq("assigned_to",currentUser.id).order("created_at",{ascending:false}),
@@ -148,10 +167,10 @@ function updateStaffNetworkStatus(){const el=$("staffNetworkStatus");if(!el)retu
 function setupStaffNotifications(){if(!currentUser||window.bizFoxStaffAlertChannel)return;try{window.bizFoxStaffAlertChannel=supabase.channel("bizfox-staff-alerts-"+currentUser.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"tasks",filter:"assigned_to=eq."+currentUser.id},payload=>window.BizFoxOffline?.notify("New work assigned",payload.new?.title||"A new task has been assigned.")).on("postgres_changes",{event:"UPDATE",schema:"public",table:"tasks",filter:"assigned_to=eq."+currentUser.id},payload=>window.BizFoxOffline?.notify("Assignment updated",payload.new?.title||"Your work assignment changed.")).subscribe();}catch(error){console.warn("Staff notifications unavailable",error);}}
 window.addEventListener("bizfox:syncstate",updateStaffNetworkStatus);
 window.addEventListener("bizfox:online",()=>setTimeout(()=>{if(currentUser&&currentOrg)renderStaffWorkspace();},1200));
-window.addEventListener("bizfox:synccomplete",()=>{if(currentUser&&currentOrg)renderStaffWorkspace();});
+window.addEventListener("bizfox:synccomplete",()=>{if(currentUser&&currentOrg){renderStaffWorkspace();renderAttendance();}});
 window.addEventListener("online",updateStaffNetworkStatus);window.addEventListener("offline",updateStaffNetworkStatus);
 $("staffEnableNotifications").addEventListener("click",async()=>{const enabled=await window.BizFoxOffline?.enableNotifications();if(enabled)window.BizFoxOffline?.notify("Biz FOX ERP","Staff notifications are enabled.");else showAuthMessage("Allow notifications in your phone settings.");});
-$("staffRefresh").addEventListener("click",renderStaffWorkspace);$("staffExpenseRefresh").addEventListener("click",renderStaffWorkspace);
+$("staffRefresh").addEventListener("click",renderStaffWorkspace);$("staffExpenseRefresh").addEventListener("click",renderStaffWorkspace);$("staffAttendanceRefresh").addEventListener("click",renderAttendance);
 $("staffProfileToggle").addEventListener("click",()=>{const card=$("staffProfileCard");card.hidden=!card.hidden;});
 $("staffSignOut").addEventListener("click",async()=>{await supabase.auth.signOut();location.replace("./staff.html");});
 $("staffNoAccessSignOut").addEventListener("click",async()=>{await supabase.auth.signOut();location.reload();});
