@@ -27,6 +27,7 @@ jobs:
       - name: Validate JavaScript syntax
         run: |
           node --check assets/js/app.js
+          node --check assets/js/supabase.js
           node --check assets/js/auth.js
           node --check assets/js/staff.js
           node --check service-worker.js
