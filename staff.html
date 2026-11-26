@@ -8,13 +8,13 @@
   <title>Biz FOX ERP · Employee Workspace</title>
   <link rel="manifest" href="./staff.webmanifest">
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/css/staff.css?v=10">
+  <link rel="stylesheet" href="./assets/css/staff.css?v=11">
   <link rel="stylesheet" href="./assets/css/app-update.css?v=1">
 </head>
 <body>
   <header class="staff-header">
     <a class="staff-brand" href="./staff.html"><img class="staff-logo" src="./assets/biz-fox-erp-logo.png" alt="Biz FOX ERP"><span><b>Biz FOX ERP</b><small>EMPLOYEE WORKSPACE</small></span></a>
-    <div class="staff-header-actions"><button id="staffAppUpdate" class="staff-outline-button" type="button">App updates</button></div>
+    <div class="staff-header-actions"><span id="staffNetworkStatus" class="staff-network-status">Checking connection…</span><button id="staffEnableNotifications" class="staff-outline-button" type="button">Enable notifications</button><button id="staffAppUpdate" class="staff-outline-button" type="button">App updates</button></div>
   </header>
   <main class="staff-shell">
     <section id="staffAuth" class="staff-auth">
@@ -47,6 +47,6 @@
   <footer class="staff-footer">Biz FOX ERP · Employee Workspace · Digital FOX Studio</footer>
   <script src="./assets/js/app-update.js?v=1"></script>
   <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(() => {}));</script>
-  <script type="module" src="./assets/js/staff.js?v=12"></script>
+  <script type="module" src="./assets/js/staff.js?v=13"></script>
 </body>
 </html>
