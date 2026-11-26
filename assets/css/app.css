@@ -300,3 +300,19 @@ body{background:#f3f6fb}
 .task-manager-actions button:hover:not(:disabled){border-color:#efb27b;color:#b96825;background:#fff9f3}
 .task-manager-actions button:disabled{opacity:.45;cursor:default}
 @media(max-width:560px){.task-manager-actions button{flex:1}}
+
+.report-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:18px 0}
+.report-kpi{background:#fff;border:1px solid #e6ebf2;border-radius:14px;padding:17px;display:grid;gap:7px;box-shadow:0 6px 20px #172b4508}
+.report-kpi small{font-size:11px;color:#718096}
+.report-kpi strong{font-size:29px;letter-spacing:-1px;color:#1d304a;font-variant-numeric:tabular-nums}
+.report-kpi span{font-size:10px;color:#94a0ae}
+.report-review-summary{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center}
+.review-big{grid-row:span 2;display:grid;gap:3px;padding:16px;border-radius:13px;background:#fff5e9}
+.review-big strong{font-size:42px;line-height:1;color:#c8752c}
+.review-big span,.review-small span{font-size:11px;color:#78869a}
+.review-small{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid #edf1f5;font-size:11px}
+.review-small b{color:#263950}
+.report-review-summary>button{grid-column:1/-1}
+@media(max-width:780px){.report-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){.report-kpi{padding:13px}.report-kpi strong{font-size:25px}}
+@media print{.sidebar,.topbar,.data-page-actions,.task-manager-actions,.text-action{display:none!important}.main{margin:0!important;background:#fff}.content{padding:0!important}.dashboard-panel,.report-kpi{box-shadow:none;break-inside:avoid}}
