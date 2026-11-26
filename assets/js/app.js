@@ -299,7 +299,7 @@ async function openTaskWorkspace(){
   const staffSelect=document.querySelector('#assignmentForm [name="assigned_to"]');
  const {data:staff,error:staffError}=await supabase.from("employees").select("user_id,full_name,employee_code,designation").eq("organization_id",currentOrg.id).eq("employment_status","active").not("user_id","is",null).order("full_name");
  if(staffError){staffSelect.innerHTML='<option value="">Could not load staff</option>';document.getElementById("assignmentMessage").textContent=staffError.message;}
- else if(!staff?.length){staffSelect.innerHTML='<option value="">No linked staff accounts yet</option>';document.getElementById("assignmentMessage").textContent="Add an employee with their work email in Administration & HR. Ask them to create an account in the Staff App using the same email; the account will link automatically.";}
+ else if(!staff?.length){staffSelect.innerHTML='<option value="">No linked staff accounts yet</option>';document.getElementById("assignmentMessage").textContent="Add the employee in Administration & HR, then use Create username & password in the employee list. Give the employee those credentials to sign in to the unified app.";}
  else{staffSelect.innerHTML='<option value="">Choose staff member</option>'+staff.map(x=>'<option value="'+escapeHtml(x.user_id)+'">'+escapeHtml([x.employee_code,x.full_name,x.designation].filter(Boolean).join(" · "))+'</option>').join("");}
  document.getElementById("assignmentForm").addEventListener("submit",async e=>{
   e.preventDefault();const form=e.currentTarget;const button=form.querySelector('button[type="submit"]');const fd=new FormData(form);
