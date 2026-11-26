@@ -52,3 +52,6 @@ create policy task_expenses_storage_upload on storage.objects for insert to auth
 with check (bucket_id='task-expenses' and private.is_org_member(((storage.foldername(name))[1])::uuid)
  and (storage.foldername(name))[4]=(select auth.uid())::text
  and exists(select 1 from public.task_expenses e where e.id=((storage.foldername(name))[3])::uuid and e.organization_id=((storage.foldername(name))[1])::uuid and e.submitted_by=(select auth.uid())));
+
+create index if not exists task_expenses_task_id_idx on public.task_expenses(task_id);
+create index if not exists task_expenses_reviewed_by_idx on public.task_expenses(reviewed_by);
