@@ -196,3 +196,8 @@ body{background:radial-gradient(circle at 12% 4%,#e8eef7 0,transparent 32%),#f5f
 .staff-attendance-buttons{display:flex;align-items:center;gap:8px}
 .staff-attendance-buttons .staff-submit{width:auto;min-width:125px}
 @media(max-width:600px){.staff-expense-category-fields{grid-template-columns:1fr}.staff-attendance-today{align-items:flex-start;flex-direction:column}.staff-attendance-buttons{width:100%}.staff-attendance-buttons .staff-submit{width:100%}}
+
+.staff-assignment-checklist{margin:15px 0;padding:15px;border:1px solid #dce6f1;border-radius:13px;background:#f8fafd}
+.staff-checklist-heading{display:flex;justify-content:space-between;align-items:center;gap:10px}.staff-checklist-heading b,.staff-checklist-heading small{display:block}.staff-checklist-heading b{color:#192c46;font-size:14px}.staff-checklist-heading small{color:#75849a;font-size:11px;margin-top:4px}.staff-checklist-heading strong{font-size:13px;color:#bd6c2c;white-space:nowrap}
+.staff-checklist-progress{height:7px;background:#e7edf4;border-radius:99px;overflow:hidden;margin:12px 0}.staff-checklist-progress span{display:block;height:100%;background:#249768;border-radius:99px;transition:width .2s}
+.staff-checklist-items{display:grid;gap:8px}.staff-checklist-item{display:flex;align-items:flex-start;gap:11px;padding:10px 11px;background:white;border:1px solid #e4eaf1;border-radius:9px;color:#33455c;font-size:13px;line-height:1.4}.staff-checklist-item input{width:19px;height:19px;min-width:19px;margin:0;accent-color:#19865d}.staff-checklist-item.is-checked span{text-decoration:line-through;color:#718095}.staff-checklist-complete{margin:11px 0 0;color:#168052;font-size:12px;font-weight:750}.staff-checklist-reminder{margin:11px 0 0;color:#a55b20;font-size:12px;font-weight:700}
