@@ -6,6 +6,7 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TbdpsU_kyvXHuc9bo2R-bQ_QjFoFaW7
 const DB_NAME = "biz-fox-erp-offline";
 const DB_VERSION = 1;
 const nativeFetch = window.fetch.bind(window);
+let serverReachable = navigator.onLine;
 
 function openOfflineDb() {
   return new Promise((resolve, reject) => {
@@ -58,8 +59,6 @@ async function mergePendingRows(url, cachedBody) {
   for (const item of items) {
     const pendingUrl = new URL(item.url);
     if (pendingUrl.pathname.split("/").pop() !== table) continue;
-    const filters = new URL(url).searchParams;
-    const idFilter = filters.get("id");
     if (item.method === "POST") {
       try {
         const body = JSON.parse(item.body);
@@ -92,7 +91,7 @@ async function outboxItems() {
 async function setOfflineState() {
   let count = 0;
   try { count = (await outboxItems()).length; } catch {}
-  window.BizFoxOfflineState = { online: navigator.onLine, pending: count };
+  window.BizFoxOfflineState = { online: navigator.onLine && serverReachable, pending: count };
   window.dispatchEvent(new CustomEvent("bizfox:syncstate", { detail: window.BizFoxOfflineState }));
 }
 async function queueRequest(url, method, headers, body) {
@@ -133,6 +132,7 @@ async function syncOutbox() {
         const sessionResult = await supabase.auth.getSession();
         if (sessionResult.data?.session?.access_token) headers.set("Authorization", "Bearer " + sessionResult.data.session.access_token);
         const response = await nativeFetch(item.url, { method: item.method, headers, body: item.body || undefined });
+        serverReachable = true;
         if (response.ok || response.status === 409) {
           await dbAction("outbox", "readwrite", store => store.delete(item.id));
           await dbAction("responses", "readwrite", store => store.clear());
@@ -143,6 +143,7 @@ async function syncOutbox() {
         await dbAction("outbox", "readwrite", store => store.put({ ...item, attempts: (item.attempts || 0) + 1, lastError: message.slice(0, 500) }));
         break;
       } catch (error) {
+        serverReachable = false;
         await dbAction("outbox", "readwrite", store => store.put({ ...item, attempts: (item.attempts || 0) + 1, lastError: String(error).slice(0, 500) }));
         break;
       }
@@ -161,7 +162,7 @@ window.BizFoxOffline = {
   syncNow: syncOutbox,
   async getStatus() { await setOfflineState(); return window.BizFoxOfflineState; },
   async enableNotifications() {
-    if (window.BizFoxAndroid?.requestNotifications) { window.BizFoxAndroid.requestNotifications(); return true; }
+    if (window.BizFoxAndroid?.requestNotifications) { window.BizFoxAndroid.requestNotifications(); return "requested"; }
     if (!("Notification" in window)) return false;
     return (await Notification.requestPermission()) === "granted";
   },
@@ -188,9 +189,12 @@ window.fetch = async (input, init = {}) => {
   if (method === "GET") {
     try {
       const response = await nativeFetch(input, init);
+      serverReachable = true;
       if (response.ok) { try { await storeResponse(key, response); } catch (error) { console.warn("Offline cache write failed", error); } }
       return response;
     } catch (error) {
+      serverReachable = false;
+      await setOfflineState();
       const cached = await cachedResponse(key).catch(() => null);
       if (cached) {
         const body = await mergePendingRows(url.href, cached.body).catch(() => cached.body);
@@ -201,8 +205,10 @@ window.fetch = async (input, init = {}) => {
   }
 
   if (["POST", "PATCH", "PUT", "DELETE"].includes(method)) {
-    try { return await nativeFetch(input, init); }
+    try { const response = await nativeFetch(input, init); serverReachable = true; return response; }
     catch (error) {
+      serverReachable = false;
+      await setOfflineState();
       const body = init.body;
       if (typeof body !== "string" || !url.pathname.startsWith("/rest/v1/")) throw error;
       const localRecord = await queueRequest(url.href, method, headers, body);
