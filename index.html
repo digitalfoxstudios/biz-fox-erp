@@ -8,10 +8,11 @@
   <title>Biz FOX ERP</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/css/app.css?v=16">
+  <link rel="stylesheet" href="./assets/css/app.css?v=17">
   <link rel="stylesheet" href="./assets/css/app-update.css?v=1">
 </head>
 <body>
+  <div id="brandSplash" class="brand-splash"><img src="./assets/biz-fox-erp-logo.png" alt="Biz FOX ERP"><strong>Biz FOX ERP</strong><small>DESIGNED &amp; DEVELOPED BY DIGITAL FOX STUDIO</small></div>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
       <a class="brand" href="./"><img class="brand-logo" src="./assets/biz-fox-erp-logo.png" alt="Biz FOX ERP"><span><strong>Biz FOX</strong><small>OFFICE AUTOMATION SUITE</small></span></a>
@@ -60,9 +61,10 @@
       <footer>© <span id="year"></span> Biz FOX ERP <span>•</span> Secure office operations <span>•</span> Designed &amp; developed by <strong>Digital FOX Studio</strong></footer>
     </main>
   </div>
-  <script type="module" src="./assets/js/app.js?v=16"></script>
+  <script type="module" src="./assets/js/app.js?v=17"></script>
   <script src="./assets/js/app-update.js?v=1"></script>
   <script>
+    window.setTimeout(() => document.getElementById('brandSplash')?.classList.add('hidden'), 3000);
     if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(() => {}));
   </script>
 </body>
