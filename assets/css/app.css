@@ -342,3 +342,9 @@ body{background:#f3f6fb}
   .data-page-actions .primary-button{white-space:nowrap;min-width:112px}
   .data-page-actions .secondary-button{white-space:nowrap;min-width:96px}
 }
+
+/* Consistent in-app back navigation on every workspace screen */
+.workspace-backbar{display:flex;align-items:center;margin:0 0 14px}
+.workspace-back-button{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 16px;border:1px solid #dce3ec;border-radius:12px;background:#fff;color:#26364b;font-size:14px;font-weight:600;box-shadow:0 2px 8px rgba(20,35,55,.05);cursor:pointer}
+.workspace-back-button:active{transform:translateY(1px)}
+.workspace-back-button:disabled{opacity:.48;cursor:default}
