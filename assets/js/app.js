@@ -28,8 +28,7 @@ const pageBackStack=[];
 function updateBackButton(){const b=document.getElementById("workspaceBackButton");if(b)b.disabled=pageBackStack.length===0;}
 function rememberCurrentPage(){pageBackStack.push({page:activePage,config:activeDataConfig});if(pageBackStack.length>30)pageBackStack.shift();}
 async function goBack(){const p=pageBackStack.pop();if(!p){updateBackButton();return;}if(p.config){activePage=p.page;await openDataConfig(p.config);}else{activeDataConfig=null;if(p.page==="overview")await renderOverview();else await openPage(p.page);}document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.page===activePage));updateBackButton();}
-const backButtonObserver=new MutationObserver(()=>{if(!document.getElementById("workspaceBackButton")){const bar=document.createElement("div");bar.className="workspace-backbar";bar.innerHTML='<button id="workspaceBackButton" class="workspace-back-button" type="button">← Back</button>';content.prepend(bar);bar.querySelector("button").addEventListener("click",goBack);}updateBackButton();});
-backButtonObserver.observe(content,{childList:true});
+
 
 let appRegistration=null;
 let appUpdateNotice=null;
