@@ -332,8 +332,13 @@ const {data:{session},error:sessionError}=await supabase.auth.getSession();
 if(sessionError||!session){location.replace("./login.html");}
 else{
   currentUser=session.user;
-  setupAppUpdates();
-  try{await loadOrganizations();addWorkspaceControls();if(organizations.length)renderOverview();else renderOnboarding();}
-  catch(error){content.innerHTML=`<div class="empty-page"><h2>Workspace connection issue</h2><p>${escapeHtml(error.message)}</p></div>`;}
+  const {data:activeMemberships}=await supabase.from("organization_members").select("role").eq("user_id",currentUser.id).eq("status","active");
+  const activeRoles=(activeMemberships||[]).map(item=>item.role);
+  if(activeRoles.includes("staff")&&!activeRoles.some(role=>["owner","admin","manager"].includes(role))){location.replace("./staff.html");}
+  else{
+    setupAppUpdates();
+    try{await loadOrganizations();addWorkspaceControls();if(organizations.length)renderOverview();else renderOnboarding();}
+    catch(error){content.innerHTML=`<div class="empty-page"><h2>Workspace connection issue</h2><p>${escapeHtml(error.message)}</p></div>`;}
+  }
   supabase.auth.onAuthStateChange((_event,newSession)=>{if(!newSession)location.href="./login.html";});
 }
