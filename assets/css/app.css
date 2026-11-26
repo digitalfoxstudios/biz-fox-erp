@@ -251,3 +251,46 @@ body{background:#f3f6fb}
 .profile-hero h2{color:#fff}
 .profile-hero p{color:#d7e2ef}
 @media(max-width:760px){.welcome{border-radius:16px}.welcome-icon{font-size:42px}.stat-card{border-radius:14px}.content{padding:18px}}
+
+
+/* Executive dashboard: live analytics and quick-action panels */
+.welcome{padding:32px 34px;display:flex;align-items:center;justify-content:space-between;min-height:174px}
+.welcome-meta{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:20px;color:#d5e1ee;font-size:11px}
+.welcome-meta span{display:inline-flex;align-items:center;gap:7px}
+.welcome-meta i{width:7px;height:7px;border-radius:50%;background:#5fe0a0;box-shadow:0 0 0 4px #5fe0a022}
+.dashboard-section-title{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:28px 0 14px}
+.dashboard-section-title h3,.panel-heading h3{margin:4px 0;font-size:18px;letter-spacing:-.35px;color:#1c2a3e}
+.dashboard-section-title p,.panel-heading p{margin:4px 0 0;color:#78869a;font-size:12px}
+.dashboard-section-title .eyebrow{font-size:9px;letter-spacing:1.4px;color:#c8752c;font-weight:800}
+.dashboard-stats{margin-bottom:18px}
+.dashboard-panels{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:17px;margin:18px 0}
+.dashboard-panel{min-width:0;background:#fff;border:1px solid #e6ebf2;border-radius:17px;padding:21px;box-shadow:0 8px 24px rgba(23,42,66,.04)}
+.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.panel-symbol{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:#f2f5fa;color:#54708e;font-size:18px}
+.task-chart-total{display:flex;align-items:baseline;gap:9px;margin:0 0 17px}
+.task-chart-total strong{font-size:35px;letter-spacing:-1.4px;color:#1b2b43}
+.task-chart-total span{font-size:11px;color:#7a8799}
+.task-chart-bars{display:grid;gap:13px}
+.task-chart-row>div:first-child{display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;color:#58677b}
+.task-chart-row b{font-variant-numeric:tabular-nums;color:#27384e}
+.task-chart-track{height:8px;border-radius:20px;background:#eef2f7;overflow:hidden}
+.task-chart-track i{height:100%;display:block;border-radius:20px;min-width:0}
+.chart-pending{background:#f3b34d}.chart-progress{background:#4c91dc}.chart-complete{background:#3ab783}.chart-other{background:#9ba9bb}
+.quick-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.quick-action-grid button{border:1px solid #e8edf4;border-radius:12px;background:#fbfcfe;text-align:left;padding:12px;display:grid;grid-template-columns:32px 1fr;align-items:center;column-gap:9px;cursor:pointer;color:#26374e;transition:.18s}
+.quick-action-grid button:hover{border-color:#f0b37d;background:#fffaf5;transform:translateY(-2px)}
+.quick-action-grid button>span{grid-row:span 2;width:32px;height:32px;border-radius:10px;background:#fff0e2;color:#c66c25;display:grid;place-items:center;font-size:16px}
+.quick-action-grid button b{font-size:11px}
+.quick-action-grid button small{font-size:9px;color:#8490a1;margin-top:2px}
+.dashboard-recent{margin:0 0 24px}
+.text-action{border:0;background:transparent;color:#c66c25;font-size:11px;font-weight:700;cursor:pointer}
+.recent-work-list{display:grid}
+.recent-work-item{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid #eff2f6;min-width:0}
+.recent-work-icon{width:33px;height:33px;flex:0 0 33px;border-radius:10px;background:#edf5ff;color:#477eaf;display:grid;place-items:center}
+.recent-work-item>div{min-width:0;flex:1;display:grid;gap:4px}
+.recent-work-item>div b{font-size:12px;color:#2b3b51;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recent-work-item>div small{font-size:10px;color:#8a96a6}
+.recent-work-item .task-state{font-size:9px;white-space:nowrap}
+.chart-loading,.dashboard-empty{padding:20px 10px;text-align:center;color:#8995a5;font-size:12px}
+@media(max-width:900px){.dashboard-panels{grid-template-columns:1fr}}
+@media(max-width:560px){.welcome{padding:23px 20px;min-height:150px}.welcome-meta{gap:9px;display:grid}.dashboard-section-title{align-items:center}.dashboard-panel{padding:16px}.quick-action-grid button{padding:10px 8px}.recent-work-item{gap:8px}.recent-work-item .task-state{max-width:88px;overflow:hidden;text-overflow:ellipsis}}
