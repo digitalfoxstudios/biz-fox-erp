@@ -24,9 +24,9 @@ for select to authenticated using (
 );
 insert into public.platform_subscription_plans(name,code,monthly_price,yearly_price,max_users,features)
 values
- ('Starter','starter',499,4990,5,'["Core office modules","Staff assignments","Attendance"]'::jsonb),
- ('Business','business',999,9990,20,'["All Starter features","Finance and inventory","Reports and approvals"]'::jsonb),
- ('Enterprise','enterprise',2499,24990,100,'["All Business features","Advanced controls","Priority support"]'::jsonb)
+ ('Starter','starter',0,0,5,'["Core office modules","Staff assignments","Attendance"]'::jsonb),
+ ('Business','business',0,0,20,'["All Starter features","Finance and inventory","Reports and approvals"]'::jsonb),
+ ('Enterprise','enterprise',0,0,100,'["All Business features","Advanced controls","Priority support"]'::jsonb)
 on conflict (code) do nothing;
 create or replace function public.platform_create_tenant(p_name text,p_slug text,p_owner_email text,p_plan_code text default 'starter')
 returns jsonb language plpgsql security definer set search_path=public,auth as $$
