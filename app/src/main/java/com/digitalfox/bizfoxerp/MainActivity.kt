@@ -16,6 +16,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.provider.MediaStore
 import androidx.core.content.FileProvider
 import java.io.File
@@ -117,8 +119,27 @@ class MainActivity : Activity() {
             webViewClient = object : WebViewClient() {
                 override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) { this@MainActivity.progress.visibility = View.VISIBLE }
                 override fun onPageFinished(view: WebView?, url: String?) { this@MainActivity.progress.visibility = View.GONE }
+                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                    val target = request?.url ?: return false
+                    val appHost = Uri.parse(appUrl).host
+                    if (target.scheme == "https" && target.host != null && target.host != appHost) {
+                        try { startActivity(Intent(Intent.ACTION_VIEW, target)) } catch (_: Exception) {
+                            Toast.makeText(this@MainActivity, "Could not open the map. Please install a browser.", Toast.LENGTH_LONG).show()
+                        }
+                        return true
+                    }
+                    if (target.scheme == "tel" || target.scheme == "mailto" || target.scheme == "geo") {
+                        try { startActivity(Intent(Intent.ACTION_VIEW, target)) } catch (_: Exception) { }
+                        return true
+                    }
+                    return false
+                }
                 override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
-                    if (request?.isForMainFrame == true) view?.loadUrl("file:///android_asset/offline.html")
+                    if (request?.isForMainFrame == true && !isNetworkAvailable()) {
+                        view?.loadUrl("file:///android_asset/offline.html")
+                    } else if (request?.isForMainFrame == true) {
+                        Toast.makeText(this@MainActivity, "Page could not load. Please try again.", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
             webChromeClient = object : WebChromeClient() {
@@ -209,6 +230,13 @@ class MainActivity : Activity() {
                 }
             }
         }, 3000L)
+    }
+
+    private fun isNetworkAvailable(): Boolean {
+        val manager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = manager.activeNetwork ?: return false
+        val capabilities = manager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
 
     private fun launchDirectCamera() {
