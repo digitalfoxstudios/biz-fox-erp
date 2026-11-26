@@ -260,10 +260,7 @@ class MainActivity : Activity() {
     }
 
     private fun showLocalNotification(title: String, body: String) {
-        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            requestNotificationPermission()
-            return
-        }
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
         val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title.take(80))
