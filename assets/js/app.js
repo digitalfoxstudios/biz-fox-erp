@@ -575,6 +575,8 @@ const {data:{session},error:sessionError}=await supabase.auth.getSession();
 if(sessionError||!session){location.replace("./login.html");}
 else{
   currentUser=session.user;
+  const {data:platformAdmin}=await supabase.from("platform_super_admins").select("id").eq("user_id",currentUser.id).maybeSingle();
+  if(platformAdmin){location.replace("./platform-admin.html");}
   const {data:activeMemberships}=await supabase.from("organization_members").select("role").eq("user_id",currentUser.id).eq("status","active");
   const activeRoles=(activeMemberships||[]).map(item=>item.role);
   if(activeRoles.includes("staff")&&!activeRoles.some(role=>["owner","admin","manager"].includes(role))){location.replace("./staff.html");}
