@@ -577,13 +577,15 @@ else{
   currentUser=session.user;
   const {data:platformAdmin}=await supabase.from("platform_super_admins").select("id").eq("user_id",currentUser.id).maybeSingle();
   if(platformAdmin){location.replace("./platform-admin.html");}
-  const {data:activeMemberships}=await supabase.from("organization_members").select("role").eq("user_id",currentUser.id).eq("status","active");
-  const activeRoles=(activeMemberships||[]).map(item=>item.role);
-  if(activeRoles.includes("staff")&&!activeRoles.some(role=>["owner","admin","manager"].includes(role))){location.replace("./staff.html");}
   else{
-    setupAppUpdates();setupTaskNotifications();
-    try{await loadOrganizations();addWorkspaceControls();if(organizations.length)renderOverview();else renderOnboarding();}
-    catch(error){content.innerHTML=`<div class="empty-page"><h2>Workspace connection issue</h2><p>${escapeHtml(error.message)}</p></div>`;}
+    const {data:activeMemberships}=await supabase.from("organization_members").select("role").eq("user_id",currentUser.id).eq("status","active");
+    const activeRoles=(activeMemberships||[]).map(item=>item.role);
+    if(activeRoles.includes("staff")&&!activeRoles.some(role=>["owner","admin","manager"].includes(role))){location.replace("./staff.html");}
+    else{
+      setupAppUpdates();setupTaskNotifications();
+      try{await loadOrganizations();addWorkspaceControls();if(organizations.length)renderOverview();else renderOnboarding();}
+      catch(error){content.innerHTML=`<div class="empty-page"><h2>Workspace connection issue</h2><p>${escapeHtml(error.message)}</p></div>`;}
+    }
+    supabase.auth.onAuthStateChange((_event,newSession)=>{if(!newSession)location.href="./login.html";});
   }
-  supabase.auth.onAuthStateChange((_event,newSession)=>{if(!newSession)location.href="./login.html";});
 }
