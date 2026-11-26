@@ -124,3 +124,60 @@ body{background:radial-gradient(circle at 12% 4%,#e8eef7 0,transparent 32%),#f5f
  .staff-section-head{align-items:center}
  .staff-report-form{padding:13px}
 }
+
+/* Employee workspace unified with the latest admin shell */
+.staff-app-shell{background:#f4f6fa;min-height:100vh}
+.staff-sidebar .brand{padding-bottom:28px}
+.staff-sidebar .brand-logo{width:44px;height:44px;object-fit:contain;border-radius:11px;background:transparent}
+.staff-sidebar .nav-item{width:100%;text-align:left}
+.staff-main{min-width:0}
+.staff-topbar{gap:12px}
+.staff-topbar .top-actions{display:flex;align-items:center;gap:8px}
+.staff-topbar .staff-outline-button{font-size:11px;padding:8px 10px;white-space:nowrap}
+.staff-content{width:min(1200px,100%);padding-top:25px}
+.staff-welcome-panel{margin:0 0 20px}
+.staff-welcome-panel h2{color:#fff}
+.staff-welcome-panel p{color:#d4dfed}
+.staff-quick-grid .module-card{text-align:left}
+.staff-page-panel[hidden]{display:none!important}
+.staff-section-head{margin:4px 0 17px}
+.staff-task-card,.staff-report-card{border-radius:13px;box-shadow:0 4px 16px #1b2c4508}
+.staff-task-card h3{font-size:17px}
+.staff-task-actions{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0 4px}
+.staff-task-actions button{width:auto;margin:0}
+.staff-report-form,.staff-expense-form{background:#f9fafc;border:1px solid #e8edf4;border-radius:12px;padding:16px;margin-top:13px}
+.staff-report-form[hidden],.staff-expense-form[hidden]{display:none!important}
+.staff-report-form h4,.staff-expense-form h4{font-size:14px;color:#1c2c43;margin:0 0 12px}
+.staff-expense-form .staff-report-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 13px}
+.staff-expense-form .wide{grid-column:1/-1}
+.staff-expense-form input,.staff-expense-form select,.staff-expense-form textarea{width:100%;border:1px solid #dce3ec;border-radius:8px;background:#fff;padding:11px;font:13px inherit;color:#1c2c43}
+.staff-expense-form label{display:grid;gap:7px;margin:8px 0;font-size:12px;font-weight:700;color:#4c5a70}
+.staff-expense-form .staff-submit{width:auto;min-width:170px}
+.staff-expense-form .staff-report-actions{margin-top:10px}
+.staff-expense-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 17px}
+.staff-expense-kpi{background:#fff;border:1px solid #e7ecf2;border-radius:12px;padding:15px}
+.staff-expense-kpi small{display:block;color:#7b8798;font-size:11px}
+.staff-expense-kpi strong{display:block;color:#172943;font-size:22px;margin-top:6px}
+.staff-expense-type{display:inline-flex;padding:5px 9px;border-radius:20px;background:#eef3fa;color:#44556d;font-size:10px;font-weight:800;text-transform:capitalize}
+.staff-expense-type.travel{background:#eaf2ff;color:#3264a4}
+.staff-expense-type.material{background:#fff1e4;color:#a95b1d}
+.staff-expense-state{display:inline-flex;padding:5px 9px;border-radius:20px;background:#fff5e8;color:#9a5b1e;font-size:10px;font-weight:800}
+.staff-expense-state.approved{background:#e8f7ef;color:#21734a}
+.staff-expense-state.rejected,.staff-expense-state.revision_requested{background:#fff0ef;color:#b0443b}
+.staff-expense-receipts{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.staff-expense-receipts a{color:#bb6826;font-size:12px;font-weight:700}
+.staff-profile-card{margin-top:20px}
+.staff-menu-backdrop{display:none}
+@media(max-width:760px){
+ .staff-sidebar{transform:translateX(-100%);transition:transform .2s;z-index:8}
+ .staff-sidebar.open{transform:translateX(0);box-shadow:12px 0 35px #10182733}
+ .staff-main{margin-left:0}
+ .staff-topbar{height:72px;padding:0 13px}
+ .staff-topbar .top-actions{gap:5px}
+ .staff-topbar .staff-outline-button{padding:7px;font-size:10px}
+ .staff-content{padding:17px 13px}
+ .staff-expense-summary{grid-template-columns:1fr 1fr}
+ .staff-expense-form .staff-report-grid{grid-template-columns:1fr}
+ .staff-expense-form .wide{grid-column:1}
+}
+@media(max-width:380px){.staff-topbar .top-actions .status-text{display:none}.staff-topbar .staff-outline-button{font-size:9px}.staff-expense-summary{grid-template-columns:1fr 1fr}}
