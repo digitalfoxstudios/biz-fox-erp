@@ -89,9 +89,9 @@ async function outboxItems() {
   });
 }
 async function setOfflineState() {
-  let count = 0;
-  try { count = (await outboxItems()).length; } catch {}
-  window.BizFoxOfflineState = { online: navigator.onLine && serverReachable, pending: count };
+  let items = [];
+  try { items = await outboxItems(); } catch {}
+  window.BizFoxOfflineState = { online: navigator.onLine && serverReachable, pending: items.length, failed: items.filter(item => item.lastError).length };
   window.dispatchEvent(new CustomEvent("bizfox:syncstate", { detail: window.BizFoxOfflineState }));
 }
 async function queueRequest(url, method, headers, body) {
