@@ -1,113 +1,73 @@
 # Biz FOX ERP
 
-A single-company office automation platform for web and Android. It is configured for one company workspace, not multi-tenant customer accounts.
+Biz FOX ERP is being rebuilt as a multi-tenant business and office-management platform by Digital FOX Studio.
 
-## Main office portal
+## Platform direction
 
-- Dashboard and administration
-- HR, attendance and leave
-- e-Office files and correspondence
+- One unified sign-in page; the app determines access from the authenticated account.
+- Platform Super Admin console for provisioning and managing business accounts.
+- Separate, isolated business workspaces. A user's access is based on active organization membership.
+- Business roles include owner, admin, manager, staff and viewer.
+- Tenant-owned records use `organization_id` and database Row Level Security (RLS).
+- Staff workflow includes assigned work, checklist items, expenses and work reports.
+
+## Main application areas
+
+- Overview dashboard
+- Administration, employees and attendance
+- Files and e-Office
+- Correspondence
+- Customers, quotations and invoices
 - Accounts and finance
-- Departments, meetings and work assignments
+- Departments and meetings
+- Tasks and work assignments
 - Inventory, assets and projects
-- Reports, audit and role-based security
+- Communication, reports and security
 
-Web portal: https://digitalfoxstudios.github.io/biz-fox-erp/
+Some module screens and workflows are still being implemented and tested. The presence of a menu item does not mean that every workflow is production-complete.
 
-## Separate Staff Work App
+## Platform administration
 
-Staff use a separate app to:
-- Sign in with their own account
-- View only their assigned work
-- Read assignment instructions and deadlines
-- Update work status
-- Submit work reports with date, hours spent, work completed, challenges and next steps
-- View manager feedback on submitted reports
+The Platform Super Admin signs in through the unified login page. Authorized platform accounts are routed to `platform-admin.html`.
 
-Staff portal: https://digitalfoxstudios.github.io/biz-fox-erp/staff.html
+The platform console currently provides:
+- Starter, Business and Enterprise plan catalog (prices remain unset at zero pending approval)
+- Business account listing
+- Business status management
+- Business provisioning for an owner whose Supabase Auth account already exists
 
-### Staff onboarding
+Owner invitations and account creation through a secure Auth administration service are not yet automated. Create/verify the owner account first, then provision the business from the platform console.
 
-1. An administrator opens **Administration & HR** and adds the employee with their work email address.
-2. The administrator selects **Create staff login** beside the employee record.
-3. Biz FOX sends a secure account invitation to the employee. The employee uses the email link to set their password.
-4. The staff account is linked to the employee record and receives the staff role automatically.
-5. A manager opens **Tasks & Work**, creates an assignment and selects the linked employee.
-6. The employee sees the assignment in the Staff App and submits progress or completion reports.
-7. The manager reviews the report and approves it or requests changes with feedback.
+## Tenant isolation and security
 
-Staff self-registration is disabled. Only authorized company administrators can create staff invitations.
+- Tenant-owned application tables have RLS enabled and use `organization_id`.
+- Membership and role checks are implemented through database policies and private helper functions.
+- Platform provisioning/listing/status functions check the caller against `platform_super_admins`.
+- Platform RPC execution is revoked from `anon` and `public`; authenticated execution is guarded inside each function.
+- Browser clients must use only the Supabase publishable/anon key. Never put a service-role or secret key in web or Android code.
 
-## Android apps
+Security review is ongoing. Supabase currently reports warnings for authenticated execution of the three guarded `SECURITY DEFINER` platform functions and disabled leaked-password protection. Review these before production launch.
 
-The signed Android release is published as two separate apps:
-- **Biz FOX ERP** — manager and office administration app
-- **Biz FOX Staff** — staff assignments and work reports
+## Current rollout status
 
-Download both APKs from the [v1.0.6 release](https://github.com/digitalfoxstudios/biz-fox-erp/releases/tag/v1.0.6). The release workflow verifies both APK signatures before publishing.
+- [x] Clean application data and Auth accounts as explicitly requested; source code, branding and storage buckets were preserved.
+- [x] Register the Platform Super Admin account.
+- [x] Add the initial multi-tenant platform database foundation.
+- [x] Add Platform Super Admin dashboard and authentication routing.
+- [x] Add permission-checked tenant management RPCs.
+- [x] Verify RLS is enabled on all current public tables and tenant-owned tables carry `organization_id`.
+- [ ] Complete tenant-isolation tests across every table, view, RPC and Storage bucket.
+- [ ] Automate secure business-owner invitations.
+- [ ] Complete end-to-end tests for tenant signup, onboarding, switching and suspension.
+- [ ] Complete remaining business module workflows and offline synchronization tests.
+- [ ] Build, sign and verify separate native Android Admin and Staff APKs.
 
-## Architecture
+## Source and deployment
 
-- Responsive web application with installable app support
-- Supabase PostgreSQL, Auth, Storage and Realtime
-- GitHub source control and automated deployment
-- Separate manager and staff Android app variants
+Repository: https://github.com/digitalfoxstudios/biz-fox-erp
 
-## Security
+The multi-tenant work is currently on the `feature/multi-tenant-platform` branch in pull request #1. It has not yet been merged or deployed to the public app URL.
 
-- Supabase service-role/secret keys are not included in browser or Android clients.
-- Row Level Security is enabled on exposed application tables.
-- Staff users can read only their own assigned tasks and their own reports.
-- Managers can assign work and review reports within the company workspace.
-- Work-report storage is private.
+Existing public app: https://digitalfoxstudios.github.io/biz-fox-erp/
 
-## Database foundation
-
-The dedicated Supabase project is provisioned in the Mumbai region. The public schema contains 26 tables with Row Level Security enabled and company-scoped policies. The `organization_id` column is retained internally as a workspace/security key; users cannot create or switch company workspaces.
-
-Core tables include profiles, organizations, organization_members, departments, employees, office_files, correspondence, tasks, task_reports, meetings, assets, projects, announcements and audit_logs.
-
-Generated TypeScript database definitions are stored in `types/database.types.ts`.
-
-## Authentication
-
-The web client uses the Supabase publishable key only. No service-role or secret key is included in browser code. Company administrators sign in at `login.html`. Public account registration and creation of additional company workspaces are disabled.
-
-Administrators add an employee and select **Create staff login**. A secured Supabase Edge Function checks the caller's company role, sends an invitation, links the account to the employee record and grants the staff role. Staff self-registration is disabled.
-
-## Current implementation status
-
-- [x] Responsive application shell and navigation
-- [x] Supabase project and secured database foundation
-- [x] Email/password sign-in and password reset UI
-- [x] Single-company workspace with public company creation disabled
-- [x] Admin-controlled staff account invitations
-- [x] Initial CRUD forms and record lists for core office modules
-- [x] Private office-document storage and file movement register
-- [x] Staff work assignment and report workflow
-- [x] Separate Staff Work App and signed Android APK
-- [x] Manager report review and feedback
-- [ ] Deeper approval workflows and remaining module automation
-- [ ] Photo/document attachments on staff work reports
-- [x] Admin-created staff invitations from the employee directory
-
-Routine module screens are being delivered in phases; unfinished screens are labelled as such.
-
-## Hosting and Auth configuration
-
-The repository includes a GitHub Actions Pages deployment workflow. Enable **Settings → Pages → Build and deployment → Source: GitHub Actions** once in this repository.
-
-Set the Supabase Auth **Site URL** to:
-
-`https://digitalfoxstudios.github.io/biz-fox-erp/`
-
-Allow that URL and the staff portal path in the Supabase Auth redirect URL list so email confirmation and password recovery return to the app.
-
-Never add a secret or service-role key to `assets/js/supabase.js`.
-
-
-## Multi-tenant platform rollout
-
-The multi-tenant platform foundation is being introduced on the `feature/multi-tenant-platform` branch while preserving the existing single-workspace source as the baseline. Platform Super Admin authentication routes to `platform-admin.html`. The platform console supports business provisioning, plan selection, business status management and tenant listing through permission-checked database functions.
-
-New business provisioning requires the owner's Supabase Auth account to exist first. The platform console does not create passwords or bypass Auth invitations. Every tenant-owned business record continues to use the existing `organization_id` isolation model and organization membership roles. Subscription plan pricing is intentionally set to zero until the platform owner approves commercial pricing.
+Do not treat the existing public app or previously published APK references as the completed multi-tenant release. A new release will be announced only after the branch is reviewed, merged, deployed and tested.
