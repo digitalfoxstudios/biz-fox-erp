@@ -133,7 +133,25 @@ async function syncOutbox() {
         if (sessionResult.data?.session?.access_token) headers.set("Authorization", "Bearer " + sessionResult.data.session.access_token);
         const response = await nativeFetch(item.url, { method: item.method, headers, body: item.body || undefined });
         serverReachable = true;
-        if (response.ok || response.status === 409) {
+        let alreadyApplied = false;
+        if (response.status === 409 && item.method === "POST") {
+          try {
+            const posted = JSON.parse(item.body);
+            const first = Array.isArray(posted) ? posted[0] : posted;
+            if (first?.id) {
+              const verifyUrl = new URL(item.url);
+              verifyUrl.search = "";
+              verifyUrl.searchParams.set("id", "eq." + first.id);
+              verifyUrl.searchParams.set("select", "id");
+              const verify = await nativeFetch(verifyUrl.href, { headers });
+              if (verify.ok) {
+                const found = await verify.json();
+                alreadyApplied = Array.isArray(found) && found.some(row => row.id === first.id);
+              }
+            }
+          } catch {}
+        }
+        if (response.ok || alreadyApplied) {
           await dbAction("outbox", "readwrite", store => store.delete(item.id));
           await dbAction("responses", "readwrite", store => store.clear());
           syncedCount++;
