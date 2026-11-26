@@ -17,6 +17,7 @@ $("staffAuthForm").addEventListener("submit",async e=>{
 });
 async function boot(user){
  currentUser=user;authPanel.hidden=true;portal.hidden=true;noAccess.hidden=true;
+ setupStaffNotifications();updateStaffNetworkStatus();
  const {data:members,error}=await supabase.from("organization_members").select("organization_id,role,status").eq("user_id",user.id).eq("status","active");
  if(error){showNoAccess("Could not check your staff access: "+error.message);return;}
  const allowed=(members||[]).filter(m=>m.role==="staff");
@@ -76,6 +77,7 @@ async function renderStaffWorkspace(){
  taskBox.querySelectorAll("[data-task-form]").forEach(form=>form.addEventListener("submit",async e=>{
   e.preventDefault();const fd=new FormData(form),button=form.querySelector("button[type=submit]"),message=form.querySelector(".staff-message"),taskId=form.dataset.taskForm;
   const work=String(fd.get("work_done")||"").trim();if(work.length<3){message.textContent="Please describe the work completed.";return;}
+  if(selectedPhotos.length&&!navigator.onLine){message.textContent="Site photos need an internet connection to upload. Connect before submitting this report with photos.";return;}
   button.disabled=true;button.textContent="Submitting…";
   const status=String(fd.get("task_status")||"in_progress");
   const report={organization_id:currentOrg.id,task_id:taskId,submitted_by:currentUser.id,report_date:String(fd.get("report_date")),work_done:work,hours_spent:fd.get("hours_spent")?Number(fd.get("hours_spent")):null,challenges:String(fd.get("challenges")||"").trim()||null,next_steps:String(fd.get("next_steps")||"").trim()||null,task_status:status};
@@ -113,6 +115,10 @@ async function renderStaffWorkspace(){
  const photoLinks={};await Promise.all(reports.flatMap(r=>(r.photo_paths||[]).map(async path=>{const {data}=await supabase.storage.from("task-reports").createSignedUrl(path,3600);if(data?.signedUrl)photoLinks[path]=data.signedUrl;})));
  reportBox.innerHTML=reports.length?reports.map(r=>`<article class="staff-report-card"><div class="staff-task-top"><div><span class="staff-chip ${esc(r.report_status)}">${esc(r.report_status.replaceAll("_"," "))}</span><small> · ${esc(r.report_date)} · ${r.hours_spent??"—"} hours</small><p>${esc(r.work_done)}</p>${r.challenges?'<p><b>Challenges:</b> '+esc(r.challenges)+'</p>':''}${r.manager_feedback?'<p><b>Manager feedback:</b> '+esc(r.manager_feedback)+'</p>':''}${(r.photo_paths||[]).length?'<div class="staff-saved-photos">'+r.photo_paths.map(path=>photoLinks[path]?'<a href="'+esc(photoLinks[path])+'" target="_blank" rel="noopener"><img src="'+esc(photoLinks[path])+'" alt="Uploaded work site photo"></a>':'').join('')+'</div>':''}${r.geo_status==="captured"&&r.geo_latitude!==null?'<p class="staff-geo-info">GPS: '+Number(r.geo_latitude).toFixed(6)+', '+Number(r.geo_longitude).toFixed(6)+' · ±'+Math.round(r.geo_accuracy_m||0)+' m · <a target="_blank" rel="noopener" href="https://www.google.com/maps?q='+r.geo_latitude+','+r.geo_longitude+'">View map</a></p>':''}</div></div></article>`).join(""):'<div class="staff-empty">You have not submitted any work reports yet.</div>';
 }
+function updateStaffNetworkStatus(){const el=$("staffNetworkStatus");if(!el)return;const state=window.BizFoxOfflineState||{online:navigator.onLine,pending:0};el.textContent=state.online?(state.pending?"Syncing · "+state.pending:"Online · Synced"):("Offline · "+state.pending+" waiting");}
+function setupStaffNotifications(){if(!currentUser||window.bizFoxStaffAlertChannel)return;try{window.bizFoxStaffAlertChannel=supabase.channel("bizfox-staff-alerts-"+currentUser.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"tasks",filter:"assigned_to=eq."+currentUser.id},payload=>window.BizFoxOffline?.notify("New work assigned",payload.new?.title||"A new task has been assigned.")).on("postgres_changes",{event:"UPDATE",schema:"public",table:"tasks",filter:"assigned_to=eq."+currentUser.id},payload=>window.BizFoxOffline?.notify("Assignment updated",payload.new?.title||"Your work assignment changed.")).subscribe();}catch(error){console.warn("Staff notifications unavailable",error);}}
+window.addEventListener("bizfox:syncstate",updateStaffNetworkStatus);window.addEventListener("online",updateStaffNetworkStatus);window.addEventListener("offline",updateStaffNetworkStatus);
+$("staffEnableNotifications").addEventListener("click",async()=>{const enabled=await window.BizFoxOffline?.enableNotifications();if(enabled)window.BizFoxOffline?.notify("Biz FOX ERP","Staff notifications are enabled.");else showAuthMessage("Allow notifications in your phone settings.","error");});
 $("staffRefresh").addEventListener("click",renderStaffWorkspace);
 $("staffProfileToggle").addEventListener("click",()=>{const card=$("staffProfileCard"),open=card.hidden;card.hidden=!open;$("staffProfileToggle").setAttribute("aria-expanded",String(open));});
 $("staffSignOut").addEventListener("click",async()=>{await supabase.auth.signOut();location.replace("./login.html");});
