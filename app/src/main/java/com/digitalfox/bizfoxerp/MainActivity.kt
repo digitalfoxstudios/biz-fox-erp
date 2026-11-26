@@ -1,6 +1,11 @@
 package com.digitalfox.bizfoxerp
 
 import android.app.Activity
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import androidx.core.app.NotificationCompat
+import android.os.Handler
+import android.os.Looper
 import android.Manifest
 import android.content.pm.PackageManager
 import android.webkit.GeolocationPermissions
@@ -33,6 +38,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import android.view.View
+import android.widget.FrameLayout
 import android.graphics.Color
 import android.graphics.Typeface
 import android.view.Gravity
@@ -81,7 +87,9 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         registerDownloadReceiver()
-        val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Color.WHITE) }
+        createNotificationChannel()
+        val root = FrameLayout(this).apply { setBackgroundColor(Color.WHITE) }
+        val mainLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Color.WHITE) }
         val bar = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
             setPadding(16, 10, 12, 10); setBackgroundColor(Color.rgb(25, 45, 72))
@@ -156,11 +164,51 @@ class MainActivity : Activity() {
                 } catch (_: Exception) { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
             })
         }
-        root.addView(bar)
-        root.addView(progress, LinearLayout.LayoutParams(-1, 4))
-        root.addView(web, LinearLayout.LayoutParams(-1, 0, 1f))
+        mainLayout.addView(bar)
+        mainLayout.addView(progress, LinearLayout.LayoutParams(-1, 4))
+        mainLayout.addView(web, LinearLayout.LayoutParams(-1, 0, 1f))
+        root.addView(mainLayout, FrameLayout.LayoutParams(-1, -1))
+        val splash = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(32, 32, 32, 32)
+            setBackgroundColor(Color.rgb(16, 24, 39))
+        }
+        val splashLogo = ImageView(this).apply {
+            setImageResource(R.drawable.biz_fox_logo)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            contentDescription = "Biz FOX ERP"
+            layoutParams = LinearLayout.LayoutParams(132, 132).apply { bottomMargin = 22 }
+        }
+        val splashTitle = TextView(this).apply {
+            text = BuildConfig.APP_NAME
+            textSize = 27f
+            setTypeface(null, Typeface.BOLD)
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+        }
+        val splashStudio = TextView(this).apply {
+            text = "DIGITAL FOX STUDIO"
+            textSize = 11f
+            letterSpacing = 0.18f
+            setTextColor(Color.rgb(255, 173, 94))
+            gravity = Gravity.CENTER
+            setPadding(0, 10, 0, 0)
+        }
+        splash.addView(splashLogo)
+        splash.addView(splashTitle)
+        splash.addView(splashStudio)
+        root.addView(splash, FrameLayout.LayoutParams(-1, -1))
         setContentView(root)
         if (savedInstanceState == null) web.loadUrl(appUrl) else web.restoreState(savedInstanceState)
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (!isFinishing) {
+                root.removeView(splash)
+                if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIFICATION_REQUEST)
+                }
+            }
+        }, 3000L)
     }
 
     private fun launchDirectCamera() {
@@ -190,6 +238,42 @@ class MainActivity : Activity() {
 
     private inner class AndroidUpdateBridge {
         @JavascriptInterface fun checkForUpdates() { runOnUiThread { this@MainActivity.checkForUpdates() } }
+        @JavascriptInterface fun requestNotifications() { runOnUiThread { this@MainActivity.requestNotificationPermission() } }
+        @JavascriptInterface fun showNotification(title: String, body: String) { runOnUiThread { this@MainActivity.showLocalNotification(title, body) } }
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(NOTIFICATION_CHANNEL, "Biz FOX ERP alerts", NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = "Work assignments, office updates and sync notifications"
+            }
+            (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(channel)
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIFICATION_REQUEST)
+        } else {
+            Toast.makeText(this, "Biz FOX notifications are enabled.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showLocalNotification(title: String, body: String) {
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestNotificationPermission()
+            return
+        }
+        val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(title.take(80))
+            .setContentText(body.take(180))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body.take(500)))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .build()
+        try { androidx.core.app.NotificationManagerCompat.from(this).notify((System.currentTimeMillis() % Int.MAX_VALUE).toInt(), notification) }
+        catch (_: SecurityException) { requestNotificationPermission() }
     }
 
     private fun compareVersions(remote: String, installed: String): Int {
@@ -306,6 +390,9 @@ class MainActivity : Activity() {
             pendingGeoCallback?.invoke(pendingGeoOrigin, granted, false)
             pendingGeoCallback = null
             pendingGeoOrigin = null
+        } else if (requestCode == NOTIFICATION_REQUEST) {
+            val granted = grantResults.any { it == PackageManager.PERMISSION_GRANTED }
+            Toast.makeText(this, if (granted) "Biz FOX notifications enabled." else "Notifications are disabled. You can enable them in Android Settings.", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -330,5 +417,11 @@ class MainActivity : Activity() {
     }
     @Suppress("DEPRECATION")
     override fun onBackPressed() { if (this::web.isInitialized && web.canGoBack()) web.goBack() else super.onBackPressed() }
-    companion object { private const val FILE_PICKER_REQUEST = 4102; private const val LOCATION_REQUEST = 4103; private const val CAMERA_CAPTURE_REQUEST = 4104 }
+    companion object {
+        private const val FILE_PICKER_REQUEST = 4102
+        private const val LOCATION_REQUEST = 4103
+        private const val CAMERA_CAPTURE_REQUEST = 4104
+        private const val NOTIFICATION_REQUEST = 4105
+        private const val NOTIFICATION_CHANNEL = "bizfox_alerts"
+    }
 }
