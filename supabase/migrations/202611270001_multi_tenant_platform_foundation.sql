@@ -41,7 +41,7 @@ begin
  insert into public.organizations(name,slug,created_by,account_status,subscription_plan_id,billing_email,trial_ends_at)
  values(trim(p_name),lower(trim(p_slug)),auth.uid(),'trial',v_plan.id,lower(trim(p_owner_email)),now()+interval '14 days') returning * into v_org;
  insert into public.organization_members(organization_id,user_id,role,status) values(v_org.id,v_owner_id,'owner','active');
- return jsonb_build_object('id',v_org.id,'name',v_org.name,'slug',v_org.slug,'status',v_org.account_status,'owner_email',lower(trim(p_owner_email)),'plan',v_plan.name);
+ return pg_catalog.jsonb_build_object('id',v_org.id,'name',v_org.name,'slug',v_org.slug,'status',v_org.account_status,'owner_email',lower(trim(p_owner_email)),'plan',v_plan.name);
 end; $$;
 revoke all on function public.platform_create_tenant(text,text,text,text) from anon, public;
 grant execute on function public.platform_create_tenant(text,text,text,text) to authenticated;
@@ -100,15 +100,15 @@ returns jsonb language plpgsql security definer set search_path='' as $function$
 declare v_org public.organizations%rowtype; v_owner_id uuid; v_plan public.platform_subscription_plans%rowtype;
 begin
  if not exists(select 1 from public.platform_super_admins where user_id=auth.uid()) then raise exception 'Platform Super Admin access required'; end if;
- if pg_catalog.length(pg_catalog.trim(coalesce(p_name,'')))<2 or pg_catalog.length(pg_catalog.trim(coalesce(p_slug,'')))<3 then raise exception 'Business name and slug are required'; end if;
- select id into v_owner_id from auth.users where pg_catalog.lower(email)=pg_catalog.lower(pg_catalog.trim(p_owner_email)) limit 1;
+ if pg_catalog.length(pg_catalog.btrim(coalesce(p_name,'')))<2 or pg_catalog.length(pg_catalog.btrim(coalesce(p_slug,'')))<3 then raise exception 'Business name and slug are required'; end if;
+ select id into v_owner_id from auth.users where pg_catalog.lower(email)=pg_catalog.lower(pg_catalog.btrim(p_owner_email)) limit 1;
  if v_owner_id is null then raise exception 'Owner account not found. Invite and verify the owner first.'; end if;
  select * into v_plan from public.platform_subscription_plans where code=p_plan_code and is_active=true;
  if v_plan.id is null then raise exception 'Selected subscription plan is unavailable'; end if;
  insert into public.organizations(name,slug,created_by,account_status,subscription_plan_id,billing_email,trial_ends_at)
- values(pg_catalog.trim(p_name),pg_catalog.lower(pg_catalog.trim(p_slug)),auth.uid(),'trial',v_plan.id,pg_catalog.lower(pg_catalog.trim(p_owner_email)),pg_catalog.now()+interval '14 days') returning * into v_org;
+ values(pg_catalog.btrim(p_name),pg_catalog.lower(pg_catalog.btrim(p_slug)),auth.uid(),'trial',v_plan.id,pg_catalog.lower(pg_catalog.btrim(p_owner_email)),pg_catalog.now()+interval '14 days') returning * into v_org;
  insert into public.organization_members(organization_id,user_id,role,status) values(v_org.id,v_owner_id,'owner','active');
- return jsonb_build_object('id',v_org.id,'name',v_org.name,'slug',v_org.slug,'status',v_org.account_status,'owner_email',pg_catalog.lower(pg_catalog.trim(p_owner_email)),'plan',v_plan.name);
+ return pg_catalog.jsonb_build_object('id',v_org.id,'name',v_org.name,'slug',v_org.slug,'status',v_org.account_status,'owner_email',pg_catalog.lower(pg_catalog.btrim(p_owner_email)),'plan',v_plan.name);
 end;
 $function$;
 create or replace function public.platform_set_tenant_status(p_tenant_id uuid,p_status text)
