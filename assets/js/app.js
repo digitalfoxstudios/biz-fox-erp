@@ -59,7 +59,16 @@ function escapeHtml(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","
 function showMessage(message){let el=document.getElementById("appMessage");if(!el){el=document.createElement("div");el.id="appMessage";el.className="app-message";document.querySelector(".content").prepend(el);}el.textContent=message;el.hidden=false;}
 function addWorkspaceControls(){
   const actions=document.querySelector(".top-actions");
-  actions.innerHTML='<span class="status-dot"></span><span class="status-text">Company workspace</span>';
+  actions.innerHTML='<span class="status-dot" id="networkDot"></span><span class="status-text" id="networkStatus">Checking connection…</span><button type="button" class="notify-enable" id="enableNotifications">🔔</button>';
+  const update=()=>{const state=window.BizFoxOfflineState||{online:navigator.onLine,pending:0};const label=document.getElementById("networkStatus"),dot=document.getElementById("networkDot");if(label)label.textContent=state.online?(state.pending?("Syncing · "+state.pending+" pending"):"Online · Synced"):("Offline · "+state.pending+" waiting");if(dot)dot.classList.toggle("offline",!state.online);};
+  window.addEventListener("bizfox:syncstate",update);window.addEventListener("online",update);window.addEventListener("offline",update);update();
+  window.addEventListener("bizfox:synccomplete",()=>{update();window.BizFoxOffline?.notify("Biz FOX ERP","Your saved changes are synced.");});
+  document.getElementById("enableNotifications").addEventListener("click",async()=>{const enabled=await window.BizFoxOffline?.enableNotifications();if(enabled)window.BizFoxOffline?.notify("Biz FOX ERP","Notifications are enabled.");else showMessage("Please allow notifications in Android or browser settings.");});
+}
+let taskAlertChannel=null;
+function setupTaskNotifications(){
+ if(taskAlertChannel||!currentUser)return;
+ try{taskAlertChannel=supabase.channel("bizfox-task-alerts-"+currentUser.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"tasks",filter:"assigned_to=eq."+currentUser.id},payload=>{const task=payload.new||{};window.BizFoxOffline?.notify("New work assigned",task.title||"A new task has been assigned to you.");}).on("postgres_changes",{event:"UPDATE",schema:"public",table:"tasks",filter:"assigned_to=eq."+currentUser.id},payload=>{const task=payload.new||{};window.BizFoxOffline?.notify("Work status updated",task.title||"Your assignment was updated.");}).subscribe();}catch(error){console.warn("Task notifications are unavailable",error);}
 }
 async function renderProfile(){
   title.textContent="My Profile";
@@ -518,7 +527,7 @@ else{
   const activeRoles=(activeMemberships||[]).map(item=>item.role);
   if(activeRoles.includes("staff")&&!activeRoles.some(role=>["owner","admin","manager"].includes(role))){location.replace("./staff.html");}
   else{
-    setupAppUpdates();
+    setupAppUpdates();setupTaskNotifications();
     try{await loadOrganizations();addWorkspaceControls();if(organizations.length)renderOverview();else renderOnboarding();}
     catch(error){content.innerHTML=`<div class="empty-page"><h2>Workspace connection issue</h2><p>${escapeHtml(error.message)}</p></div>`;}
   }
