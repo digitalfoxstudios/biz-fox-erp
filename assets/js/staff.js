@@ -7,7 +7,7 @@ const money=v=>"₹"+Number(v||0).toLocaleString("en-IN",{minimumFractionDigits:
 const showAuthMessage=(message,kind="error")=>{const el=$("staffAuthMessage");el.textContent=message;el.style.color=kind==="success"?"#21734a":"#b34a38";};
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 function showPage(page){
- const names={overview:"Overview",tasks:"My Assignments",expenses:"Travel & Material Expenses",attendance:"Attendance",reports:"Work Reports"};
+ const names={overview:"Overview",tasks:"My Assignments",expenses:"Travel & Material Expenses",attendance:"Attendance",reports:"Work Reports",profile:"My Profile"};
  document.querySelectorAll(".staff-page-panel").forEach(el=>el.hidden=el.id!=="staffPage"+page[0].toUpperCase()+page.slice(1));
  document.querySelectorAll("[data-staff-page]").forEach(el=>el.classList.toggle("active",el.dataset.staffPage===page));
  $("staffPageTitle").textContent=names[page]||"Overview";
@@ -41,8 +41,16 @@ async function boot(user){
  const {data:employee}=await supabase.from("employees").select("id,full_name,employee_code,designation,phone").eq("organization_id",currentOrg.id).eq("user_id",user.id).eq("employment_status","active").maybeSingle();currentEmployee=employee||null;portal.hidden=false;
  $("staffGreeting").textContent=user.user_metadata?.full_name||user.user_metadata?.name||"My workspace";
  $("staffOrgName").textContent=currentOrg.name+" · Employee account";
- $("staffProfileName").textContent=$("staffGreeting").textContent;
- $("staffProfileDetails").textContent="Username: "+((user.email||"").split("@")[0])+" · Role: Employee · Company: "+currentOrg.name;
+ const displayName=currentEmployee?.full_name||user.user_metadata?.full_name||user.user_metadata?.name||"Employee";
+ $("staffProfilePageName").textContent=displayName;
+ $("staffProfileAvatar").textContent=displayName.trim().split(/\s+/).map(x=>x[0]).slice(0,2).join("").toUpperCase()||"ME";
+ $("staffProfilePageRole").textContent=(currentEmployee?.designation||"Employee")+" · "+currentOrg.name;
+ $("staffProfilePageDetails").innerHTML=[
+  ["Full name",displayName],["Employee code",currentEmployee?.employee_code||"Not assigned"],
+  ["Username",((user.email||"").split("@")[0])],["Phone",currentEmployee?.phone||"Not provided"],
+  ["Designation",currentEmployee?.designation||"Employee"],["Company",currentOrg.name],
+  ["Account role","Employee"],["Account ID",user.id]
+ ].map(([label,value])=>'<div class="staff-profile-detail"><small>'+esc(label)+'</small><strong>'+esc(value)+'</strong></div>').join("");
  setupStaffNotifications();updateStaffNetworkStatus();showPage("overview");await renderStaffWorkspace();await renderAttendance();
 }
 function showNoAccess(message="Your staff login is not linked to an active employee record. Ask the administrator to create your employee record and issue your username and password."){
@@ -174,8 +182,8 @@ window.addEventListener("bizfox:synccomplete",()=>{if(currentUser&&currentOrg){r
 window.addEventListener("online",updateStaffNetworkStatus);window.addEventListener("offline",updateStaffNetworkStatus);
 $("staffEnableNotifications").addEventListener("click",async()=>{const enabled=await window.BizFoxOffline?.enableNotifications();if(enabled)window.BizFoxOffline?.notify("Biz FOX ERP","Staff notifications are enabled.");else showAuthMessage("Allow notifications in your phone settings.");});
 $("staffRefresh").addEventListener("click",renderStaffWorkspace);$("staffExpenseRefresh").addEventListener("click",renderStaffWorkspace);$("staffAttendanceRefresh").addEventListener("click",renderAttendance);
-$("staffProfileToggle").addEventListener("click",()=>{const card=$("staffProfileCard");card.hidden=!card.hidden;});
-$("staffSignOut").addEventListener("click",async()=>{await supabase.auth.signOut();location.replace("./staff.html");});
+async function staffSignOut(button){if(button){button.disabled=true;button.textContent="Signing out…";}const {error}=await supabase.auth.signOut();if(error){if(button){button.disabled=false;button.textContent="⇥ Sign out";}showAuthMessage("Sign out failed: "+error.message);return;}location.replace("./staff.html");}
+$("staffSidebarSignOut").addEventListener("click",()=>staffSignOut($("staffSidebarSignOut")));
 $("staffNoAccessSignOut").addEventListener("click",async()=>{await supabase.auth.signOut();location.reload();});
 supabase.auth.onAuthStateChange(event=>{if(event==="SIGNED_OUT"){currentUser=null;currentOrg=null;portal.hidden=true;noAccess.hidden=true;authPanel.hidden=false;}});
 const {data:{session}}=await supabase.auth.getSession();if(session)await boot(session.user);
