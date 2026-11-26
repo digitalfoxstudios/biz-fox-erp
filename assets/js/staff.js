@@ -77,7 +77,6 @@ async function renderStaffWorkspace(){
  taskBox.querySelectorAll("[data-task-form]").forEach(form=>form.addEventListener("submit",async e=>{
   e.preventDefault();const fd=new FormData(form),button=form.querySelector("button[type=submit]"),message=form.querySelector(".staff-message"),taskId=form.dataset.taskForm;
   const work=String(fd.get("work_done")||"").trim();if(work.length<3){message.textContent="Please describe the work completed.";return;}
-  if(selectedPhotos.length&&!navigator.onLine){message.textContent="Site photos need an internet connection to upload. Connect before submitting this report with photos.";return;}
   button.disabled=true;button.textContent="Submitting…";
   const status=String(fd.get("task_status")||"in_progress");
   const report={organization_id:currentOrg.id,task_id:taskId,submitted_by:currentUser.id,report_date:String(fd.get("report_date")),work_done:work,hours_spent:fd.get("hours_spent")?Number(fd.get("hours_spent")):null,challenges:String(fd.get("challenges")||"").trim()||null,next_steps:String(fd.get("next_steps")||"").trim()||null,task_status:status};
@@ -106,7 +105,8 @@ async function renderStaffWorkspace(){
    if(pathError){message.textContent="Report saved, but photo links could not be attached: "+pathError.message;button.disabled=false;button.textContent="Submit work report";return;}
   }
   const {error:taskError}=await supabase.from("tasks").update({status}).eq("id",taskId).eq("organization_id",currentOrg.id).eq("assigned_to",currentUser.id);
-  message.textContent=taskError?"Report submitted, but task status could not be updated: "+taskError.message:"Work report submitted successfully.";
+  const syncState=await window.BizFoxOffline?.getStatus();
+  message.textContent=taskError?"Report saved, but task status could not be updated: "+taskError.message:(syncState?.pending?"Saved on this device. Report and photos will sync automatically when the network returns.":"Work report submitted successfully.");
   message.style.color=taskError?"#b34a38":"#21734a";
   button.disabled=false;button.textContent="Submit work report";
   if(!taskError)await renderStaffWorkspace();
