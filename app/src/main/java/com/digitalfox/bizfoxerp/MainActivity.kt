@@ -60,6 +60,7 @@ class MainActivity : Activity() {
     private var activeDownloadId = -1L
     private var pendingInstallUri: Uri? = null
     private val appUrl = BuildConfig.APP_URL
+    private var lastAppUrl = BuildConfig.APP_URL
     private val releasesApi = "https://api.github.com/repos/digitalfoxstudios/biz-fox-erp/releases/latest"
 
     private val downloadReceiver = object : BroadcastReceiver() {
@@ -117,7 +118,7 @@ class MainActivity : Activity() {
             addJavascriptInterface(AndroidUpdateBridge(), "BizFoxAndroid")
             CookieManager.getInstance().setAcceptCookie(true)
             webViewClient = object : WebViewClient() {
-                override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) { this@MainActivity.progress.visibility = View.VISIBLE }
+                override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) { if (url != null && Uri.parse(url).host == Uri.parse(appUrl).host) lastAppUrl = url; this@MainActivity.progress.visibility = View.VISIBLE }
                 override fun onPageFinished(view: WebView?, url: String?) { this@MainActivity.progress.visibility = View.GONE }
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val target = request?.url ?: return false
@@ -266,6 +267,7 @@ class MainActivity : Activity() {
 
     private inner class AndroidUpdateBridge {
         @JavascriptInterface fun checkForUpdates() { runOnUiThread { this@MainActivity.checkForUpdates() } }
+        @JavascriptInterface fun retryApp() { runOnUiThread { web.loadUrl(lastAppUrl) } }
         @JavascriptInterface fun requestNotifications() { runOnUiThread { this@MainActivity.requestNotificationPermission() } }
         @JavascriptInterface fun showNotification(title: String, body: String) { runOnUiThread { this@MainActivity.showLocalNotification(title, body) } }
     }
