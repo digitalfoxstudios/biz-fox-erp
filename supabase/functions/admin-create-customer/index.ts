@@ -21,7 +21,7 @@ Deno.serve(async(req:Request)=>{
  if(customerError||!customer)return json({error:"Customer record not found."},404);
  if(customer.status!=="active")return json({error:"Only active customers can receive portal access."},400);
  if(!customer.email||!/^\S+@\S+\.\S+$/.test(customer.email))return json({error:"Add a valid email address to the customer record first."},400);
- let userId=customer.user_id;
+ let userId=customer.user_id;let createdNow=false;
  if(userId){
   const {error}=await admin.auth.admin.updateUserById(userId,{password,email:customer.email,email_confirm:true,user_metadata:{full_name:customer.customer_name,account_type:"customer"}});
   if(error)return json({error:error.message},400);
@@ -31,6 +31,6 @@ Deno.serve(async(req:Request)=>{
   userId=data.user.id;
  }
  const {error:linkError}=await admin.from("customers").update({user_id:userId}).eq("id",customer.id).eq("organization_id",customer.organization_id);
- if(linkError)return json({error:"Login created but customer linking failed: "+linkError.message},500);
+ if(linkError){if(createdNow)await admin.auth.admin.deleteUser(userId);return json({error:"Customer linking failed: "+linkError.message},500);}
  return json({success:true,email:customer.email,message:"Customer portal access has been created. Share the email and temporary password securely."});
 });
