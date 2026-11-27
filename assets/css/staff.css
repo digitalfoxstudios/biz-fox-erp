@@ -217,3 +217,11 @@ body{background:radial-gradient(circle at 12% 4%,#e8eef7 0,transparent 32%),#f5f
 .staff-profile-detail small{display:block;color:#8a95a6;font-size:10px;margin-bottom:6px}
 .staff-profile-detail strong{display:block;color:#26364e;font-size:13px;overflow-wrap:anywhere}
 @media(max-width:520px){.staff-profile-hero{padding:20px 17px}.staff-profile-details{grid-template-columns:1fr;padding:4px 17px}.staff-profile-detail{padding:13px 3px}}
+
+/* Employee expense report controls */
+.staff-expense-report-tools{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:0 0 8px;padding:14px;background:#fff;border:1px solid #e5ebf2;border-radius:12px}
+.staff-expense-report-tools label{display:grid;gap:6px;min-width:145px;color:#536278;font-size:11px;font-weight:700}
+.staff-expense-report-tools input{min-height:40px;padding:8px 10px;border:1px solid #dce3ec;border-radius:8px;background:#fff;color:#1c2c43;font:13px inherit}
+.staff-expense-report-tools .staff-submit{width:auto;min-height:40px;padding:9px 15px}
+.staff-expense-report-hint{margin:0 0 14px;color:#718096;font-size:11px}
+@media(max-width:540px){.staff-expense-report-tools{align-items:stretch}.staff-expense-report-tools label,.staff-expense-report-tools .staff-submit{width:100%}}
