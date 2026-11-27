@@ -1,6 +1,6 @@
 # Biz FOX ERP
 
-A single-company office automation platform for web and Android. It is configured for one company workspace, not multi-tenant customer accounts.
+A single-company office automation platform for web and Android. One company workspace is initialized once by the installation administrator. Customers, employees and administrators share one unified credential sign-in page and are routed to separate role-based workspaces.
 
 ## Main office portal
 
@@ -14,7 +14,7 @@ A single-company office automation platform for web and Android. It is configure
 
 Web portal: https://digitalfoxstudios.github.io/biz-fox-erp/
 
-## Separate Staff Work App
+## Customer Portal\n\nCustomers use the same unified login page as employees and administrators. After the company administrator links a customer record to a login, the customer can view their own quotations, invoices, payment status and registered contact details. Customer access is isolated with row-level security; customers cannot access other customers' records or internal office modules.\n\n## Separate Staff Work App
 
 Staff use a separate app to:
 - Sign in with their own account
@@ -36,7 +36,7 @@ Staff portal: https://digitalfoxstudios.github.io/biz-fox-erp/staff.html
 6. The employee sees the assignment in the Staff App and submits progress or completion reports.
 7. The manager reviews the report and approves it or requests changes with feedback.
 
-Staff self-registration is disabled. Only authorized company administrators can create staff invitations.
+Staff self-registration is disabled. Only authorized company administrators can create or reset staff credentials.
 
 ## Android apps
 
@@ -71,9 +71,9 @@ Generated TypeScript database definitions are stored in `types/database.types.ts
 
 ## Authentication
 
-The web client uses the Supabase publishable key only. No service-role or secret key is included in browser code. Company administrators sign in at `login.html`. Public account registration and creation of additional company workspaces are disabled.
+The web client uses the Supabase publishable key only. No service-role or secret key is included in browser code. Customers, employees and administrators sign in through the same `login.html` page. Credentials determine the workspace automatically; there is no role selector. Public account registration and creation of additional company workspaces are disabled. The first-time installation administrator completes a one-time company setup.
 
-Administrators add an employee and select **Create staff login**. A secured Supabase Edge Function checks the caller's company role, sends an invitation, links the account to the employee record and grants the staff role. Staff self-registration is disabled.
+Administrators add an employee and select **Create staff login**. A secured Supabase Edge Function checks the caller's company role, creates or updates the staff credential, links the account to the employee record and grants the staff role. Administrators can also create customer portal credentials from the customer directory. Staff and customer self-registration are disabled.
 
 ## Current implementation status
 

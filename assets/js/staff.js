@@ -77,11 +77,22 @@ async function renderAttendance(){
  box.innerHTML=rows?.length?rows.map(row=>'<article class="staff-report-card"><div class="staff-task-top"><div><span class="staff-expense-state '+(row.check_out?"approved":"")+'">'+esc(row.status)+'</span><h3>'+esc(new Date(row.attendance_date+"T00:00:00").toLocaleDateString())+'</h3><p>Check-in: '+(row.check_in?esc(new Date(row.check_in).toLocaleTimeString()):"—")+' · Check-out: '+(row.check_out?esc(new Date(row.check_out).toLocaleTimeString()):"—")+'</p>'+(row.check_in_latitude!=null?'<small>Check-in GPS: '+Number(row.check_in_latitude).toFixed(5)+', '+Number(row.check_in_longitude).toFixed(5)+' · <a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query='+row.check_in_latitude+','+row.check_in_longitude+'">Map</a></small>':"")+'</div></div></article>').join(""):'<div class="staff-empty">No attendance history yet.</div>';
 }
 
+async function loadAllStaffExpenses(){
+ const all=[];let offset=0,pageSize=1000;
+ while(true){
+  const result=await supabase.from("task_expenses").select("*").eq("organization_id",currentOrg.id).eq("submitted_by",currentUser.id).order("created_at",{ascending:false}).range(offset,offset+pageSize-1);
+  if(result.error)return {data:null,error:result.error};
+  const page=result.data||[];all.push(...page);
+  if(page.length<pageSize)break;
+  offset+=pageSize;
+ }
+ return {data:all,error:null};
+}
 async function renderStaffWorkspace(){
  const [tasksResult,reportsResult,expensesResult]=await Promise.all([
   supabase.from("tasks").select("*").eq("organization_id",currentOrg.id).eq("assigned_to",currentUser.id).order("created_at",{ascending:false}),
   supabase.from("task_reports").select("*").eq("organization_id",currentOrg.id).eq("submitted_by",currentUser.id).order("created_at",{ascending:false}).limit(100),
-  supabase.from("task_expenses").select("*").eq("organization_id",currentOrg.id).eq("submitted_by",currentUser.id).order("created_at",{ascending:false}).limit(200)
+  loadAllStaffExpenses()
  ]);
  const taskBox=$("staffTasks"),reportBox=$("staffReports"),expenseBox=$("staffExpenses");
  if(tasksResult.error){taskBox.innerHTML='<div class="staff-empty">'+esc(tasksResult.error.message)+'</div>';return;}
@@ -128,6 +139,23 @@ async function renderStaffWorkspace(){
  $("staffExpenseSummary").innerHTML='<article class="staff-expense-kpi"><small>Travel charges</small><strong>'+money(travel)+'</strong></article><article class="staff-expense-kpi"><small>Material purchases</small><strong>'+money(material)+'</strong></article><article class="staff-expense-kpi"><small>Total claimed</small><strong>'+money(total)+'</strong></article>';
  const receiptLinks={};await Promise.all(expensesCache.flatMap(e=>(e.receipt_paths||[]).map(async path=>{const {data}=await supabase.storage.from("task-expenses").createSignedUrl(path,3600);if(data?.signedUrl)receiptLinks[path]=data.signedUrl;})));
  expenseBox.innerHTML=expensesCache.length?expensesCache.map(e=>`<article class="staff-report-card"><div class="staff-task-top"><div><span class="staff-expense-type ${esc(e.expense_type)}">${esc(expenseLabel(e.expense_type))}</span> <span class="staff-expense-state ${esc(e.status)}">${esc(e.status.replaceAll("_"," "))}</span><h3>${esc(taskTitle(e.task_id))}</h3><p><b>${esc(e.description)}</b></p><p>${esc(e.expense_date)} · ${esc(e.vendor_name||"No vendor specified")} · ${money(e.amount)}</p>${e.quantity?'<small>Quantity: '+esc(e.quantity)+' '+esc(e.unit||'')+(e.unit_rate?' · Rate: '+money(e.unit_rate):'')+'</small>':''}${e.payment_method?'<p>Payment: '+esc(e.payment_method)+'</p>':''}${e.manager_feedback?'<p><b>Manager feedback:</b> '+esc(e.manager_feedback)+'</p>':''}${(e.receipt_paths||[]).length?'<div class="staff-expense-receipts">'+e.receipt_paths.map((p,i)=>receiptLinks[p]?'<a href="'+esc(receiptLinks[p])+'" target="_blank" rel="noopener">View receipt '+(i+1)+'</a>':'').join('')+'</div>':''}</div></div></article>`).join(""):'<div class="staff-empty">No expense claims submitted yet. Open an assignment and select “Add travel / material expense”.</div>';
+}
+function createExpensesReport(){
+ const from=$("staffExpenseReportFrom")?.value||"",to=$("staffExpenseReportTo")?.value||"";
+ if(from&&to&&from>to){showAuthMessage("The report start date must be before the end date.");return;}
+ const rows=expensesCache.filter(e=>(!from||e.expense_date>=from)&&(!to||e.expense_date<=to)).sort((a,b)=>String(a.expense_date).localeCompare(String(b.expense_date)));
+ if(!rows.length){showAuthMessage("No saved expenses found for the selected date range.");return;}
+ const total=rows.reduce((s,e)=>s+Number(e.amount||0),0);
+ const travel=rows.filter(e=>e.expense_type==="travel").reduce((s,e)=>s+Number(e.amount||0),0);
+ const material=rows.filter(e=>e.expense_type==="material").reduce((s,e)=>s+Number(e.amount||0),0);
+ const other=rows.filter(e=>!['travel','material'].includes(e.expense_type)).reduce((s,e)=>s+Number(e.amount||0),0);
+ const name=currentEmployee?.full_name||currentUser?.user_metadata?.full_name||currentUser?.email||"Employee";
+ const range=(from||"Beginning")+" to "+(to||"Today");
+ const body=rows.map((e,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(e.expense_date)+'</td><td>'+esc(expenseLabel(e.expense_type))+'</td><td>'+esc(taskTitle(e.task_id))+'</td><td>'+esc(e.description)+'</td><td>'+esc(e.vendor_name||"—")+'</td><td>'+esc(e.quantity??"—")+' '+esc(e.unit||"")+'</td><td>'+esc(e.payment_method||"—")+'</td><td>'+esc(e.status.replaceAll("_"," "))+'</td><td class="amount">'+money(e.amount)+'</td></tr>').join("");
+ const win=window.open("","_blank");
+ if(!win){showAuthMessage("Allow pop-ups to create the expenses report.");return;}
+ win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Employee Expenses Report</title><style>body{font:13px Arial,sans-serif;color:#1c2c43;margin:28px}h1{font-size:22px;margin:0 0 5px}.muted{color:#66758a;font-size:12px}.meta{display:flex;justify-content:space-between;gap:20px;margin:18px 0}.totals{display:flex;gap:12px;margin:18px 0}.total{border:1px solid #dce4ed;border-radius:8px;padding:12px;min-width:120px}.total b{display:block;font-size:17px;margin-top:5px}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border:1px solid #dce3ec;padding:7px;text-align:left;font-size:10px}th{background:#f1f4f8}.amount{text-align:right;white-space:nowrap}.foot{margin-top:20px;font-size:10px;color:#718096}@media print{body{margin:12mm}.no-print{display:none}}</style></head><body><h1>Biz FOX ERP · Employee Expenses Report</h1><div class="muted">Travel, material and other expense claims</div><div class="meta"><div><b>Employee:</b> '+esc(name)+'<br><b>Company:</b> '+esc(currentOrg?.name||"Biz FOX ERP")+'</div><div><b>Period:</b> '+esc(range)+'<br><b>Generated:</b> '+esc(new Date().toLocaleString())+'</div></div><div class="totals"><div class="total">Travel charges<b>'+money(travel)+'</b></div><div class="total">Material purchases<b>'+money(material)+'</b></div><div class="total">Other expenses<b>'+money(other)+'</b></div><div class="total">Grand total<b>'+money(total)+'</b></div></div><p class="muted">'+rows.length+' saved expense record(s). Status is shown for each claim.</p><table><thead><tr><th>#</th><th>Date</th><th>Category</th><th>Assigned job</th><th>Description</th><th>Vendor</th><th>Qty / Unit</th><th>Payment</th><th>Status</th><th>Amount</th></tr></thead><tbody>'+body+'</tbody></table><div class="foot">Generated from saved employee expense claims in Biz FOX ERP.</div><p class="no-print"><button onclick="window.print()">Print / Save as PDF</button></p><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>');
+ win.document.close();
 }
 function setupReportForms(taskBox){
  taskBox.querySelectorAll("[data-task-form]").forEach(form=>{
@@ -181,12 +209,12 @@ window.addEventListener("bizfox:online",()=>setTimeout(()=>{if(currentUser&&curr
 window.addEventListener("bizfox:synccomplete",()=>{if(currentUser&&currentOrg){renderStaffWorkspace();renderAttendance();}});
 window.addEventListener("online",updateStaffNetworkStatus);window.addEventListener("offline",updateStaffNetworkStatus);
 $("staffEnableNotifications").addEventListener("click",async()=>{const enabled=await window.BizFoxOffline?.enableNotifications();if(enabled)window.BizFoxOffline?.notify("Biz FOX ERP","Staff notifications are enabled.");else showAuthMessage("Allow notifications in your phone settings.");});
-$("staffRefresh").addEventListener("click",renderStaffWorkspace);$("staffExpenseRefresh").addEventListener("click",renderStaffWorkspace);$("staffAttendanceRefresh").addEventListener("click",renderAttendance);
+$("staffRefresh").addEventListener("click",renderStaffWorkspace);$("staffExpenseRefresh").addEventListener("click",renderStaffWorkspace);$("staffAttendanceRefresh").addEventListener("click",renderAttendance);$("staffCreateExpenseReport").addEventListener("click",createExpensesReport);
 async function staffSignOut(button){if(button){button.disabled=true;button.textContent="Signing out…";}const {error}=await supabase.auth.signOut();if(error){if(button){button.disabled=false;button.textContent="⇥ Sign out";}showAuthMessage("Sign out failed: "+error.message);return;}location.replace("./staff.html");}
 $("staffSidebarSignOut").addEventListener("click",()=>staffSignOut($("staffSidebarSignOut")));
 $("staffNoAccessSignOut").addEventListener("click",async()=>{await supabase.auth.signOut();location.reload();});
 supabase.auth.onAuthStateChange(event=>{if(event==="SIGNED_OUT"){currentUser=null;currentOrg=null;portal.hidden=true;noAccess.hidden=true;authPanel.hidden=false;}});
-const {data:{session}}=await supabase.auth.getSession();if(session)await boot(session.user);
+const {data:{session}}=await supabase.auth.getSession();if(session)await boot(session.user);else location.replace("./login.html");
 document.getElementById("staffAppUpdate").addEventListener("click",()=>{if(window.BizFoxAndroid?.checkForUpdates){window.BizFoxAndroid.checkForUpdates();return;}window.open("https://github.com/digitalfoxstudios/biz-fox-erp/releases/latest","_blank","noopener");});
 
 // Build refresh: admin-assigned employee checklists.
