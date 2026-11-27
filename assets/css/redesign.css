@@ -90,3 +90,6 @@ footer{color:#7c899b}
  .customer-shell .profile-details{grid-template-columns:1fr}
  .login-wrap{padding:20px 0}
 }
+
+/* Employee access is always initiated from the unified login page. */
+.staff-auth{display:none!important}
