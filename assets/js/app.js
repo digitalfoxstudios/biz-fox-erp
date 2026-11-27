@@ -548,10 +548,81 @@ async function openSalesWorkspace(initialTab="customers"){
  await refreshSummary();await showTab(initialTab);
 }
 
+
+async function renderCompanySettings(){
+ title.textContent="Company settings";
+ if(!currentOrg){renderOnboarding();return;}
+ const {data:membership,error:memberError}=await supabase.from("organization_members").select("role").eq("organization_id",currentOrg.id).eq("user_id",currentUser.id).eq("status","active").maybeSingle();
+ if(memberError||!membership||!["owner","admin"].includes(membership.role)){
+  content.innerHTML='<div class="empty-page"><h2>Access restricted</h2><p>Only the company owner or an administrator can manage company settings.</p></div>';return;
+ }
+ const {data:company,error}=await supabase.from("organizations").select("id,name,slug,billing_email,timezone,phone,address,website,gst_number").eq("id",currentOrg.id).single();
+ if(error){content.innerHTML='<div class="empty-page"><h2>Could not load company settings</h2><p>'+escapeHtml(error.message)+'</p></div>';return;}
+ content.innerHTML=`<div class="settings-layout">
+ <section class="dashboard-panel company-settings-panel"><div class="panel-heading"><div><span class="eyebrow">WORKSPACE PROFILE</span><h3>Company details</h3><p>These details are used across company records and reports.</p></div></div>
+ <form id="companySettingsForm" class="company-settings-form">
+ <label>Company / business name<input name="name" required maxlength="160" value="${escapeHtml(company.name||"")}"></label>
+ <label>Billing email<input name="billing_email" type="email" maxlength="254" value="${escapeHtml(company.billing_email||"")}"></label>
+ <label>Contact phone<input name="phone" type="tel" maxlength="30" value="${escapeHtml(company.phone||"")}"></label>
+ <label>GSTIN<input name="gst_number" maxlength="15" pattern="[0-9A-Za-z]{15}" value="${escapeHtml(company.gst_number||"")}" placeholder="15-character GSTIN"></label>
+ <label>Website<input name="website" type="url" maxlength="200" value="${escapeHtml(company.website||"")}" placeholder="https://example.com"></label>
+ <label>Time zone<select name="timezone"><option value="Asia/Kolkata" ${company.timezone==="Asia/Kolkata"?"selected":""}>India Standard Time (Asia/Kolkata)</option><option value="UTC" ${company.timezone==="UTC"?"selected":""}>UTC</option></select></label>
+ <label class="settings-full">Registered address<textarea name="address" rows="3" maxlength="500">${escapeHtml(company.address||"")}</textarea></label>
+ <div class="settings-full settings-form-actions"><button class="primary-button" type="submit" id="saveCompanySettings">Save company details</button><span id="companySettingsMessage" role="status"></span></div>
+ </form></section>
+ <section class="dashboard-panel security-settings-panel"><div class="panel-heading"><div><span class="eyebrow">ACCOUNT SECURITY</span><h3>Company account deletion</h3><p>Permanent removal of the company workspace.</p></div></div>
+ <div class="danger-notice"><strong>This action cannot be undone.</strong><p>Deleting this company removes its workspace records, staff/customer access and your owner login. Export any records you need before proceeding.</p><p>Only the company owner can perform this action. You will need your current password, the exact company name and a typed confirmation.</p></div>
+ <button class="danger-button" id="showDeleteCompany" type="button">Delete company account</button>
+ <form id="deleteCompanyForm" class="delete-company-form" hidden>
+ <label>Confirm company name<input name="confirm_name" required autocomplete="off" value=""></label>
+ <label>Current account password<input name="password" type="password" required autocomplete="current-password"></label>
+ <label>Type DELETE MY COMPANY<input name="confirm_phrase" required autocomplete="off" placeholder="DELETE MY COMPANY"></label>
+ <div class="delete-actions"><button class="danger-button" id="confirmDeleteCompany" type="submit">Permanently delete company</button><button class="secondary-button" id="cancelDeleteCompany" type="button">Cancel</button></div>
+ <small class="delete-security-note">Password is checked again with Supabase before the server accepts the deletion. The server also verifies your owner role and a freshly issued login token.</small>
+ </form></section></div>`;
+ const form=document.getElementById("companySettingsForm"),message=document.getElementById("companySettingsMessage");
+ form.addEventListener("submit",async event=>{
+  event.preventDefault();const button=document.getElementById("saveCompanySettings");button.disabled=true;button.textContent="Saving…";message.textContent="";
+  const fd=new FormData(form),name=String(fd.get("name")||"").trim(),gst=String(fd.get("gst_number")||"").trim().toUpperCase(),website=String(fd.get("website")||"").trim();
+  if(name.length<2){message.textContent="Enter a valid company name.";button.disabled=false;button.textContent="Save company details";return;}
+  if(gst&&!/^[0-9A-Z]{15}$/.test(gst)){message.textContent="Enter a valid 15-character GSTIN.";button.disabled=false;button.textContent="Save company details";return;}
+  if(website){try{const parsed=new URL(website);if(!["http:","https:"].includes(parsed.protocol))throw new Error();}catch{message.textContent="Enter a valid website URL.";button.disabled=false;button.textContent="Save company details";return;}}
+  const update={name,billing_email:String(fd.get("billing_email")||"").trim()||null,phone:String(fd.get("phone")||"").trim()||null,gst_number:gst||null,website:website||null,timezone:String(fd.get("timezone")||"Asia/Kolkata"),address:String(fd.get("address")||"").trim()||null,updated_at:new Date().toISOString()};
+  const {error:saveError}=await supabase.from("organizations").update(update).eq("id",company.id);
+  button.disabled=false;button.textContent="Save company details";
+  if(saveError){message.textContent="Could not save: "+saveError.message;return;}
+  currentOrg={...currentOrg,...update};message.textContent="Company details saved successfully.";message.className="settings-success";
+ });
+ document.getElementById("showDeleteCompany").addEventListener("click",()=>{
+  if(membership.role!=="owner"){showMessage("Only the company owner can delete the company account.");return;}
+  document.getElementById("deleteCompanyForm").hidden=false;document.getElementById("showDeleteCompany").hidden=true;
+  document.querySelector('#deleteCompanyForm [name="confirm_name"]').value="";
+ });
+ document.getElementById("cancelDeleteCompany").addEventListener("click",()=>{document.getElementById("deleteCompanyForm").reset();document.getElementById("deleteCompanyForm").hidden=true;document.getElementById("showDeleteCompany").hidden=false;});
+ document.getElementById("deleteCompanyForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  if(!navigator.onLine){showMessage("Company deletion requires an active internet connection.");return;}
+  const deleteForm=event.currentTarget,fd=new FormData(deleteForm),typedName=String(fd.get("confirm_name")||"").trim(),password=String(fd.get("password")||""),phrase=String(fd.get("confirm_phrase")||"").trim();
+  if(membership.role!=="owner"){showMessage("Only the company owner can delete the company account.");return;}
+  if(typedName!==company.name||phrase!=="DELETE MY COMPANY"){showMessage("Confirmation did not match. Nothing has been deleted.");return;}
+  if(!window.confirm("FINAL WARNING: Permanently delete "+company.name+" and all company workspace records? This cannot be undone."))return;
+  const button=document.getElementById("confirmDeleteCompany");button.disabled=true;button.textContent="Verifying and deleting…";
+  try{
+   const {data:verified,error:verifyError}=await supabase.auth.signInWithPassword({email:currentUser.email,password});
+   if(verifyError||!verified?.session)throw new Error("Password verification failed. Check your password and try again.");
+   const {data:deleted,error:deleteError}=await supabase.functions.invoke("delete-company-account",{body:{company_name:typedName,confirmation:phrase}});
+   if(deleteError)throw new Error(deleteError.message||"The server could not complete the deletion.");
+   if(!deleted?.success)throw new Error(deleted?.error||"The server did not confirm deletion.");
+   await supabase.auth.signOut({scope:"local"});location.replace("./login.html");
+  }catch(error){button.disabled=false;button.textContent="Permanently delete company";showMessage(error.message||"Company deletion failed. No success was reported.");}
+ });
+}
+
 async function openPage(id){
  activePage=id;
  activeDataConfig=null;
  if(id==="profile"){await renderProfile();return;}
+ if(id==="company-settings"){await renderCompanySettings();return;}
  if(id==="tasks"){await openTaskWorkspace();return;}
  if(id==="reports"){await openReportsWorkspace();return;}
  if(id==="sales"){await openSalesWorkspace();return;}
