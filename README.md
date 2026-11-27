@@ -34,9 +34,10 @@ The platform console currently provides:
 - Starter, Business and Enterprise plan catalog (prices remain unset at zero pending approval)
 - Business account listing
 - Business status management
-- Business provisioning for an owner whose Supabase Auth account already exists
+- Business provisioning for an existing owner account (platform-managed)
+- Public self-service company registration with owner sign-up, email verification support and automatic Owner membership
 
-Owner invitations and account creation through a secure Auth administration service are not yet automated. Create/verify the owner account first, then provision the business from the platform console.
+New companies should use the **Register your company** link on the unified login page. The owner creates their own account, verifies their email when required, and the server-side registration function creates a 14-day trial workspace and Owner membership. The Platform Console's manual provisioning option remains for existing Auth accounts. Owner invitations are not part of the registration flow.
 
 ## Tenant isolation and security
 
@@ -57,8 +58,9 @@ Security review is ongoing. Supabase currently reports warnings for authenticate
 - [x] Add permission-checked tenant management RPCs.
 - [x] Verify RLS is enabled on all current public tables and tenant-owned tables carry `organization_id`.
 - [ ] Complete tenant-isolation tests across every table, view, RPC and Storage bucket.
-- [ ] Automate secure business-owner invitations.
-- [ ] Complete end-to-end tests for tenant signup, onboarding, switching and suspension.
+- [x] Add self-service company registration and owner account creation through Supabase Auth.
+- [x] Add server-side company provisioning with email-verification enforcement and automatic Owner membership.
+- [ ] Complete end-to-end tests for tenant signup, email verification, onboarding, switching and suspension.
 - [ ] Complete remaining business module workflows and offline synchronization tests.
 - [ ] Build, sign and verify separate native Android Admin and Staff APKs.
 
