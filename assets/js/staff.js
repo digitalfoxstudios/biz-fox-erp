@@ -186,7 +186,7 @@ async function staffSignOut(button){if(button){button.disabled=true;button.textC
 $("staffSidebarSignOut").addEventListener("click",()=>staffSignOut($("staffSidebarSignOut")));
 $("staffNoAccessSignOut").addEventListener("click",async()=>{await supabase.auth.signOut();location.reload();});
 supabase.auth.onAuthStateChange(event=>{if(event==="SIGNED_OUT"){currentUser=null;currentOrg=null;portal.hidden=true;noAccess.hidden=true;authPanel.hidden=false;}});
-const {data:{session}}=await supabase.auth.getSession();if(session)await boot(session.user);
+const {data:{session}}=await supabase.auth.getSession();if(session)await boot(session.user);else location.replace("./login.html");
 document.getElementById("staffAppUpdate").addEventListener("click",()=>{if(window.BizFoxAndroid?.checkForUpdates){window.BizFoxAndroid.checkForUpdates();return;}window.open("https://github.com/digitalfoxstudios/biz-fox-erp/releases/latest","_blank","noopener");});
 
 // Build refresh: admin-assigned employee checklists.
