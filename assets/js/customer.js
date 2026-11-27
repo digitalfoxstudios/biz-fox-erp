@@ -27,7 +27,7 @@ function renderDocuments(type){
  content.innerHTML='<section class="dashboard-panel"><div class="panel-heading"><div><h2>'+title.textContent+'</h2><p>Documents issued by your service provider</p></div><button class="secondary-button" id="customerRefresh">Refresh</button></div>'+(rows.length?(isInvoice?invoiceRows(rows):'<div class="table-wrap"><table><thead><tr><th>Quotation</th><th>Date</th><th>Valid until</th><th>Amount</th><th>Status</th></tr></thead><tbody>'+rows.map(row=>'<tr><td>'+esc(row.quotation_number)+'</td><td>'+esc(row.quotation_date)+'</td><td>'+esc(row.valid_until||"—")+'</td><td>'+money(row.grand_total)+'</td><td>'+esc(row.status)+'</td></tr>').join("")+'</tbody></table></div>'):'<p class="staff-empty">No '+(isInvoice?"invoices":"quotations")+' are linked to your account yet.</p>')+'</section>';
  $("customerRefresh").addEventListener("click",loadCustomerData);
 }
-function bindTabs(){document.querySelectorAll("[data-customer-tab]").forEach(button=>button.addEventListener("click",()=>setTab(button.dataset.customerTab)));}
+function bindTabs(){document.querySelectorAll("[data-customer-tab]").forEach(button=>button.onclick=()=>setTab(button.dataset.customerTab));}
 async function loadCustomerData(){
  const [q,i]=await Promise.all([
   supabase.from("quotations").select("id,quotation_number,quotation_date,valid_until,grand_total,status").eq("customer_id",customer.id).order("quotation_date",{ascending:false}),
