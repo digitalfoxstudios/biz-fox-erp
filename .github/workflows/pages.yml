@@ -1,7 +1,9 @@
-name: Deploy Biz FOX ERP to GitHub Pages
+name: Validate and deploy Biz FOX ERP
 
 on:
   push:
+    branches: [main, feature/single-company-unified-experience]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -12,14 +14,12 @@ permissions:
   id-token: write
 
 concurrency:
-  group: github-pages
+  group: biz-fox-pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  validate:
+    name: Validate application scripts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -30,7 +30,21 @@ jobs:
           node --check assets/js/supabase.js
           node --check assets/js/auth.js
           node --check assets/js/staff.js
+          node --check assets/js/customer.js
+          node --check assets/js/company-setup.js
           node --check service-worker.js
+
+  deploy:
+    name: Deploy GitHub Pages
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    needs: validate
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
