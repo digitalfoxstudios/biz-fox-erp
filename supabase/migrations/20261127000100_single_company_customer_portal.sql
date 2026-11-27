@@ -8,7 +8,7 @@ create unique index if not exists customers_user_id_unique
 drop policy if exists customers_read_self on public.customers;
 create policy customers_read_self on public.customers
   for select to authenticated
-  using (user_id = (select auth.uid()));
+  using (user_id = (select auth.uid()) and status = 'active');
 
 drop policy if exists invoices_read_customer_self on public.invoices;
 create policy invoices_read_customer_self on public.invoices
@@ -18,6 +18,7 @@ create policy invoices_read_customer_self on public.invoices
     where c.id = invoices.customer_id
       and c.organization_id = invoices.organization_id
       and c.user_id = (select auth.uid())
+      and c.status = 'active'
   ));
 
 drop policy if exists quotations_read_customer_self on public.quotations;
