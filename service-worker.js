@@ -1,5 +1,5 @@
-const CACHE_NAME="biz-fox-erp-shell-v40";
-const APP_SHELL=["./","./index.html","./login.html","./reset-password.html","./staff.html","./customer.html","./setup-company.html","./staff.webmanifest","./offline.html","./manifest.webmanifest","./assets/js/supabase.js","./assets/icon.svg","./assets/biz-fox-erp-logo.png","./assets/css/app-update.css?v=1","./assets/css/app.css?v=30","./assets/css/redesign.css?v=2","./assets/js/app.js?v=30","./assets/js/supabase.js","./assets/js/auth.js?v=9","./assets/css/staff.css?v=17","./assets/js/staff.js?v=27","./assets/js/customer.js?v=1","./assets/js/company-setup.js?v=1"];
+const CACHE_NAME="biz-fox-erp-shell-v41";
+const APP_SHELL=["./","./index.html","./login.html","./reset-password.html","./staff.html","./customer.html","./setup-company.html","./staff.webmanifest","./offline.html","./manifest.webmanifest","./assets/js/supabase.js","./assets/icon.svg","./assets/biz-fox-erp-logo.png","./assets/css/app-update.css?v=1","./assets/css/app.css?v=31","./assets/css/redesign.css?v=2","./assets/js/app.js?v=31","./assets/js/supabase.js","./assets/js/auth.js?v=9","./assets/css/staff.css?v=17","./assets/js/staff.js?v=27","./assets/js/customer.js?v=1","./assets/js/company-setup.js?v=1"];
 self.addEventListener("install",event=>event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL))));
 self.addEventListener("activate",event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener("fetch",event=>{
