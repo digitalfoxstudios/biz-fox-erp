@@ -361,3 +361,39 @@ body{background:#f3f6fb}
 .assignment-checklist-row{display:flex;align-items:center;gap:9px;margin:8px 0}.assignment-checklist-row input{flex:1;min-width:0;padding:11px;border:1px solid #d8e0eb;border-radius:9px;background:white}.assignment-check-number{width:22px;color:#63748a;font-weight:800}.assignment-checklist-row button{white-space:nowrap}
 .manager-task-checklist{margin:13px 0;padding:13px;border:1px solid #e0e8f1;border-radius:11px;background:#f8fafd}.manager-task-checklist>b{display:block;color:#1c2e47;margin-bottom:8px}.manager-task-checklist-items{display:grid;gap:7px}.manager-checklist-item{display:flex;align-items:flex-start;gap:9px;color:#46566b;font-size:13px}.manager-checklist-item span{font-weight:900;color:#b56b2e}.manager-checklist-item.is-checked span{color:#21845a}
 @media(max-width:560px){.assignment-checklist-heading{align-items:flex-start;flex-direction:column}.assignment-checklist-row{align-items:stretch}.assignment-checklist-row button{padding:8px}}
+
+
+/* Mobile quotation/invoice item editor: stack fields inside the available viewport. */
+@media(max-width:720px){
+  .sales-doc-form,.sales-doc-form *{min-width:0}
+  .sales-doc-form{width:100%;max-width:100%;overflow:hidden}
+  .sales-lines-head>div{display:none!important}
+  #salesLineItems{width:100%;max-width:100%}
+  .sales-line-row{
+    width:100%;max-width:100%;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    grid-template-areas:"description description" "quantity rate" "tax remove";
+    gap:9px;
+    padding:12px;
+    margin:10px 0;
+    border:1px solid #e4e9f1;
+    border-radius:12px;
+    background:#fbfcfe;
+  }
+  .sales-line-row .line-desc{grid-area:description}
+  .sales-line-row .line-qty{grid-area:quantity}
+  .sales-line-row .line-rate{grid-area:rate}
+  .sales-line-row .line-tax{grid-area:tax}
+  .sales-line-row .remove-line{grid-area:remove;min-height:44px;width:100%}
+  .sales-line-row input,.sales-line-row select{
+    box-sizing:border-box;width:100%;min-width:0;max-width:100%;
+    min-height:44px;padding:10px;font-size:14px;
+  }
+  .sales-line-row .remove-line{align-self:stretch}
+  #addSalesLine{max-width:100%;white-space:normal}
+  .sales-calculation{width:100%;max-width:100%;box-sizing:border-box}
+  .sales-calculation>div{width:100%;min-width:0}
+  .sales-calculation>div span,.sales-calculation>div strong{gap:10px}
+  .sales-calculation>div b{white-space:nowrap}
+}
