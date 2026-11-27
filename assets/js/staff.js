@@ -109,13 +109,14 @@ async function renderStaffWorkspace(){
   <form class="staff-report-form" data-task-form="${t.id}" hidden><h4>Work completion report</h4><div class="staff-report-grid">
    <label>Report date<input name="report_date" type="date" value="${today()}" required></label><label>Hours spent<input name="hours_spent" type="number" min="0" max="24" step="0.25" placeholder="e.g. 3.5"></label>
    <label class="wide">Work completed / action taken<textarea name="work_done" required minlength="3" placeholder="Describe what you completed today"></textarea></label>
+   <label class="wide">Equipment / materials used<textarea name="materials_used" placeholder="Enter camera models, DVR/NVR, cables, connectors, sensors, automation devices or other materials actually used"></textarea></label>
    <label class="wide">Challenges or pending issues<textarea name="challenges" placeholder="Mention any problems or support required"></textarea></label>
    <label class="wide">Next steps<textarea name="next_steps" placeholder="What remains to be done?"></textarea></label>
    <label class="wide">Current work status<select name="task_status"><option value="in_progress">In progress</option><option value="blocked">Blocked / need help</option><option value="completed">Completed</option></select></label>
    <div class="wide staff-photo-controls"><b>Work site photos</b><button class="staff-outline-button" type="button" data-open-camera>Take site photo</button><input name="camera_photo" type="file" accept="image/*" capture="environment" hidden><small>Camera capture only. Take up to 10 site photos. GPS location is captured automatically with each photo.</small></div>
    <div class="wide staff-photo-preview" data-photo-preview></div><div class="wide staff-location-panel"><div><b>Photo GPS location</b><small data-location-status>GPS will be captured automatically when you take a site photo.</small></div>
    <input type="hidden" name="geo_latitude"><input type="hidden" name="geo_longitude"><input type="hidden" name="geo_accuracy_m"><input type="hidden" name="geo_captured_at"><input type="hidden" name="geo_status" value="not_requested"></div>
-  </div><div class="staff-report-actions"><button class="staff-submit" type="submit">Submit work report</button></div><p class="staff-message" role="status"></p></form>
+  </div><div class="staff-report-actions"><button class="staff-outline-button" type="button" data-ai-report>✦ Write report with AI</button><button class="staff-submit" type="submit">Submit work report</button></div><p class="staff-message" role="status"></p></form>
   <form class="staff-expense-form" data-expense-form="${t.id}" hidden><h4>Task expense claim</h4><div class="staff-report-grid">
    <label>Expense category<select name="expense_type" required><option value="travel">Travel charges</option><option value="material">Sourced material purchase</option><option value="other">Other task expense</option></select></label>
    <label>Expense date<input name="expense_date" type="date" value="${today()}" required></label>
@@ -127,6 +128,31 @@ async function renderStaffWorkspace(){
    <label class="wide">Bill / receipt attachment<input name="receipts" type="file" accept="image/jpeg,image/png,application/pdf" multiple><small>Attach bill or receipt photos/PDF, up to 5 files and 8 MB each.</small></label>
   </div><div class="staff-report-actions"><button class="staff-submit" type="submit">Submit expense claim</button></div><p class="staff-message" role="status"></p></form>
  </article>`).join(""):'<div class="staff-empty">No work has been assigned to you yet. New assignments will appear here.</div>';
+ taskBox.querySelectorAll("[data-ai-report]").forEach(button=>button.addEventListener("click",async()=>{
+  const form=button.closest("form"),message=form?.querySelector(".staff-message");
+  if(!form||!message)return;
+  const work=String(form.elements.work_done.value||"").trim();
+  if(work.length<3){message.textContent="Enter your work notes first. AI will organize your notes into a professional report.";form.elements.work_done.focus();return;}
+  button.disabled=true;const original=button.textContent;button.textContent="Writing report…";message.textContent="Generating a draft from the information you entered…";
+  try{
+   const {data,error}=await supabase.functions.invoke("ai-service-report",{body:{
+    task_id:form.dataset.taskForm,
+    report_date:form.elements.report_date.value,
+    hours_spent:form.elements.hours_spent.value,
+    work_done:work,
+    materials_used:form.elements.materials_used.value,
+    challenges:form.elements.challenges.value,
+    next_steps:form.elements.next_steps.value,
+    task_status:form.elements.task_status.value
+   }});
+   if(error)throw new Error(error.message||"AI report generation failed.");
+   if(!data?.report)throw new Error(data?.error||"AI did not return a report.");
+   form.elements.work_done.value=data.report;
+   message.textContent="AI draft ready. Review and edit it before submitting the work report.";
+   message.style.color="#21734a";
+  }catch(error){message.textContent=(error.message||"AI report generation failed.")+" You can still write and submit the report manually.";message.style.color="#b34a38";}
+  finally{button.disabled=false;button.textContent=original;}
+ }));
  taskBox.querySelectorAll("[data-checklist-id]").forEach(box=>box.addEventListener("change",async()=>{const row=box.closest(".staff-checklist-item");box.disabled=true;const checked=box.checked;const {error}=await supabase.from("task_checklist_items").update({is_checked:checked,checked_at:checked?new Date().toISOString():null,checked_by:checked?currentUser.id:null}).eq("id",box.dataset.checklistId).eq("organization_id",currentOrg.id);if(error){box.checked=!checked;showAuthMessage("Checklist could not be updated: "+error.message);box.disabled=false;return;}await renderStaffWorkspace();}));
  taskBox.querySelectorAll("[data-toggle-report]").forEach(b=>b.addEventListener("click",()=>{const f=taskBox.querySelector('[data-task-form="'+b.dataset.toggleReport+'"]');f.hidden=!f.hidden;}));
  taskBox.querySelectorAll("[data-toggle-expense]").forEach(b=>b.addEventListener("click",()=>{const f=taskBox.querySelector('[data-expense-form="'+b.dataset.toggleExpense+'"]');f.hidden=!f.hidden;}));
