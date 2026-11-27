@@ -26,9 +26,8 @@ function tokenIssuedRecently(token: string): boolean {
 async function removeOrgFolder(admin: ReturnType<typeof createClient>, bucket: string, prefix: string) {
   const storage = admin.storage.from(bucket);
   const removeFolder = async (folder: string): Promise<void> => {
-    let offset = 0;
     while (true) {
-      const { data, error } = await storage.list(folder, { limit: 500, offset });
+      const { data, error } = await storage.list(folder, { limit: 500, offset: 0 });
       if (error) throw new Error("Could not inspect stored company files in " + bucket + ".");
       if (!data?.length) break;
       const files: string[] = [];
@@ -41,8 +40,6 @@ async function removeOrgFolder(admin: ReturnType<typeof createClient>, bucket: s
         const { error: removeError } = await storage.remove(files);
         if (removeError) throw new Error("Could not remove stored company files in " + bucket + ".");
       }
-      if (data.length < 500) break;
-      offset += data.length;
     }
   };
   await removeFolder(prefix);
