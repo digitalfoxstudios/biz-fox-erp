@@ -77,11 +77,22 @@ async function renderAttendance(){
  box.innerHTML=rows?.length?rows.map(row=>'<article class="staff-report-card"><div class="staff-task-top"><div><span class="staff-expense-state '+(row.check_out?"approved":"")+'">'+esc(row.status)+'</span><h3>'+esc(new Date(row.attendance_date+"T00:00:00").toLocaleDateString())+'</h3><p>Check-in: '+(row.check_in?esc(new Date(row.check_in).toLocaleTimeString()):"—")+' · Check-out: '+(row.check_out?esc(new Date(row.check_out).toLocaleTimeString()):"—")+'</p>'+(row.check_in_latitude!=null?'<small>Check-in GPS: '+Number(row.check_in_latitude).toFixed(5)+', '+Number(row.check_in_longitude).toFixed(5)+' · <a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query='+row.check_in_latitude+','+row.check_in_longitude+'">Map</a></small>':"")+'</div></div></article>').join(""):'<div class="staff-empty">No attendance history yet.</div>';
 }
 
+async function loadAllStaffExpenses(){
+ const all=[];let offset=0,pageSize=1000;
+ while(true){
+  const result=await supabase.from("task_expenses").select("*").eq("organization_id",currentOrg.id).eq("submitted_by",currentUser.id).order("created_at",{ascending:false}).range(offset,offset+pageSize-1);
+  if(result.error)return {data:null,error:result.error};
+  const page=result.data||[];all.push(...page);
+  if(page.length<pageSize)break;
+  offset+=pageSize;
+ }
+ return {data:all,error:null};
+}
 async function renderStaffWorkspace(){
  const [tasksResult,reportsResult,expensesResult]=await Promise.all([
   supabase.from("tasks").select("*").eq("organization_id",currentOrg.id).eq("assigned_to",currentUser.id).order("created_at",{ascending:false}),
   supabase.from("task_reports").select("*").eq("organization_id",currentOrg.id).eq("submitted_by",currentUser.id).order("created_at",{ascending:false}).limit(100),
-  supabase.from("task_expenses").select("*").eq("organization_id",currentOrg.id).eq("submitted_by",currentUser.id).order("created_at",{ascending:false}).limit(200)
+  loadAllStaffExpenses()
  ]);
  const taskBox=$("staffTasks"),reportBox=$("staffReports"),expenseBox=$("staffExpenses");
  if(tasksResult.error){taskBox.innerHTML='<div class="staff-empty">'+esc(tasksResult.error.message)+'</div>';return;}
