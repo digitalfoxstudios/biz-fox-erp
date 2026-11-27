@@ -4,6 +4,7 @@ const submit=document.getElementById("authSubmit");
 const message=document.getElementById("authMessage");
 const forgot=document.getElementById("forgotPassword");
 const APP_URL="https://digitalfoxstudios.github.io/biz-fox-erp/";
+const RESET_URL=APP_URL+"reset-password.html";
 const STAFF_SUFFIX="@staff.bizfox.invalid";
 let routing=false;
 const setMessage=(value,kind="")=>{message.textContent=value;message.className="form-message "+kind;};
@@ -28,7 +29,7 @@ forgot.addEventListener("click",async()=>{
  const identity=form.elements.identity.value.trim().toLowerCase();
  if(!identity.includes("@")||identity.endsWith(STAFF_SUFFIX)){setMessage("Enter the email address registered to your account to request a password reset.","error");return;}
  forgot.disabled=true;
- const {error}=await supabase.auth.resetPasswordForEmail(identity,{redirectTo:APP_URL});
+ const {error}=await supabase.auth.resetPasswordForEmail(identity,{redirectTo:RESET_URL});
  forgot.disabled=false;
  setMessage(error?error.message:"If this email is registered, a password reset link will be sent.","success");
 });
