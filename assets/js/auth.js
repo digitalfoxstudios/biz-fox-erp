@@ -18,6 +18,8 @@ async function routeUser(user){
  if(roles.includes("staff")){location.replace("./staff.html");return;}
  const {data:customer,error:customerError}=await supabase.from("customers").select("id").eq("user_id",user.id).maybeSingle();
  if(!customerError&&customer){location.replace("./customer.html");return;}
+ const {data:platformAdmin}=await supabase.from("platform_super_admins").select("user_id").eq("user_id",user.id).maybeSingle();
+ if(platformAdmin){location.replace("./setup-company.html");return;}
  await supabase.auth.signOut();
  routing=false;
  setMessage("This account is not linked to an active Biz FOX workspace. Contact your company administrator.","error");
