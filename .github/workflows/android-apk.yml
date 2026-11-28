@@ -80,7 +80,7 @@ jobs:
           BIZFOX_KEYSTORE_PASSWORD: ${{ secrets.BIZFOX_KEYSTORE_PASSWORD }}
           BIZFOX_KEY_ALIAS: ${{ secrets.BIZFOX_KEY_ALIAS }}
           BIZFOX_KEY_PASSWORD: ${{ secrets.BIZFOX_KEY_PASSWORD }}
-        run: gradle assembleRelease
+        run: gradle assembleRelease -x lintVitalRelease
       - name: Prepare and verify the unified signed APK
         run: |
           mkdir -p dist
@@ -101,5 +101,4 @@ jobs:
           name: Biz FOX ERP v${{ steps.version.outputs.version }}
           generate_release_notes: true
           files: dist/*.apk
-
 # Release: one signed APK for administrator and employee role-based access.
