@@ -7,7 +7,7 @@ export function initNotificationCenter({user, organizationId, mount}) {
   button.type = "button";
   button.className = "notification-center-trigger";
   button.setAttribute("aria-label", "Open notifications");
-  button.innerHTML = '♧ <span class="notification-count" hidden>0</span>';
+  button.innerHTML = '🔔 <span class="notification-count" hidden>0</span>';
   const panel = document.createElement("section");
   panel.className = "notification-center-panel";
   panel.hidden = true;
