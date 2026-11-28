@@ -29,6 +29,22 @@ function updateBackButton(){const b=document.getElementById("workspaceBackButton
 function rememberCurrentPage(){pageBackStack.push({page:activePage,config:activeDataConfig});if(pageBackStack.length>30)pageBackStack.shift();}
 async function goBack(){const p=pageBackStack.pop();if(!p){updateBackButton();return;}if(p.config){activePage=p.page;await openDataConfig(p.config);}else{activeDataConfig=null;if(p.page==="overview")await renderOverview();else await openPage(p.page);}document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.page===activePage));updateBackButton();}
 
+window.bizFoxHandleBack=async function(){
+ const sidebar=document.getElementById("sidebar");
+ if(sidebar?.classList.contains("open")){sidebar.classList.remove("open");return true;}
+ const dialog=document.querySelector("dialog[open]");
+ if(dialog){dialog.close();return true;}
+ const modal=document.querySelector(".modal-overlay:not([hidden]),.modal:not([hidden])");
+ if(modal){modal.remove();return true;}
+ if(pageBackStack.length){await goBack();return true;}
+ if(activePage!=="overview"){
+  activeDataConfig=null;activePage="overview";await renderOverview();
+  document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.page==="overview"));
+  updateBackButton();return true;
+ }
+ return false;
+};
+
 
 let appRegistration=null;
 let appUpdateNotice=null;
