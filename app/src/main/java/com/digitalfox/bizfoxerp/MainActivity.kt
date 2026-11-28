@@ -429,7 +429,16 @@ class MainActivity : Activity() {
         super.onDestroy()
     }
     @Suppress("DEPRECATION")
-    override fun onBackPressed() { if (this::web.isInitialized && web.canGoBack()) web.goBack() else super.onBackPressed() }
+    override fun onBackPressed() {
+        if (!this::web.isInitialized) {
+            super.onBackPressed()
+            return
+        }
+        web.evaluateJavascript("(function(){return window.bizFoxHandleBack ? window.bizFoxHandleBack() : false;})()") { result ->
+            if (result == "true") return@evaluateJavascript
+            if (web.canGoBack()) web.goBack() else finish()
+        }
+    }
     companion object {
         private const val FILE_PICKER_REQUEST = 4102
         private const val LOCATION_REQUEST = 4103
