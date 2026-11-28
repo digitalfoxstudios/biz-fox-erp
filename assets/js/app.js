@@ -1,5 +1,6 @@
 import { supabase } from "./supabase.js";
 import { initNotificationCenter } from "./notifications.js";
+import { initMessaging } from "./messaging.js";
 
 const defaultDocumentTerms={
   quotation:"1. This quotation is valid for 15 days from the date of issue unless stated otherwise.\n2. Prices are based on the scope and quantities mentioned; changes may affect the price and delivery schedule.\n3. Work will begin after written acceptance and any agreed advance payment.\n4. Applicable taxes will be charged as per law.\n5. Payment is due as per the agreed payment schedule.\n6. This quotation is subject to final written confirmation by the company.",
@@ -869,7 +870,7 @@ else{
   }
   else{
     setupAppUpdates();setupTaskNotifications();
-    try{await loadOrganizations();addWorkspaceControls();if(organizations.length){initNotificationCenter({user:currentUser,organizationId:currentOrg.id,mount:document.querySelector(".top-actions")});renderOverview();}else renderOnboarding();}
+    try{await loadOrganizations();addWorkspaceControls();if(organizations.length){initNotificationCenter({user:currentUser,organizationId:currentOrg.id,mount:document.querySelector(".top-actions")});initMessaging({user:currentUser,organizationId:currentOrg.id,role:"admin",mount:document.querySelector(".top-actions")});renderOverview();}else renderOnboarding();}
     catch(error){content.innerHTML=`<div class="empty-page"><h2>Workspace connection issue</h2><p>${escapeHtml(error.message)}</p></div>`;}
   }
   supabase.auth.onAuthStateChange((_event,newSession)=>{if(!newSession)location.href="./login.html";});
