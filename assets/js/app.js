@@ -632,7 +632,8 @@ async function openSalesWorkspace(initialTab="customers"){
    const type=extraDocumentTypes.find(t=>t.key===doc.document_type),customer=customers.find(c=>c.id===doc.customer_id)||{},templateId=settings.documents?.[doc.document_type]||"classic";
    const palettes={classic:["#e98a2b","#17243a"],corporate:["#173b63","#ffffff"],modern:["#087f8c","#ffffff"],elegant:["#343434","#c6a56b"],creative:["#6b4eff","#ffffff"]};
    const colors=theme.applyAcross===false?palettes[templateId]:[theme.primary||palettes[templateId][0],theme.secondary||palettes[templateId][1]],primary=colors[0],logo=theme.logoUrl||"";
-   const fieldLabels=Object.fromEntries(type.fields.map(([k,l])=>[k,l]));\n   const companyDocumentTerms=settings.terms?.[doc.document_type]||"";
+   const fieldLabels=Object.fromEntries(type.fields.map(([k,l])=>[k,l]));
+   const companyDocumentTerms=settings.terms?.[doc.document_type]||"";
    const fieldRows=Object.entries(doc.fields||{}).map(([k,v])=>'<tr><th>'+esc(fieldLabels[k]||k.replaceAll("_"," "))+'</th><td>'+esc(v)+'</td></tr>').join("");
    const itemRows=(doc.line_items||[]).map(x=>'<tr><td>'+esc(x.description)+'</td><td>'+esc(x.quantity)+'</td><td>'+esc(x.unit||"")+'</td><td>'+money(x.rate)+'</td></tr>').join("");
    const customerBlock=customer.customer_name?'<section class="party"><b>Customer</b><br>'+esc(customer.customer_name)+'<br>'+esc(customer.billing_address||"")+'<br>'+esc([customer.city,customer.state,customer.pincode].filter(Boolean).join(", "))+'<br>'+esc(customer.phone||"")+(customer.gstin?'<br>GSTIN: '+esc(customer.gstin):"")+'</section>':"";
@@ -727,7 +728,8 @@ async function renderCompanySettings(){
  const {data:templateRecord}=await supabase.from("company_document_settings").select("settings").eq("organization_id",company.id).maybeSingle();
  let templateSettings=templateRecord?.settings||{theme:{primary:"#e98a2b",secondary:"#17243a",applyAcross:true,logoUrl:""},documents:{}};
  templateSettings.theme={primary:"#e98a2b",secondary:"#17243a",applyAcross:true,logoUrl:"",...(templateSettings.theme||{})};
- templateSettings.documents=templateSettings.documents||{};\n templateSettings.terms={...defaultDocumentTerms,...(templateSettings.terms||{})};
+ templateSettings.documents=templateSettings.documents||{};
+ templateSettings.terms={...defaultDocumentTerms,...(templateSettings.terms||{})};
  const templateSection=document.createElement("section");templateSection.className="dashboard-panel document-template-panel";
  templateSection.innerHTML='<div class="panel-heading"><div><span class="eyebrow">DOCUMENT BRANDING</span><h3>Document templates</h3><p>Choose from five ready-made A4 designs for every document type. Set one default per document, or apply your company theme across all documents.</p></div></div><div class="template-theme-grid"><label>Company logo URL<input id="docLogoUrl" type="url" placeholder="https://example.com/company-logo.png"></label><label>Primary brand colour<input id="docPrimaryColor" type="color"></label><label>Secondary colour<input id="docSecondaryColor" type="color"></label><label class="template-theme-toggle"><input id="docApplyTheme" type="checkbox"> Apply common company theme across all documents</label></div><div class="template-picker-head"><label>Choose document type<select id="templateDocumentType">'+templateCatalog.map(x=>'<option value="'+x.key+'">'+x.label+'</option>').join("")+'</select></label><span id="templateSelectedLabel" class="tag">Default design</span></div><div id="templateChoices" class="template-choice-grid"></div><div class="document-terms-editor"><label for="templateDocumentTerms">Company terms &amp; conditions for this document</label><textarea id="templateDocumentTerms" rows="8" placeholder="Enter the company terms that should print on this document"></textarea><small>These terms are saved separately for each document type and appear on newly printed documents. You can edit the wording to match your company policy.</small></div><div class="template-actions"><button class="primary-button" id="saveDocumentTemplates" type="button">Save document template settings</button><span id="documentTemplateMessage" role="status"></span></div><p class="template-note">All templates use A4 page dimensions. Existing generated documents are not changed when you update these defaults. Logo URLs must be publicly accessible for PDF printing.</p>';
  document.querySelector(".settings-layout").insertBefore(templateSection,document.querySelector(".security-settings-panel"));
@@ -742,12 +744,15 @@ async function renderCompanySettings(){
  templateSection.querySelector("#docPrimaryColor").value=templateSettings.theme.primary||"#e98a2b";
  templateSection.querySelector("#docSecondaryColor").value=templateSettings.theme.secondary||"#17243a";
  templateSection.querySelector("#docApplyTheme").checked=templateSettings.theme.applyAcross!==false;
- const termsEditor=templateSection.querySelector("#templateDocumentTerms");\n const paintDocumentTerms=()=>{termsEditor.value=templateSettings.terms[typeSelect.value]||"";};\n typeSelect.addEventListener("change",()=>{paintChoices();paintDocumentTerms();});paintChoices();paintDocumentTerms();
+ const termsEditor=templateSection.querySelector("#templateDocumentTerms");
+ const paintDocumentTerms=()=>{termsEditor.value=templateSettings.terms[typeSelect.value]||"";};
+ typeSelect.addEventListener("change",()=>{paintChoices();paintDocumentTerms();});paintChoices();paintDocumentTerms();
  templateSection.querySelector("#saveDocumentTemplates").addEventListener("click",async()=>{
   const saveButton=templateSection.querySelector("#saveDocumentTemplates"),msg=templateSection.querySelector("#documentTemplateMessage");
   const logoUrl=templateSection.querySelector("#docLogoUrl").value.trim();
   if(logoUrl){try{const u=new URL(logoUrl);if(!["http:","https:"].includes(u.protocol))throw new Error();}catch{msg.textContent="Enter a valid HTTPS or HTTP logo URL.";return;}}
-  templateSettings.theme={logoUrl,primary:templateSection.querySelector("#docPrimaryColor").value,secondary:templateSection.querySelector("#docSecondaryColor").value,applyAcross:templateSection.querySelector("#docApplyTheme").checked};\n  templateSettings.terms[typeSelect.value]=termsEditor.value.trim();
+  templateSettings.theme={logoUrl,primary:templateSection.querySelector("#docPrimaryColor").value,secondary:templateSection.querySelector("#docSecondaryColor").value,applyAcross:templateSection.querySelector("#docApplyTheme").checked};
+  templateSettings.terms[typeSelect.value]=termsEditor.value.trim();
   saveButton.disabled=true;saveButton.textContent="Saving…";msg.textContent="";
   const {error:saveTemplateError}=await supabase.from("company_document_settings").upsert({organization_id:company.id,settings:templateSettings,updated_by:currentUser.id,updated_at:new Date().toISOString()},{onConflict:"organization_id"});
   saveButton.disabled=false;saveButton.textContent="Save document template settings";
@@ -806,7 +811,8 @@ async function renderTermsAndConditions(){
 \nasync function openPage(id){
  activePage=id;
  activeDataConfig=null;
- if(id==="profile"){await renderProfile();return;}\n if(id==="terms"){await renderTermsAndConditions();return;}
+ if(id==="profile"){await renderProfile();return;}
+ if(id==="terms"){await renderTermsAndConditions();return;}
  if(id==="company-settings"){await renderCompanySettings();return;}
  if(id==="tasks"){await openTaskWorkspace();return;}
  if(id==="reports"){await openReportsWorkspace();return;}
