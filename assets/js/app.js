@@ -1,4 +1,5 @@
 import { supabase } from "./supabase.js";
+import { initNotificationCenter } from "./notifications.js";
 
 const defaultDocumentTerms={
   quotation:"1. This quotation is valid for 15 days from the date of issue unless stated otherwise.\n2. Prices are based on the scope and quantities mentioned; changes may affect the price and delivery schedule.\n3. Work will begin after written acceptance and any agreed advance payment.\n4. Applicable taxes will be charged as per law.\n5. Payment is due as per the agreed payment schedule.\n6. This quotation is subject to final written confirmation by the company.",
@@ -95,7 +96,7 @@ function escapeHtml(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","
 function showMessage(message){let el=document.getElementById("appMessage");if(!el){el=document.createElement("div");el.id="appMessage";el.className="app-message";document.querySelector(".content").prepend(el);}el.textContent=message;el.hidden=false;}
 function addWorkspaceControls(){
   const actions=document.querySelector(".top-actions");
-  actions.innerHTML='<span class="status-dot" id="networkDot"></span><span class="status-text" id="networkStatus">Checking connection…</span><button type="button" class="notify-enable" id="enableNotifications">🔔</button>';
+  actions.innerHTML='<span class="status-dot" id="networkDot"></span><span class="status-text" id="networkStatus">Checking connection…</span><button type="button" class="notify-enable" id="enableNotifications">Allow alerts</button>';
   const update=()=>{const state=window.BizFoxOfflineState||{online:navigator.onLine,pending:0};const label=document.getElementById("networkStatus"),dot=document.getElementById("networkDot");if(label)label.textContent=!state.online?("Offline · "+state.pending+" waiting"):state.failed?("Sync failed · "+state.failed):state.pending?("Syncing · "+state.pending+" pending"):"Online · Synced";if(dot)dot.classList.toggle("offline",!state.online);};
   window.addEventListener("bizfox:syncstate",update);window.addEventListener("online",update);window.addEventListener("offline",update);update();
   window.addEventListener("bizfox:synccomplete",()=>{update();window.BizFoxOffline?.notify("Biz FOX ERP","Your saved changes are synced.");});
@@ -868,7 +869,7 @@ else{
   }
   else{
     setupAppUpdates();setupTaskNotifications();
-    try{await loadOrganizations();addWorkspaceControls();if(organizations.length)renderOverview();else renderOnboarding();}
+    try{await loadOrganizations();addWorkspaceControls();if(organizations.length){initNotificationCenter({user:currentUser,organizationId:currentOrg.id,mount:document.querySelector(".top-actions")});renderOverview();}else renderOnboarding();}
     catch(error){content.innerHTML=`<div class="empty-page"><h2>Workspace connection issue</h2><p>${escapeHtml(error.message)}</p></div>`;}
   }
   supabase.auth.onAuthStateChange((_event,newSession)=>{if(!newSession)location.href="./login.html";});

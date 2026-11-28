@@ -1,4 +1,5 @@
 import { supabase } from "./supabase.js";
+import { initNotificationCenter } from "./notifications.js";
 const $=id=>document.getElementById(id);
 const authPanel=$("staffAuth"),portal=$("staffPortal"),noAccess=$("staffNoAccess");
 let currentUser=null,currentOrg=null,currentEmployee=null,staffOrganizations=[],tasksCache=[],reportsCache=[],expensesCache=[],taskCustomerMap={};
@@ -51,7 +52,7 @@ async function boot(user){
   ["Designation",currentEmployee?.designation||"Employee"],["Company",currentOrg.name],
   ["Account role","Employee"],["Account ID",user.id]
  ].map(([label,value])=>'<div class="staff-profile-detail"><small>'+esc(label)+'</small><strong>'+esc(value)+'</strong></div>').join("");
- setupStaffNotifications();updateStaffNetworkStatus();showPage("overview");await renderStaffWorkspace();await renderAttendance();
+ setupStaffNotifications();initNotificationCenter({user:currentUser,organizationId:currentOrg.id,mount:document.querySelector(".staff-topbar .top-actions")});updateStaffNetworkStatus();showPage("overview");await renderStaffWorkspace();await renderAttendance();
 }
 function showNoAccess(message="Your staff login is not linked to an active employee record. Ask the administrator to create your employee record and issue your username and password."){
  authPanel.hidden=true;portal.hidden=true;noAccess.hidden=false;const p=noAccess.querySelector("p");if(p)p.textContent=message;

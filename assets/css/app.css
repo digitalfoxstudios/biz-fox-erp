@@ -415,3 +415,24 @@ body{background:#f3f6fb}
 .document-terms{margin:24px 0 12px;padding:12px;border-top:1px solid #d9dee6;font-size:9pt;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
 .document-terms h3{font-size:11pt;margin:0 0 8px;color:#202938}
 .document-terms p{margin:0;white-space:pre-wrap}
+
+/* In-app notification centre */
+.notification-center-trigger{position:relative;border:1px solid #e3e8ef;background:#fff;color:#24334b;border-radius:10px;min-width:40px;height:38px;font-size:19px;cursor:pointer}
+.notification-count{position:absolute;right:-6px;top:-7px;min-width:18px;height:18px;padding:0 4px;border-radius:12px;background:#df642f;color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;border:2px solid #fff}
+.notification-count[hidden]{display:none}
+.notification-center-panel{position:absolute;right:24px;top:68px;width:min(390px,calc(100vw - 28px));max-height:min(560px,75vh);overflow:auto;background:#fff;border:1px solid #e3e8ef;border-radius:14px;box-shadow:0 18px 55px #10182725;z-index:30}
+.notification-center-panel[hidden]{display:none}
+.notification-center-head{position:sticky;top:0;background:#fff;padding:15px 16px;border-bottom:1px solid #edf0f4;display:flex;align-items:center;justify-content:space-between;z-index:1}
+.notification-center-head strong{font-size:14px;color:#17253b}
+.notification-mark-all{border:0;background:none;color:#c56a2c;font-size:11px;font-weight:700;cursor:pointer}
+.notification-center-list{padding:6px}
+.notification-row{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #f0f2f5;background:#fff;padding:12px 11px;cursor:pointer}
+.notification-row:hover{background:#f8fafc}
+.notification-row.unread{background:#fff8f1}
+.notification-row-title,.notification-row-body,.notification-row time{display:block}
+.notification-row-title{font-size:12px;font-weight:800;color:#26354c}
+.notification-row-body{font-size:11px;color:#66748a;margin-top:4px;line-height:1.45}
+.notification-row time{font-size:9px;color:#929cad;margin-top:7px}
+.notification-empty{padding:24px 15px;text-align:center;color:#8792a4;font-size:12px}
+.top-actions{position:relative}
+@media(max-width:760px){.notification-center-panel{right:0;top:50px}}
