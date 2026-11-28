@@ -1,5 +1,6 @@
 import { supabase } from "./supabase.js";
 import { initNotificationCenter } from "./notifications.js";
+import { initMessaging } from "./messaging.js";
 const $=id=>document.getElementById(id);
 const content=$("customerContent"),title=$("customerPageTitle");
 let customer=null,quotes=[],invoices=[];
@@ -44,6 +45,6 @@ if(!session){location.replace("./login.html");}
 else{
  const {data,error}=await supabase.from("customers").select("id,organization_id,customer_code,customer_name,email,phone,billing_address").eq("user_id",session.user.id).maybeSingle();
  if(error||!data){await supabase.auth.signOut();location.replace("./login.html");}
- else{customer=data;initNotificationCenter({user:session.user,organizationId:customer.organization_id,mount:document.querySelector(".customer-shell .top-actions")});await loadCustomerData();}
+ else{customer=data;initNotificationCenter({user:session.user,organizationId:customer.organization_id,mount:document.querySelector(".customer-shell .top-actions")});initMessaging({user:session.user,organizationId:customer.organization_id,role:"customer",customer,mount:document.querySelector(".customer-shell .top-actions")});await loadCustomerData();}
 }
 supabase.auth.onAuthStateChange((event)=>{if(event==="SIGNED_OUT")location.replace("./login.html");});
