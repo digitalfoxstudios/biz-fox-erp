@@ -31,7 +31,7 @@ export function initMessaging({user, organizationId, role, customer=null, employ
   document.body.append(overlay);
 
   const $=selector=>overlay.querySelector(selector);
-  const list=$(".bizfox-chat-list"), messages=$(".bizfox-chat-messages"), empty=$(".bizfox-chat-empty"), activeBox=$(".bizfox-chat-active");
+  const list=$(".bizfox-chat-list"), messages=$(".bizfox-chat-messages"), empty=$(".bizfox-chat-empty"), activeBox=$(".bizfox-chat-active"), layout=$(".bizfox-chat-layout");
   const nameFor=conversation=>{
     if(conversation.conversation_type==="admin_employee") return contacts.find(x=>x.user_id===conversation.employee_user_id)?.name || "Employee";
     if(conversation.customer_id) return contacts.find(x=>x.id===conversation.customer_id)?.name || "Customer";
@@ -76,7 +76,7 @@ export function initMessaging({user, organizationId, role, customer=null, employ
   }
   async function openConversation(id){
     const c=conversations.find(x=>x.id===id); if(!c)return;
-    active=c; empty.hidden=true; activeBox.hidden=false;
+    active=c; empty.hidden=true; activeBox.hidden=false; layout.classList.add("chat-open");
     $(".bizfox-chat-person").textContent=nameFor(c);
     $(".bizfox-chat-subject").textContent=c.subject||"General conversation";
     list.querySelectorAll(".bizfox-chat-item").forEach(x=>x.classList.toggle("selected",x.dataset.chatId===id));
@@ -162,7 +162,7 @@ export function initMessaging({user, organizationId, role, customer=null, employ
   $(".bizfox-chat-cancel").addEventListener("click",()=>{$(".bizfox-chat-new-dialog").hidden=true;});
   $(".bizfox-chat-start").addEventListener("click",startConversation);
   $(".bizfox-chat-compose").addEventListener("submit",sendMessage);
-  $(".bizfox-chat-back").addEventListener("click",()=>{active=null;activeBox.hidden=true;empty.hidden=false;});
+  $(".bizfox-chat-back").addEventListener("click",()=>{active=null;activeBox.hidden=true;empty.hidden=false;layout.classList.remove("chat-open");});
   overlay.addEventListener("click",e=>{if(e.target===overlay)overlay.hidden=true;});
   if(role==="customer")$(".bizfox-chat-new").textContent="Contact admin";
   refreshRealtime();
