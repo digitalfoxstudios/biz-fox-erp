@@ -38,10 +38,11 @@ export function initMessaging({user, organizationId, role, customer=null, employ
     return "Conversation";
   };
   const unreadCount=async()=>{
+    const ids=conversations.map(c=>c.id);
     let total=0;
-    for(const c of conversations){
-      const {count}=await supabase.from("chat_messages").select("id",{count:"exact",head:true}).eq("conversation_id",c.id).is("read_at",null).neq("sender_id",user.id);
-      total+=count||0;
+    if(ids.length){
+      const {count}=await supabase.from("chat_messages").select("id",{count:"exact",head:true}).in("conversation_id",ids).is("read_at",null).neq("sender_id",user.id);
+      total=count||0;
     }
     const badge=button.querySelector(".bizfox-chat-badge");
     badge.textContent=total>99?"99+":String(total); badge.hidden=!total;
