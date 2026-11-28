@@ -436,3 +436,66 @@ body{background:#f3f6fb}
 .notification-empty{padding:24px 15px;text-align:center;color:#8792a4;font-size:12px}
 .top-actions{position:relative}
 @media(max-width:760px){.notification-center-panel{right:0;top:50px}}
+
+
+/* Secure in-app messaging */
+.bizfox-chat-launch{position:relative;border:1px solid #dce3ec;background:#fff;color:#23344d;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:750;cursor:pointer}
+.bizfox-chat-badge{display:inline-grid;place-items:center;min-width:17px;height:17px;padding:0 4px;margin-left:4px;border-radius:12px;background:#d95c32;color:#fff;font-size:10px}
+.bizfox-chat-badge[hidden]{display:none}
+.bizfox-chat-overlay{position:fixed;inset:0;z-index:10000;background:#10182780;display:grid;place-items:center;padding:18px}
+.bizfox-chat-overlay[hidden]{display:none}
+.bizfox-chat-window{width:min(980px,100%);height:min(720px,92vh);background:#fff;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px #10182745}
+.bizfox-chat-header{height:62px;flex:0 0 62px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e8edf3}
+.bizfox-chat-header strong,.bizfox-chat-header small{display:block}.bizfox-chat-header strong{font-size:15px;color:#1d2d44}.bizfox-chat-header small{font-size:11px;color:#8390a2;margin-top:3px}
+.bizfox-chat-close{border:0;background:#f1f4f8;border-radius:9px;width:36px;height:36px;font-size:24px;color:#46566d;cursor:pointer}
+.bizfox-chat-layout{display:grid;grid-template-columns:300px minmax(0,1fr);min-height:0;flex:1}
+.bizfox-chat-sidebar{border-right:1px solid #e8edf3;min-height:0;display:flex;flex-direction:column}
+.bizfox-chat-list-head{height:54px;flex:0 0 54px;padding:0 13px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eef1f5}
+.bizfox-chat-list-head strong{font-size:12px;color:#283850}
+.bizfox-chat-new{border:0;border-radius:8px;background:#1d3657;color:#fff;padding:7px 11px;font-size:11px;font-weight:700;cursor:pointer}
+.bizfox-chat-list{overflow:auto;padding:7px}
+.bizfox-chat-item{display:block;width:100%;padding:11px;text-align:left;border:0;border-radius:9px;background:#fff;cursor:pointer}
+.bizfox-chat-item:hover,.bizfox-chat-item.selected{background:#f1f5fa}
+.bizfox-chat-item strong,.bizfox-chat-item span,.bizfox-chat-item small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bizfox-chat-item strong{font-size:12px;color:#26364c}.bizfox-chat-item span{font-size:11px;color:#66758b;margin-top:4px}.bizfox-chat-item small{font-size:10px;color:#9aa5b4;margin-top:5px}
+.bizfox-chat-thread{min-width:0;min-height:0;display:flex;flex-direction:column;background:#f8fafc}
+.bizfox-chat-empty{margin:auto;color:#8491a3;font-size:13px;padding:24px;text-align:center}
+.bizfox-chat-active{display:flex;flex-direction:column;min-height:0;flex:1}
+.bizfox-chat-active[hidden]{display:none}
+.bizfox-chat-thread-head{height:54px;flex:0 0 54px;background:#fff;border-bottom:1px solid #e8edf3;display:flex;align-items:center;gap:10px;padding:0 15px}
+.bizfox-chat-thread-head strong,.bizfox-chat-thread-head small{display:block}.bizfox-chat-thread-head strong{font-size:12px;color:#283850}.bizfox-chat-thread-head small{font-size:10px;color:#8491a3;margin-top:3px}
+.bizfox-chat-back{display:none;border:0;background:transparent;font-size:25px;color:#43546b}
+.bizfox-chat-messages{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:10px}
+.bizfox-chat-bubble{max-width:min(78%,520px);padding:10px 12px;border-radius:12px;background:#fff;border:1px solid #e8edf3;overflow-wrap:anywhere}
+.bizfox-chat-bubble.mine{align-self:flex-end;background:#eaf2ff;border-color:#d9e6fa}
+.bizfox-chat-bubble.theirs{align-self:flex-start}
+.bizfox-chat-bubble>div{font-size:12px;line-height:1.55;color:#29384e}
+.bizfox-chat-bubble small{display:block;font-size:9px;color:#8793a4;text-align:right;margin-top:6px}
+.bizfox-chat-file{display:block;margin-top:7px;font-size:11px;color:#255b9a;text-decoration:underline;overflow-wrap:anywhere}
+.bizfox-chat-compose{display:flex;align-items:flex-end;gap:8px;padding:12px;background:#fff;border-top:1px solid #e8edf3}
+.bizfox-chat-compose textarea{flex:1;resize:none;min-height:40px;max-height:110px;border:1px solid #dbe2eb;border-radius:9px;padding:10px;font:12px inherit;outline:none}
+.bizfox-chat-compose>button{border:0;border-radius:9px;background:#1d3657;color:#fff;padding:11px 16px;font-size:12px;font-weight:700;cursor:pointer}
+.bizfox-chat-compose>button:disabled{opacity:.5}
+.bizfox-chat-attach{width:38px;height:38px;display:grid;place-items:center;border:1px solid #dbe2eb;border-radius:9px;font-size:21px;color:#40516a;cursor:pointer}
+.bizfox-chat-file-note{font-size:9px;color:#9aa5b4;background:#fff;text-align:right;padding:0 14px 8px}
+.bizfox-chat-hint{font-size:11px;color:#8a96a7;text-align:center;padding:18px}
+.bizfox-chat-new-dialog{position:absolute;inset:0;z-index:2;background:#10182765;display:grid;place-items:center;padding:16px}
+.bizfox-chat-new-dialog[hidden]{display:none}
+.bizfox-chat-new-card{width:min(390px,100%);background:#fff;border-radius:13px;padding:18px;display:grid;gap:12px;box-shadow:0 15px 50px #10182735}
+.bizfox-chat-new-card>strong{font-size:14px;color:#26364c}
+.bizfox-chat-new-card select,.bizfox-chat-new-card input{width:100%;min-width:0;border:1px solid #dbe2eb;border-radius:8px;padding:11px;font-size:12px;background:#fff}
+.bizfox-chat-new-card>div{display:flex;justify-content:flex-end;gap:8px}
+.bizfox-chat-new-card button{border:0;border-radius:8px;padding:9px 13px;font-size:11px;font-weight:700;cursor:pointer}
+.bizfox-chat-cancel{background:#eef1f5;color:#42516a}.bizfox-chat-start{background:#1d3657;color:#fff}
+@media(max-width:650px){
+ .bizfox-chat-overlay{padding:0}
+ .bizfox-chat-window{width:100%;height:100dvh;max-height:100dvh;border-radius:0}
+ .bizfox-chat-layout{grid-template-columns:1fr}
+ .bizfox-chat-sidebar{display:flex}
+ .bizfox-chat-thread{display:none}
+ .bizfox-chat-layout.chat-open .bizfox-chat-sidebar{display:none}
+ .bizfox-chat-layout.chat-open .bizfox-chat-thread{display:flex}
+ .bizfox-chat-back{display:block}
+ .bizfox-chat-bubble{max-width:88%}
+ .bizfox-chat-messages{padding:12px}
+}
