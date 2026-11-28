@@ -59,6 +59,7 @@ class MainActivity : Activity() {
     private var downloadReceiverRegistered = false
     private var activeDownloadId = -1L
     private var pendingInstallUri: Uri? = null
+    private var backPressPending = false
     private val appUrl = BuildConfig.APP_URL
     private var lastAppUrl = BuildConfig.APP_URL
     private val releasesApi = "https://api.github.com/repos/digitalfoxstudios/biz-fox-erp/releases/latest"
@@ -256,6 +257,8 @@ class MainActivity : Activity() {
         @JavascriptInterface fun retryApp() { runOnUiThread { web.loadUrl(lastAppUrl) } }
         @JavascriptInterface fun requestNotifications() { runOnUiThread { this@MainActivity.requestNotificationPermission() } }
         @JavascriptInterface fun showNotification(title: String, body: String) { runOnUiThread { this@MainActivity.showLocalNotification(title, body) } }
+        @JavascriptInterface fun backHandled() { runOnUiThread { backPressPending = false } }
+        @JavascriptInterface fun exitOnBack() { runOnUiThread { backPressPending = false; finish() } }
     }
 
     private fun createNotificationChannel() {
@@ -434,10 +437,22 @@ class MainActivity : Activity() {
             super.onBackPressed()
             return
         }
-        web.evaluateJavascript("(function(){return window.bizFoxHandleBack ? window.bizFoxHandleBack() : false;})()") { result ->
-            if (result == "true") return@evaluateJavascript
-            if (web.canGoBack()) web.goBack() else finish()
-        }
+        if (backPressPending) return
+        backPressPending = true
+        // evaluateJavascript does not await a Promise returned by an async JS function.
+        // Resolve the SPA handler inside JavaScript and report the result through the bridge.
+        web.evaluateJavascript(
+            "(function(){try{" +
+                "var handler=window.bizFoxHandleBack;" +
+                "if(typeof handler!=='function'){BizFoxAndroid.exitOnBack();return;}" +
+                "Promise.resolve().then(function(){return handler();}).then(function(handled){" +
+                    "if(handled){BizFoxAndroid.backHandled();}" +
+                    "else if(window.history.length>1){window.history.back();BizFoxAndroid.backHandled();}" +
+                    "else{BizFoxAndroid.exitOnBack();}" +
+                "}).catch(function(){BizFoxAndroid.exitOnBack();});" +
+            "}catch(e){BizFoxAndroid.exitOnBack();}})();",
+            null
+        )
     }
     companion object {
         private const val FILE_PICKER_REQUEST = 4102
