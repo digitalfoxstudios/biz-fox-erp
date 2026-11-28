@@ -808,7 +808,8 @@ async function renderTermsAndConditions(){
  <p><strong>By continuing to use Biz FOX ERP, you acknowledge that you have read these Application Terms &amp; Conditions.</strong></p>
  </div></section>`;
 }
-\nasync function openPage(id){
+
+async function openPage(id){
  activePage=id;
  activeDataConfig=null;
  if(id==="profile"){await renderProfile();return;}
