@@ -12,10 +12,11 @@ android {
     defaultConfig {
         applicationId = "com.digitalfox.bizfoxerp"
         minSdk = 23
-        targetSdk = 35
-        versionCode = 17
-        versionName = "1.3.3"
-        buildConfigField("String", "APP_URL", "\"https://digitalfoxstudios.github.io/biz-fox-erp/?nativeVersion=1.3.3\"")
+        // Keep the installer compatibility profile conservative for Android 11 devices.
+        targetSdk = 32
+        versionCode = 18
+        versionName = "1.3.4"
+        buildConfigField("String", "APP_URL", "\"https://digitalfoxstudios.github.io/biz-fox-erp/?nativeVersion=1.3.4\"")
         buildConfigField("String", "APP_NAME", "\"Biz FOX ERP\"")
         buildConfigField("String", "RELEASE_ASSET", "\"biz-fox-erp.apk\"")
     }
@@ -26,6 +27,10 @@ android {
             storePassword = releaseStorePassword
             keyAlias = releaseKeyAlias
             keyPassword = releaseKeyPassword
+            // Explicitly produce the broadly compatible v1 + v2 signed APK.
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = false
         }
     }
     buildTypes {
