@@ -25,6 +25,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
+import android.print.PrintManager
+import android.print.PrintAttributes
+import android.print.PrintJob
 import android.webkit.JavascriptInterface
 import android.webkit.CookieManager
 import android.webkit.DownloadListener
@@ -60,6 +63,9 @@ class MainActivity : Activity() {
     private var activeDownloadId = -1L
     private var pendingInstallUri: Uri? = null
     private var backPressPending = false
+    private var pendingPrintTitle: String? = null
+    private var activePrintJob: PrintJob? = null
+    private var printingDocument = false
     private val appUrl = BuildConfig.APP_URL
     private var lastAppUrl = BuildConfig.APP_URL
     private val releasesApi = "https://api.github.com/repos/digitalfoxstudios/biz-fox-erp/releases/latest"
@@ -105,7 +111,10 @@ class MainActivity : Activity() {
             CookieManager.getInstance().setAcceptCookie(true)
             webViewClient = object : WebViewClient() {
                 override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) { if (url != null && Uri.parse(url).host == Uri.parse(appUrl).host) lastAppUrl = url; this@MainActivity.progress.visibility = View.VISIBLE }
-                override fun onPageFinished(view: WebView?, url: String?) { this@MainActivity.progress.visibility = View.GONE }
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    this@MainActivity.progress.visibility = View.GONE
+                    if (view === web && pendingPrintTitle != null) startNativePrint()
+                }
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val target = request?.url ?: return false
                     // Allow embedded map tiles/frames to render inside the employee/admin workspace.
@@ -259,6 +268,54 @@ class MainActivity : Activity() {
         @JavascriptInterface fun showNotification(title: String, body: String) { runOnUiThread { this@MainActivity.showLocalNotification(title, body) } }
         @JavascriptInterface fun backHandled() { runOnUiThread { backPressPending = false } }
         @JavascriptInterface fun exitOnBack() { runOnUiThread { backPressPending = false; finish() } }
+        @JavascriptInterface fun printHtml(html: String, title: String) { runOnUiThread { printHtmlDocument(html, title) } }
+    }
+
+    private fun printHtmlDocument(html: String, title: String) {
+        if (printingDocument) {
+            Toast.makeText(this, "A print job is already being prepared.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        printingDocument = true
+        pendingPrintTitle = title.take(100).ifBlank { "Biz FOX document" }
+        web.loadDataWithBaseURL(appUrl, html, "text/html", "UTF-8", null)
+    }
+
+    private fun startNativePrint() {
+        val title = pendingPrintTitle ?: return
+        pendingPrintTitle = null
+        try {
+            val manager = getSystemService(Context.PRINT_SERVICE) as PrintManager
+            val adapter = web.createPrintDocumentAdapter(title)
+            activePrintJob = manager.print(
+                title,
+                adapter,
+                PrintAttributes.Builder()
+                    .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
+                    .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                    .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
+                    .build()
+            )
+            monitorPrintJob()
+        } catch (error: Exception) {
+            printingDocument = false
+            activePrintJob = null
+            Toast.makeText(this, "Could not open Android print service: " + (error.message ?: "Unknown error"), Toast.LENGTH_LONG).show()
+            web.loadUrl(lastAppUrl)
+        }
+    }
+
+    private fun monitorPrintJob() {
+        Handler(Looper.getMainLooper()).postDelayed({
+            val job = activePrintJob
+            if (job == null || job.isCompleted || job.isFailed || job.isCancelled) {
+                activePrintJob = null
+                printingDocument = false
+                web.loadUrl(lastAppUrl)
+            } else {
+                monitorPrintJob()
+            }
+        }, 700L)
     }
 
     private fun createNotificationChannel() {
