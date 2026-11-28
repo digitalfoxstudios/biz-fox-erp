@@ -267,8 +267,23 @@ class MainActivity : Activity() {
         @JavascriptInterface fun requestNotifications() { runOnUiThread { this@MainActivity.requestNotificationPermission() } }
         @JavascriptInterface fun showNotification(title: String, body: String) { runOnUiThread { this@MainActivity.showLocalNotification(title, body) } }
         @JavascriptInterface fun backHandled() { runOnUiThread { backPressPending = false } }
-        @JavascriptInterface fun exitOnBack() { runOnUiThread { backPressPending = false; finish() } }
+        @JavascriptInterface fun exitOnBack() { runOnUiThread { showExitConfirmation() } }
         @JavascriptInterface fun printHtml(html: String, title: String) { runOnUiThread { printHtmlDocument(html, title) } }
+    }
+
+    private fun showExitConfirmation() {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Exit Biz FOX ERP?")
+            .setMessage("Are you sure you want to exit the app?")
+            .setNegativeButton("Stay") { _, _ -> backPressPending = false }
+            .setPositiveButton("Exit") { _, _ ->
+                backPressPending = false
+                finish()
+            }
+            .setOnCancelListener { backPressPending = false }
+            .create()
+        dialog.setOnDismissListener { backPressPending = false }
+        dialog.show()
     }
 
     private fun printHtmlDocument(html: String, title: String) {
